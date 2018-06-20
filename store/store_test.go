@@ -5,83 +5,58 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
-	"time"
 
-	"github.com/euforia/thrap/thrapb"
-	"github.com/ghodss/yaml"
+	"github.com/euforia/thrap/manifest"
 	"github.com/stretchr/testify/assert"
 )
 
-func fatal(t *testing.T, err error) {
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func loadTestObj() *thrapb.Stack {
-	b, _ := ioutil.ReadFile("../thrap.yml")
-	var st thrapb.Stack
-	yaml.Unmarshal(b, &st)
-	return &st
-}
-
-func Test_BadgerStore(t *testing.T) {
+func Test_thrap(t *testing.T) {
 	tmpdir, _ := ioutil.TempDir("/tmp", "thrap-")
 	defer os.RemoveAll(tmpdir)
-	db, err := NewBadgerDB(tmpdir)
-	fatal(t, err)
+
+	db, _ := NewBadgerDB(tmpdir)
 	defer db.Close()
 
-	st := NewBadgerStore(db, sha256.New, "/manifest")
-	mf := loadTestObj()
-
-	mf1, err := st.Set(mf)
-	assert.Nil(t, err)
-
-	var nobj thrapb.Stack
-	err = st.Get(mf1, &nobj)
-	assert.Nil(t, err)
-	err = st.Get([]byte("Foo"), nil)
+	_, err := NewStackStore(nil)
 	assert.NotNil(t, err)
 
-	assert.Equal(t, mf, &nobj)
+	objs := NewBadgerObjectStore(db, sha256.New, "/manifest/")
+	st, _ := NewStackStore(objs)
 
-	_, err = st.Set(mf)
-	assert.Equal(t, errObjectExists, err)
+	stack, _ := manifest.ParseYAML("../thrap.yml")
+	stack.Validate()
 
-	// Delete
-	err = st.Delete(mf1)
+	_, _, err = st.Create(stack)
 	assert.Nil(t, err)
-	err = st.Get(mf1, nil)
+	// t.Logf("%+v", nmf)
+
+	_, _, err = st.Get(stack.ID)
+	assert.Nil(t, err)
+	_, _, err = st.Create(stack)
 	assert.NotNil(t, err)
-
-	ldigest, last, err := st.CreateRef("test/ref")
-	assert.Nil(t, err)
-
-	ref := &thrapb.ChainHeader{
-		Timestamp:  time.Now().UnixNano(),
-		DataDigest: mf1,
-	}
-
-	ref.Previous = last.Hash(sha256.New())
-	assert.Equal(t, ldigest, ref.Previous)
-
-	_, err = st.SetRef("test/ref", ref)
-	assert.Nil(t, err)
-	assert.Equal(t, uint64(1), ref.Height)
-
-	sec, err := st.GetRef("test/ref")
-	assert.Nil(t, err)
-	assert.Equal(t, ref, sec)
-
-	c := uint64(1)
-	var cu int
-	err = st.IterRefChain("test/ref", func(header *thrapb.ChainHeader) error {
-		assert.Equal(t, c, header.Height)
-		c--
-		cu++
-		return nil
-	})
-	assert.Nil(t, err)
-	assert.Equal(t, 2, cu)
+	//assert.Equal(t, nmf.Header.Previous, make([]byte, 32))
 }
+
+// func Test_buildDockerfile(t *testing.T) {
+// 	conf, _ := config.ParseFile("./etc/config.hcl")
+// 	langs, _ := LoadLanguages(conf.Languages)
+// 	c := &thrapb.Component{
+// 		Language: thrapb.LanguageID("go:1.10"),
+// 		ID:       "api",
+// 		Build: &thrapb.Build{
+// 			Dockerfile: "api.dockerfile",
+// 		},
+// 		Secrets: &thrapb.Secrets{
+// 			Destination: "etc/secrets",
+// 		},
+// 	}
+//
+// 	_, err := BuildDockerfile("test", c, langs["go"])
+// 	assert.Nil(t, err)
+// }
+
+// func Test_LoadVariablesFromFile(t *testing.T) {
+// 	vars, err := LoadVariablesFromFile("./test-fixtures/vars.hcl")
+// 	assert.Nil(t, err)
+// 	assert.NotEqual(t, 0, len(vars))
+// }

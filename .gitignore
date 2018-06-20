@@ -1,0 +1,14 @@
+.thrap
+thrap
+.Trash
+.DS_Store
+*.log
+*.test
+.env
+*.exe
+*.dll
+*.so
+*.dylib
+.vscode/
+.a
+secrets.*

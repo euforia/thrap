@@ -1,0 +1,14 @@
+FROM golang:${lang.version} as build
+WORKDIR /go/src/${vcs.addr}/${vcs.repo.owner}/${vcs.repo.name}
+
+# Move this out
+COPY . .
+
+RUN make deps
+RUN make test
+RUN make dist
+
+FROM alpine
+WORKDIR /
+COPY --from=build /go/src/${vcs.addr}/${vcs.repo.owner}/${vcs.repo.name}/dist/${stack.id}-linux /usr/bin/${stack.id}
+CMD ["${stack.id}"]

@@ -1,0 +1,71 @@
+#
+# Available variables can be found in the vars.hcl file
+#
+name: thrap
+
+# Stack components
+components:
+  # ID of the component within the stack. This can be any arbitrary name.
+  db:
+    name: cockroachdb/cockroach
+    version: v2.0.2
+    type: datastore
+
+  api:
+    name: api
+    # Type of component.  This determines items that need to be automated
+    type: api
+    # The access point of your stack ie. expose ports as defined in the
+    # dockerfile, giving it an fqdn. (default false)
+    head: true
+    # External to true makes the comp. available on the internet.  Head must be
+    # true for this to take effect. (default false)
+    external: false
+    # Secrets configuration for the component
+    secrets:
+        # Relative path to the working directory inside the container where
+        # secrets are written.
+        destination: secrets.hcl
+        # Format in which the secrets should be written out
+        format: hcl
+
+    # Environment variables
+    # env:
+        # Read variables in from this file path. Anything without an '=' sign
+        # in it is ignored.
+        # file: .env
+        # Inline environment variables.
+        # vars:
+
+    # Language is required if building
+    language: go:1.10
+
+    # Build this component (default <component id>.Dockerfile)
+    build:
+        # context: .
+        dockerfile: api.dockerfile
+
+# External dependencies for the app. External is in the context of your
+# ecosystem.  In a nomad or kubernetes world this could be any third-party
+# service such as AWS RDS or GCP Spanner etc.
+dependencies:
+  # Dep ID.  This can be any arbitrary key
+  github:
+    name: github
+    # Dependency version
+    version: v3
+    # External to the local environment
+    external: true
+    config:
+      addr: "https://api.github.com"
+
+  ecr:
+    name: ecr
+    external: true
+    version: v1
+
+  vault:
+    name: vault
+    version: v1
+    config:
+      addr: "http://vault.service:4646"

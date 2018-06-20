@@ -1,0 +1,65 @@
+package thrap
+
+import (
+	"encoding/json"
+	"errors"
+	"io/ioutil"
+	"net/http"
+
+	"github.com/gogo/protobuf/proto"
+)
+
+const (
+	contentTypeProtobufV3 = "application/protobuf.v3"
+	contentTypeJSON       = "application/json"
+)
+
+var (
+	errContentTypeNotSupported = errors.New("content type not supported")
+	errNotProtoBufMsg          = errors.New("not a protobuf message")
+)
+
+func unmarshal(r *http.Request, obj proto.Message) (err error) {
+	buf, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+
+	ctype := r.Header.Get("Content-Type")
+	switch ctype {
+	case contentTypeProtobufV3:
+		err = proto.Unmarshal(buf, obj)
+
+	case contentTypeJSON:
+		err = json.Unmarshal(buf, obj)
+
+	default:
+		return errContentTypeNotSupported
+
+	}
+
+	return err
+}
+
+func marshal(w http.ResponseWriter, ctype string, obj proto.Message) (err error) {
+	var data []byte
+
+	switch ctype {
+	case contentTypeProtobufV3:
+		data, err = proto.Marshal(obj)
+
+	case contentTypeJSON:
+		data, err = json.Marshal(obj)
+
+	default:
+		return errContentTypeNotSupported
+
+	}
+
+	if err == nil {
+		w.Header().Set("Content-Type", ctype)
+		w.Write(data)
+	}
+
+	return err
+}
