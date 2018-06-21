@@ -117,17 +117,6 @@ func (asm *devCompAssembler) addSecretsVolume(i int, workdir *dockerfile.WorkDir
 	return asm.dockerfile.AddInstruction(i, vol)
 }
 
-// func (asm *devCompAssembler) addSecretsVolumes(workdirs []*dockerfile.WorkDir) (err error) {
-// 	for i, workdir := range workdirs {
-//
-// 		err = asm.addSecretsVolume(i, workdir)
-// 		if err != nil {
-// 			break
-// 		}
-// 	}
-// 	return
-// }
-
 func (asm *devCompAssembler) ensureWorkdir(idx int) (*dockerfile.WorkDir, error) {
 	stage := asm.dockerfile.Stages[idx]
 	wd, _ := stage.GetOp(dockerfile.KeyWorkDir)
@@ -142,6 +131,17 @@ func (asm *devCompAssembler) ensureWorkdir(idx int) (*dockerfile.WorkDir, error)
 
 	return wd.(*dockerfile.WorkDir), nil
 }
+
+// func (asm *devCompAssembler) addSecretsVolumes(workdirs []*dockerfile.WorkDir) (err error) {
+// 	for i, workdir := range workdirs {
+//
+// 		err = asm.addSecretsVolume(i, workdir)
+// 		if err != nil {
+// 			break
+// 		}
+// 	}
+// 	return
+// }
 
 // addSecretVolToStage adds a volume instruction to the given stage.  It declares
 // the volume relative to the WORKDIR specified. If WORKDIR is not specified it

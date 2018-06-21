@@ -4,9 +4,8 @@ import (
 	"os"
 	"testing"
 
-	git "gopkg.in/src-d/go-git.v4"
-
 	"github.com/stretchr/testify/assert"
+	git "gopkg.in/src-d/go-git.v4"
 )
 
 func Test_VCS(t *testing.T) {

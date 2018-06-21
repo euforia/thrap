@@ -10,7 +10,7 @@ import (
 
 const DockerIgnoresFile = ".dockerignore"
 
-func ReadIgnores(dir string) ([]string, error) {
+func ReadIgnoresFile(dir string) ([]string, error) {
 	fpath := filepath.Join(dir, DockerIgnoresFile)
 	if !utils.FileExists(fpath) {
 		return []string{}, nil
