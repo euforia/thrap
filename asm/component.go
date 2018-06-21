@@ -22,16 +22,19 @@ type devCompAssembler struct {
 	comp *thrapb.Component
 
 	// Parsed docker file
-	dockerfile *dockerfile.Dockerfile
+	dockerfile    *dockerfile.Dockerfile
+	dockerignores []string
+
 	// Assembled files after rendering
 	files map[string][]byte
 }
 
 func newDevCompAssembler(c *thrapb.Component, langpack *devpack.DevPack) *devCompAssembler {
 	asm := &devCompAssembler{
-		comp:  c,
-		pack:  langpack,
-		files: make(map[string][]byte),
+		comp:          c,
+		pack:          langpack,
+		files:         make(map[string][]byte),
+		dockerignores: make([]string, 0),
 	}
 
 	asm.init()
@@ -84,7 +87,10 @@ func (asm *devCompAssembler) assemble(variables scope.Variables) (err error) {
 		return err
 	}
 
+	// Dockerfile workdir check
 	stages := asm.dockerfile.Stages
+	lastIdx := len(stages) - 1
+
 	workdirs := make([]*dockerfile.WorkDir, len(stages))
 	for i := range stages {
 		workdirs[i], err = asm.ensureWorkdir(i)
@@ -96,26 +102,31 @@ func (asm *devCompAssembler) assemble(variables scope.Variables) (err error) {
 	if asm.comp.HasSecrets() {
 		// Local file
 		asm.files[asm.comp.Secrets.Destination] = []byte{}
-		err = asm.addSecretsVolumes(workdirs)
+		asm.dockerignores = append(asm.dockerignores, asm.comp.Secrets.Destination)
+		err = asm.addSecretsVolume(lastIdx, workdirs[lastIdx])
 	}
 
 	return err
 }
 
-func (asm *devCompAssembler) addSecretsVolumes(workdirs []*dockerfile.WorkDir) (err error) {
-	for i, workdir := range workdirs {
-
-		vol := &dockerfile.Volume{
-			Paths: []string{filepath.Join(workdir.Path, asm.comp.Secrets.Destination)},
-		}
-
-		err = asm.dockerfile.AddInstruction(i, vol)
-		if err != nil {
-			break
-		}
+func (asm *devCompAssembler) addSecretsVolume(i int, workdir *dockerfile.WorkDir) error {
+	vol := &dockerfile.Volume{
+		Paths: []string{filepath.Join(workdir.Path, asm.comp.Secrets.Destination)},
 	}
-	return
+
+	return asm.dockerfile.AddInstruction(i, vol)
 }
+
+// func (asm *devCompAssembler) addSecretsVolumes(workdirs []*dockerfile.WorkDir) (err error) {
+// 	for i, workdir := range workdirs {
+//
+// 		err = asm.addSecretsVolume(i, workdir)
+// 		if err != nil {
+// 			break
+// 		}
+// 	}
+// 	return
+// }
 
 func (asm *devCompAssembler) ensureWorkdir(idx int) (*dockerfile.WorkDir, error) {
 	stage := asm.dockerfile.Stages[idx]

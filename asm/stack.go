@@ -8,10 +8,11 @@ import (
 
 	"github.com/euforia/hclencoder"
 	"github.com/euforia/pseudo/scope"
-	"github.com/euforia/thrap"
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/devpack"
+	"github.com/euforia/thrap/dockerfile"
 	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vars"
 	"github.com/euforia/thrap/vcs"
 	git "gopkg.in/src-d/go-git.v4"
@@ -107,6 +108,9 @@ func (asm *StackAsm) materializeDevComp(casm *devCompAssembler) error {
 	files := make(map[string][]byte, 2)
 	files[casm.comp.Build.Dockerfile] = []byte(casm.dockerfile.String())
 
+	// TODO: check if file exists. load and confirm values
+	files[dockerfile.DockerIgnoresFile] = []byte(strings.Join(casm.dockerignores, "\n"))
+
 	// Default files to write independent of language pack
 	name, content := asm.vcsIgnoreFile(casm.pack.IgnoreExts...)
 	files[name] = content
@@ -148,7 +152,7 @@ func (asm *StackAsm) writeFile(basename string, contents []byte, force bool) err
 		err    error
 	)
 
-	if !thrap.FileExists(path) || force {
+	if !utils.FileExists(path) || force {
 
 		bk := filepath.Base(basename)
 		if bk != basename {

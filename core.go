@@ -16,6 +16,7 @@ import (
 	"github.com/euforia/thrap/secrets"
 	"github.com/euforia/thrap/store"
 	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vcs"
 	homedir "github.com/mitchellh/go-homedir"
 )
@@ -109,7 +110,7 @@ func (core *Core) initStores() error {
 
 	dir := "~/" + consts.WorkDir + "/db"
 	dbdir, _ := homedir.Expand(dir)
-	if !FileExists(dbdir) {
+	if !utils.FileExists(dbdir) {
 		core.log.Println("Initializing new db:", dbdir)
 		os.MkdirAll(dbdir, 0755)
 	}
@@ -167,12 +168,7 @@ func (core *Core) ConfirmIdentity(ident *thrapb.Identity) (*thrapb.Identity, err
 	if !verifySignature(ident.PublicKey, shash, ident.Signature) {
 		return nil, errors.New("signature verification failed")
 	}
-	// temp
-	// if bytes.Compare(b58e, ident.Signature) != 0 {
-	// 	return nil, errors.New("invalid signature")
-	// }
 
-	// sident.Nonce++
 	sident.Signature = ident.Signature
 
 	resp, _, err := core.ist.Update(sident)
@@ -185,7 +181,7 @@ func (core *Core) ConfirmIdentity(ident *thrapb.Identity) (*thrapb.Identity, err
 func (core *Core) RegisterStack(stack *thrapb.Stack) (*thrapb.Stack, []*ActionReport, error) {
 	errs := stack.Validate()
 	if len(errs) > 0 {
-		return nil, nil, FlattenErrors(errs)
+		return nil, nil, utils.FlattenErrors(errs)
 	}
 
 	stack, _, err := core.sst.Create(stack)

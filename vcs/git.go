@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/euforia/thrap/utils"
 	"github.com/go-ini/ini"
 	homedir "github.com/mitchellh/go-homedir"
 	"gopkg.in/src-d/go-git.v4"
@@ -46,6 +47,14 @@ func (g *GitVCS) Init(conf map[string]interface{}) error {
 		return err
 	}
 
+	if utils.FileExists(fpath) {
+		err = g.loadFromGitConfig(fpath)
+	}
+
+	return err
+}
+
+func (g *GitVCS) loadFromGitConfig(fpath string) error {
 	f, err := ini.Load(fpath)
 	if err != nil {
 		return err

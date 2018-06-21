@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/euforia/hclencoder"
-	"github.com/euforia/thrap"
 	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/utils"
 )
 
 //
@@ -84,7 +84,7 @@ func writeHCLManifest(stack *thrapb.Stack, w io.Writer) error {
 }
 
 func writeHCLManifestFile(stack *thrapb.Stack, fpath string) error {
-	if thrap.FileExists(fpath) {
+	if utils.FileExists(fpath) {
 		return os.ErrExist
 	}
 

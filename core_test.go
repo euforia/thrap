@@ -17,6 +17,6 @@ func Test_core(t *testing.T) {
 	fatal(t, err)
 
 	assert.NotNil(t, c.vcs)
-	assert.Nil(t, c.reg)
+	assert.NotNil(t, c.reg)
 	assert.NotNil(t, c.sec)
 }

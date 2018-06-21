@@ -15,6 +15,7 @@ import (
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/devpack"
 	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vars"
 	"github.com/euforia/thrap/vcs"
 	"gopkg.in/src-d/go-git.v4"
@@ -97,7 +98,7 @@ func commandStackInit() *cli.Command {
 			}
 
 			mfile := filepath.Join(projPath, consts.DefaultManifestFile)
-			if thrap.FileExists(mfile) {
+			if utils.FileExists(mfile) {
 				// TODO: ???
 				return fmt.Errorf("manifest %s already exists", consts.DefaultManifestFile)
 			}
@@ -117,7 +118,7 @@ func commandStackInit() *cli.Command {
 			stack := promptComps(projName, ctx.String("lang"), conf)
 			errs := stack.Validate()
 			if errs != nil {
-				return thrap.FlattenErrors(errs)
+				return utils.FlattenErrors(errs)
 			}
 
 			stAsm, err := asm.NewStackAsm(stack, vcsp, gitRepo, scopeVars, devpacks)
@@ -143,7 +144,7 @@ func setupProjPath(ctx *cli.Context) (string, error) {
 
 	projPath, err := thrap.GetLocalPath(projPath)
 	if err == nil {
-		if !thrap.FileExists(projPath) {
+		if !utils.FileExists(projPath) {
 			os.MkdirAll(projPath, 0755)
 		}
 	}

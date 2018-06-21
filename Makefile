@@ -20,7 +20,7 @@ deps:
 	dep ensure -v
 
 test:
-	go test -cover ./...
+	go test -cover $(shell go list ./... | grep -v /vendor/)
 
 $(NAME):
 	$(BUILD_CMD) -o $(NAME) $(SOURCE_FILES)

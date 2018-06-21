@@ -21,7 +21,6 @@ func Test_nomad(t *testing.T) {
 	fatal(t, err)
 
 	wrappedJob := hclWrapNomadJob(job)
-	hclencoder.OmitEmpty = true
 	b, err := hclencoder.Encode(wrappedJob)
 	fatal(t, err)
 	fmt.Printf("\n%s\n", b)

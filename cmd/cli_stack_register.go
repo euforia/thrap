@@ -8,6 +8,7 @@ import (
 	"github.com/euforia/hclencoder"
 	"github.com/euforia/thrap"
 	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/utils"
 	"google.golang.org/grpc"
 	"gopkg.in/urfave/cli.v2"
 )
@@ -23,7 +24,7 @@ func commandStackRegister() *cli.Command {
 				return err
 			}
 			if errs := stack.Validate(); errs != nil {
-				return thrap.FlattenErrors(errs)
+				return utils.FlattenErrors(errs)
 			}
 
 			taddr := ctx.String("thrap-addr")
@@ -68,7 +69,7 @@ func commandStackValidate() *cli.Command {
 			if errs == nil {
 				writeHCLManifest(mf, os.Stdout)
 			} else {
-				err = thrap.FlattenErrors(errs)
+				err = utils.FlattenErrors(errs)
 			}
 
 			return err

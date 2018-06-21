@@ -14,6 +14,7 @@ import (
 	"github.com/euforia/hclencoder"
 	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
+	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vcs"
 	homedir "github.com/mitchellh/go-homedir"
 )
@@ -26,7 +27,7 @@ func ConfigureHomeDir() error {
 	}
 
 	hwdir := filepath.Join(hdir, consts.WorkDir)
-	if !FileExists(hwdir) {
+	if !utils.FileExists(hwdir) {
 		os.MkdirAll(hwdir, 0755)
 	}
 
@@ -34,7 +35,7 @@ func ConfigureHomeDir() error {
 	var conf *config.ThrapConfig
 
 	varsfile := filepath.Join(hwdir, consts.ConfigFile)
-	if !FileExists(varsfile) {
+	if !utils.FileExists(varsfile) {
 		conf = config.DefaultThrapConfig()
 	} else {
 		conf, err = ReadGlobalConfig()
@@ -51,7 +52,7 @@ func ConfigureHomeDir() error {
 	var cconf *config.CredsConfig
 
 	credsFile := filepath.Join(hwdir, consts.CredsFile)
-	if !FileExists(credsFile) {
+	if !utils.FileExists(credsFile) {
 		cconf = config.DefaultCredsConfig()
 	} else {
 		cconf, err = ReadGlobalCreds()
@@ -66,7 +67,7 @@ func ConfigureHomeDir() error {
 	}
 
 	fpath, _ := homedir.Expand("~/" + consts.WorkDir + "/" + consts.KeyFile)
-	if !FileExists(fpath) {
+	if !utils.FileExists(fpath) {
 		_, err = generateKeyPair(fpath)
 	}
 
@@ -133,7 +134,7 @@ func ConfigureProjectDir(name, repoOwner, dir string) error {
 	os.MkdirAll(tdir, 0755)
 
 	varsfile := filepath.Join(tdir, consts.ConfigFile)
-	if FileExists(varsfile) {
+	if utils.FileExists(varsfile) {
 		return nil
 	}
 

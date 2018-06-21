@@ -2,7 +2,6 @@ package dockerfile
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 
 	"github.com/pkg/errors"
@@ -72,7 +71,6 @@ func (df *Dockerfile) AddInstruction(stage int, inst Instruction) error {
 		copy(nst, st[:j+1])
 		copy(nst[j+2:], st[j+1:])
 		nst[j+1] = inst
-		fmt.Println(nst)
 	}
 
 	df.Stages[stage] = nst
@@ -133,43 +131,6 @@ type RawDockerfile struct {
 	Stages []RawInstructions
 }
 
-// GetPorts returns defined ports for the stage in the dockerfile
-// func (df *Dockerfile) GetPorts(stage int) []string {
-// 	exposed := df.getRawInstructionsByKey(stage, KeyExpose)
-// 	out := make([]string, 0, len(exposed))
-// 	for _, e := range exposed {
-// 		p := strings.TrimSpace(string(e.Data))
-// 		if len(p) > 0 {
-// 			out = append(out, p)
-// 		}
-// 	}
-// 	return out
-// }
-
-// GetEnvVars returns the defined env vars for a stage from the dockerfile
-// func (df *Dockerfile) GetEnvVars(stage int) map[string]string {
-// 	envs := df.getRawInstructionsByKey(stage, KeyEnv)
-// 	out := make(map[string]string, 0)
-// 	for _, e := range envs {
-// 		kvs := parseKV(e.Data)
-// 		for k, v := range kvs {
-// 			out[k] = v
-// 		}
-// 	}
-// 	return out
-// }
-
-// func (df *Dockerfile) getRawInstructionsByKey(i int, key string) RawInstructions {
-// 	insts := df.Stages[i]
-// 	out := make(RawInstructions, 0)
-// 	for i, in := range insts {
-// 		if in.Op == key {
-// 			out = append(out, insts[i])
-// 		}
-// 	}
-// 	return out
-// }
-
 func ParseRaw(raw *RawDockerfile) *Dockerfile {
 	df := &Dockerfile{Stages: make([]Stage, len(raw.Stages))}
 
@@ -178,14 +139,7 @@ func ParseRaw(raw *RawDockerfile) *Dockerfile {
 		for i, s := range stage {
 			ki, err := ParseInstruction(s)
 			if err == nil {
-				// Set stage id
-				// if ki.Key() == KeyFrom {
-				// 	if f := ki.(*From); f.As == "" {
-				// 		f.As = strconv.Itoa(j)
-				// 	}
-				// }
 				df.Stages[j][i] = ki
-
 			} else {
 				df.Stages[j][i] = stage[i]
 			}

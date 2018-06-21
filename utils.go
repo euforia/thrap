@@ -17,6 +17,7 @@ import (
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/utils"
 	homedir "github.com/mitchellh/go-homedir"
 )
 
@@ -35,61 +36,6 @@ func ReadGlobalCreds() (*config.CredsConfig, error) {
 	}
 	return nil, err
 }
-
-func FlattenErrors(errs map[string]error) error {
-	var out string
-	for k, v := range errs {
-		out += k + ":" + v.Error() + "\n"
-	}
-	return errors.New(out)
-}
-
-func FileExists(fpath string) bool {
-	_, err := os.Stat(fpath)
-	return err == nil
-}
-
-func mergeErrors(e1, e2 error) error {
-	if e1 == nil {
-		return e2
-	} else if e2 == nil {
-		return e1
-	}
-	return errors.New(e1.Error() + "; " + e2.Error())
-}
-
-// func LoadGlobalVars() (map[string]string, error) {
-// 	hdir, err := homedir.Dir()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	return LoadVars(hdir)
-// }
-//
-// func LoadVars(dir string) (map[string]string, error) {
-// 	b, err := ioutil.ReadFile(filepath.Join(dir, consts.WorkDir, consts.DefaultVarsFile))
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	var out map[string]string
-// 	err = hcl.Decode(&out, string(b))
-// 	return out, err
-// }
-//
-// func MergeVars(m1, m2 map[string]string) map[string]string {
-// 	if m1 == nil {
-// 		return m2
-// 	} else if m2 == nil {
-// 		return m1
-// 	}
-//
-// 	for k, v := range m2 {
-// 		m1[k] = v
-// 	}
-// 	return m1
-// }
 
 // GetLocalPath computes the path from the user specified args.  Uses the
 // current directory if none is supplied in args
@@ -162,9 +108,9 @@ func PromptUntilNoError(prompt string, out io.Writer, in io.Reader, f func([]byt
 func LoadManifest(mfile string) (*thrapb.Stack, error) {
 
 	if mfile == "" {
-		if FileExists(consts.DefaultManifestFile) {
+		if utils.FileExists(consts.DefaultManifestFile) {
 			mfile = "thrap.hcl"
-		} else if FileExists("thrap.yml") {
+		} else if utils.FileExists("thrap.yml") {
 			mfile = "thrap.yml"
 		} else {
 			return nil, errors.New("no manifest found")

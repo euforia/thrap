@@ -8,12 +8,6 @@
   revision = "28f7e881ca57bc00e028f9ede9f0d9104cfeef5e"
 
 [[projects]]
-  name = "github.com/Sirupsen/logrus"
-  packages = ["."]
-  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
-  version = "v1.0.5"
-
-[[projects]]
   branch = "master"
   name = "github.com/armon/go-metrics"
   packages = ["."]
@@ -84,22 +78,18 @@
   name = "github.com/docker/distribution"
   packages = [
     ".",
-    "context",
-    "digest",
+    "digestset",
     "manifest",
     "manifest/schema1",
     "manifest/schema2",
-    "reference",
-    "uuid"
+    "reference"
   ]
-  revision = "48294d928ced5dd9b378f7fd7c6f5da3ff3f2c89"
-  version = "v2.6.2"
+  revision = "7484e51bf6af0d3b1a849644cdaced3cfcf13617"
 
 [[projects]]
-  branch = "master"
   name = "github.com/docker/libtrust"
   packages = ["."]
-  revision = "aabc10ec26b754e797f9028f4589c5b7bd90dc20"
+  revision = "fa567046d9b14f6aa788882a950d69651d230b21"
 
 [[projects]]
   name = "github.com/emirpasic/gods"
@@ -170,10 +160,9 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/golang/snappy"
   packages = ["."]
-  revision = "2e65f85255dbc3072edf28d6b5b8efc472979f5a"
+  revision = "553a641470496b2327abcac10b36396bd98e45c9"
 
 [[projects]]
   name = "github.com/google/go-github"
@@ -194,22 +183,10 @@
   version = "1.0.0"
 
 [[projects]]
-  name = "github.com/gorilla/context"
-  packages = ["."]
-  revision = "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
-  version = "v1.1.1"
-
-[[projects]]
-  name = "github.com/gorilla/mux"
-  packages = ["."]
-  revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
-  version = "v1.6.2"
-
-[[projects]]
   name = "github.com/hashicorp/consul"
   packages = ["api"]
-  revision = "5174058f0d2bda63fa5198ab96c33d9a909c58ed"
-  version = "v1.1.0"
+  revision = "fb848fc48818f58690db09d14640513aa6bf3c02"
+  version = "v1.0.7"
 
 [[projects]]
   branch = "master"
@@ -224,10 +201,9 @@
   revision = "d5fe4b57a186c716b0e00b8c301cbd9b4182694d"
 
 [[projects]]
-  branch = "master"
   name = "github.com/hashicorp/go-immutable-radix"
   packages = ["."]
-  revision = "7f3cd4390caab3250a57f30efdb2a65dd7649ecf"
+  revision = "8aac2701530899b64bdea735a1de8da899815220"
 
 [[projects]]
   branch = "master"
@@ -254,10 +230,9 @@
   revision = "6bb64b370b90e7ef1fa532be9e591a81c3493e00"
 
 [[projects]]
-  branch = "master"
   name = "github.com/hashicorp/go-sockaddr"
   packages = ["."]
-  revision = "6d291a969b86c4b633730bfc6b8b9d64c3aafed9"
+  revision = "7165ee14aff120ee3642aa2bcf2dea8eebef29c3"
 
 [[projects]]
   branch = "master"
@@ -266,13 +241,12 @@
   revision = "23480c0665776210b5fbbac6eaaee40e3e6a96b7"
 
 [[projects]]
-  branch = "master"
   name = "github.com/hashicorp/golang-lru"
   packages = [
     ".",
     "simplelru"
   ]
-  revision = "0fb14efe8c47ae851c0034ed7a448854d3d34cf3"
+  revision = "a0d98a5f288019575c6d1f4bb1573fef2d1fcdc4"
 
 [[projects]]
   branch = "master"
@@ -320,14 +294,12 @@
 [[projects]]
   name = "github.com/hashicorp/raft"
   packages = ["."]
-  revision = "6d14f0c70869faabd9e60ba7ed88a6cbbd6a661f"
-  version = "v1.0.0"
+  revision = "077966dbc90f342107eb723ec52fdb0463ec789b"
 
 [[projects]]
   name = "github.com/hashicorp/serf"
   packages = ["coordinate"]
-  revision = "d6574a5bb1226678d7010325fb6c985db20ee458"
-  version = "v0.8.1"
+  revision = "b6017ae61f4420ed0c02d5eeeb9ff3fc02953f14"
 
 [[projects]]
   name = "github.com/hashicorp/vault"
@@ -378,10 +350,9 @@
   revision = "3864e76763d94a6df2f9960b16a20a33da9f9a66"
 
 [[projects]]
-  branch = "master"
   name = "github.com/mitchellh/hashstructure"
   packages = ["."]
-  revision = "2bca23e0e452137f789efbc8610126fd8b94f73b"
+  revision = "1ef5c71b025aef149d12346356ac5973992860bc"
 
 [[projects]]
   branch = "master"
@@ -420,16 +391,21 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/ryanuber/go-glob"
   packages = ["."]
-  revision = "572520ed46dbddaed19ea3d9541bdd0494163693"
-  version = "v0.1"
+  revision = "256dc444b735e061061cf46c809487313d5b0065"
 
 [[projects]]
   name = "github.com/sergi/go-diff"
   packages = ["diffmatchpatch"]
   revision = "1744e2970ca51c86172c8190fadad617561ed6e7"
   version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "3d4380f53a34dcdc95f0c1db702615992b38d9a4"
 
 [[projects]]
   name = "github.com/src-d/gcfg"
@@ -451,8 +427,7 @@
 [[projects]]
   name = "github.com/ugorji/go"
   packages = ["codec"]
-  revision = "b4c50a2b199d93b13dc15e78929cfb23bfdf21ab"
-  version = "v1.1.1"
+  revision = "0053ebfd9d0ee06ccefbfe17072021e1d4acebee"
 
 [[projects]]
   branch = "master"
@@ -480,25 +455,23 @@
     "poly1305",
     "ssh",
     "ssh/agent",
-    "ssh/knownhosts",
-    "ssh/terminal"
+    "ssh/knownhosts"
   ]
   revision = "7f39a6fea4fe9364fb61e1def6a268a51b4f3a06"
 
 [[projects]]
-  branch = "master"
   name = "golang.org/x/net"
   packages = [
     "context",
     "context/ctxhttp",
-    "http/httpguts",
     "http2",
     "http2/hpack",
     "idna",
     "internal/timeseries",
+    "lex/httplex",
     "trace"
   ]
-  revision = "db08ff08e8622530d9ed3a0e8ac279f6d4c02196"
+  revision = "f5dfe339be1d06f81b22525fe34671ee7d2c8904"
 
 [[projects]]
   branch = "master"
@@ -678,6 +651,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6cccf6675a11eacf1e54c1e489b6adc583029539815dfbd985fb4543b291186d"
+  inputs-digest = "8370e6f0dc489eea13425cb15ac1044f49fa6cbc4d445f41e1ee184e22fb8c84"
   solver-name = "gps-cdcl"
   solver-version = 1
