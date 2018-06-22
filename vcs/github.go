@@ -67,8 +67,6 @@ func (gh *githubVCS) DefaultEmail() string {
 
 func (gh *githubVCS) Get(repo *Repository, opt Option) (interface{}, error) {
 	ctx := context.Background()
-
-	// Create only if it does not exist
 	ghRepo, _, err := gh.client.Repositories.Get(ctx, repo.Owner, repo.Name)
 	return ghRepo, err
 }

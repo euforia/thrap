@@ -31,7 +31,7 @@ func commandAgent() *cli.Command {
 			}
 
 			srv := grpc.NewServer()
-			svc := thrap.NewService(core)
+			svc := thrap.NewService(core, nil)
 			thrapb.RegisterThrapServer(srv, svc)
 
 			baddr := ctx.String("bind-addr")
