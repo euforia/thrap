@@ -52,7 +52,7 @@ func Test_Parse_multistage(t *testing.T) {
 	assert.Equal(t, 2, len(m.Stages))
 
 	assert.Equal(t, 5, len(m.Stages[0]))
-	assert.Equal(t, 6, len(m.Stages[1]))
+	assert.Equal(t, 5, len(m.Stages[1]))
 
 	df := ParseRaw(m)
 

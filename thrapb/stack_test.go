@@ -9,7 +9,10 @@ import (
 )
 
 func loadTestStack() *Stack {
-	b, _ := ioutil.ReadFile("../thrap.yml")
+	b, err := ioutil.ReadFile("../test-fixtures/thrap.yml")
+	if err != nil {
+		panic(err)
+	}
 	st := new(Stack)
 	yaml.Unmarshal(b, st)
 	return st
@@ -32,12 +35,3 @@ func Test_Stack(t *testing.T) {
 	errs = st.Validate()
 	assert.NotNil(t, errs)
 }
-
-//
-// func Test_Stack_Hash(t *testing.T) {
-// 	st := loadTestStack()
-// 	mf := &Manifest{Stack: st,Header:&}
-// 	//mf1 := mf.Hash(sha256.New())
-// 	fmt.Println(st.Hash(sha256.New()))
-// 	//fmt.Println(mf.Header.DataDigest)
-// }

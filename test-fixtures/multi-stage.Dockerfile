@@ -6,6 +6,7 @@ RUN make test
 RUN make dist
 
 FROM alpine:latest
+WORKDIR /
 RUN apk --no-cache add ca-certificates
 COPY --from=builder /go/src/github.com/euforia/pseudo/dist/pseudo-linux /bin/pseudo
 CMD ["pseudo"]

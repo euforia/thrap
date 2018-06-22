@@ -23,7 +23,7 @@ func Test_thrap(t *testing.T) {
 	objs := NewBadgerObjectStore(db, sha256.New, "/manifest/")
 	st, _ := NewStackStore(objs)
 
-	stack, _ := manifest.ParseYAML("../thrap.yml")
+	stack, _ := manifest.ParseYAML("../test-fixtures/thrap.yml")
 	stack.Validate()
 
 	_, _, err = st.Create(stack)
