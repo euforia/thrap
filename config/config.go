@@ -5,7 +5,6 @@ import (
 
 	"github.com/euforia/hclencoder"
 	"github.com/euforia/pseudo/scope"
-	"github.com/euforia/thrap/vars"
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hil/ast"
 )
@@ -68,27 +67,27 @@ type VCSRepoConfig struct {
 }
 
 type VCSConfig struct {
-	ID       string        `hcl:"id"`
-	Addr     string        `hcl:"addr"`
+	ID       string        `hcl:"id" hcle:"omit"`
+	Addr     string        `hcl:"addr" hcle:"omitempty"`
 	Username string        `hcl:"username"`
-	Repo     VCSRepoConfig `hcl:"repo"`
+	Repo     VCSRepoConfig `hcl:"repo" hcle:"omitempty"`
 }
 
 func (conf *VCSConfig) ScopeVars() scope.Variables {
 	return scope.Variables{
-		vars.VcsID: ast.Variable{
+		"id": ast.Variable{
 			Value: conf.ID,
 			Type:  ast.TypeString,
 		},
-		vars.VcsAddr: ast.Variable{
+		"addr": ast.Variable{
 			Value: conf.Addr,
 			Type:  ast.TypeString,
 		},
-		vars.VcsRepoName: ast.Variable{
+		"username": ast.Variable{
 			Value: conf.Repo.Name,
 			Type:  ast.TypeString,
 		},
-		vars.VcsRepoOwner: ast.Variable{
+		"repo.owner": ast.Variable{
 			Value: conf.Repo.Owner,
 			Type:  ast.TypeString,
 		},
@@ -96,8 +95,8 @@ func (conf *VCSConfig) ScopeVars() scope.Variables {
 }
 
 type OrchestratorConfig struct {
-	ID   string `hcl:"id"`
-	Addr string `hcl:"addr"`
+	ID   string `hcl:"id" hcle:"omit"`
+	Addr string `hcl:"addr" hcle:"omitempty"`
 }
 
 type RegistryRepoConfig struct {
@@ -105,23 +104,23 @@ type RegistryRepoConfig struct {
 }
 
 type RegistryConfig struct {
-	ID   string                 `hcl:"id"`
-	Addr string                 `hcl:"addr"`
+	ID   string                 `hcl:"id" hcle:"omit"`
+	Addr string                 `hcl:"addr" hcle:"omitempty"`
 	Repo *RegistryRepoConfig    `hcl:"repo" hcle:"omitempty"`
 	Conf map[string]interface{} `hcl:"conf" hcle:"omitempty"`
 }
 
 func (conf *RegistryConfig) ScopeVars() scope.Variables {
 	return scope.Variables{
-		vars.RegistryID: ast.Variable{
+		"id": ast.Variable{
 			Value: conf.ID,
 			Type:  ast.TypeString,
 		},
-		vars.RegistryAddr: ast.Variable{
+		"addr": ast.Variable{
 			Value: conf.Addr,
 			Type:  ast.TypeString,
 		},
-		vars.RegistryRepoName: ast.Variable{
+		"repo.name": ast.Variable{
 			Value: conf.Repo.Name,
 			Type:  ast.TypeString,
 		},
@@ -129,40 +128,72 @@ func (conf *RegistryConfig) ScopeVars() scope.Variables {
 }
 
 type SecretsConfig struct {
-	ID   string `hcl:"id"`
-	Addr string `hcl:"addr"`
+	ID   string `hcl:"id" hcle:"omit"`
+	Addr string `hcl:"addr" hcle:"omitempty"`
 }
 
 type ThrapConfig struct {
-	VCS          *VCSConfig          `hcl:"vcs"`
-	Orchestrator *OrchestratorConfig `hcl:"orchestrator"`
-	Registry     *RegistryConfig     `hcl:"registry"`
-	Secrets      *SecretsConfig      `hcl:"secrets"`
+	VCS          map[string]*VCSConfig          `hcl:"vcs"`
+	Orchestrator map[string]*OrchestratorConfig `hcl:"orchestrator"`
+	Registry     map[string]*RegistryConfig     `hcl:"registry"`
+	Secrets      map[string]*SecretsConfig      `hcl:"secrets"`
+}
+
+func (conf *ThrapConfig) GetVCS(id string) *VCSConfig {
+	return conf.VCS["id"]
+}
+func (conf *ThrapConfig) GetOrchestrator(id string) *OrchestratorConfig {
+	return conf.Orchestrator["id"]
+}
+func (conf *ThrapConfig) GetRegistry(id string) *RegistryConfig {
+	return conf.Registry["id"]
+}
+func (conf *ThrapConfig) GetSecrets(id string) *SecretsConfig {
+	return conf.Secrets["id"]
 }
 
 func (conf *ThrapConfig) ScopeVars() scope.Variables {
-	svars := conf.VCS.ScopeVars()
-
-	rvars := conf.Registry.ScopeVars()
-	for k, v := range rvars {
-		svars[k] = v
+	svars := make(scope.Variables)
+	for k, v := range conf.VCS {
+		vars := v.ScopeVars()
+		for k1, v1 := range vars {
+			svars["vcs."+k+"."+k1] = v1
+		}
 	}
+
+	for k, v := range conf.Registry {
+		vars := v.ScopeVars()
+		for k1, v1 := range vars {
+			svars["registry."+k+"."+k1] = v1
+		}
+	}
+
+	// svars := conf.VCS.ScopeVars()
+
+	// rvars := conf.Registry.ScopeVars()
+	// for k, v := range rvars {
+	// 	svars[k] = v
+	// }
 
 	return svars
 }
 
 func DefaultThrapConfig() *ThrapConfig {
 	return &ThrapConfig{
-		VCS: &VCSConfig{
-			ID:   "github",
-			Addr: "github.com",
+		VCS: map[string]*VCSConfig{
+			"github": &VCSConfig{
+				Addr: "github.com",
+			},
 		},
-		Orchestrator: &OrchestratorConfig{},
-		Registry:     &RegistryConfig{},
-		Secrets: &SecretsConfig{
-			ID: "file",
-			// For file this is the path
-			Addr: "secrets",
+		Orchestrator: map[string]*OrchestratorConfig{
+			"docker": &OrchestratorConfig{},
+		},
+		Registry: make(map[string]*RegistryConfig),
+		Secrets: map[string]*SecretsConfig{
+			"file": &SecretsConfig{
+				// For file this is the path
+				//Addr: "secrets",
+			},
 		},
 	}
 }

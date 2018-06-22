@@ -56,11 +56,7 @@ func commandStackInit() *cli.Command {
 		},
 		Action: func(ctx *cli.Context) error {
 
-			conf, err := config.ParseFile("./etc/config.hcl")
-			if err != nil {
-				return err
-			}
-
+			//
 			projPath, err := setupProjPath(ctx)
 			if err != nil {
 				return err
@@ -84,11 +80,11 @@ func commandStackInit() *cli.Command {
 				return err
 			}
 
-			if err = setRepoOwner(ctx, thrapConf.VCS.Username, projPath); err != nil {
+			defaultVCS := thrapConf.VCS[ctx.String("vcs")]
+			if err = setRepoOwner(ctx, defaultVCS.Username, projPath); err != nil {
 				return err
 			}
 
-			//projLang := ctx.String("lang")
 			repoOwner := ctx.String(vars.VcsRepoOwner)
 
 			// Local project setup
@@ -110,6 +106,11 @@ func commandStackInit() *cli.Command {
 
 			gitRemoteAddr := scopeVars[vars.VcsAddr].Value.(string)
 			vcsp, gitRepo, err := setupGit(projName, repoOwner, projPath, gitRemoteAddr)
+			if err != nil {
+				return err
+			}
+
+			conf, err := config.ParseFile("./etc/config.hcl")
 			if err != nil {
 				return err
 			}

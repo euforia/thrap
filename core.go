@@ -65,44 +65,44 @@ func NewCore(logger *log.Logger) (*Core, error) {
 }
 
 func (core *Core) initResourceProviders(conf *config.ThrapConfig, creds *config.CredsConfig) (err error) {
-	vconf := &vcs.Config{
-		Provider: conf.VCS.ID,
-		Conf:     map[string]interface{}{"username": conf.VCS.Username},
-	}
-
-	vcreds := creds.GetVCSCreds(conf.VCS.ID)
-	for k, v := range vcreds {
-		vconf.Conf[k] = v
-	}
-
-	core.vcs, err = vcs.New(vconf)
-	if err != nil {
-		return err
-	}
-
-	if conf.Registry.ID != "" {
-		rconf := registry.DefaultConfig()
-		rconf.Provider = conf.Registry.ID
-		for k, v := range conf.Registry.Conf {
-			rconf.Conf[k] = v
-		}
-		core.reg, err = registry.New(rconf)
-		if err != nil {
-			return err
-		}
-	}
-
-	screds := creds.GetSecretsCreds(conf.Secrets.ID)
-	sconf := &secrets.Config{
-		Provider: conf.Secrets.ID,
-		Conf:     make(map[string]interface{}),
-	}
-	sconf.Conf["addr"] = conf.Secrets.Addr
-	for k, v := range screds {
-		sconf.Conf[k] = v
-	}
-
-	core.sec, err = secrets.New(sconf)
+	// vconf := &vcs.Config{
+	// 	Provider: conf.VCS.ID,
+	// 	Conf:     map[string]interface{}{"username": conf.VCS.Username},
+	// }
+	//
+	// vcreds := creds.GetVCSCreds(conf.VCS.ID)
+	// for k, v := range vcreds {
+	// 	vconf.Conf[k] = v
+	// }
+	//
+	// core.vcs, err = vcs.New(vconf)
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// if conf.Registry.ID != "" {
+	// 	rconf := registry.DefaultConfig()
+	// 	rconf.Provider = conf.Registry.ID
+	// 	for k, v := range conf.Registry.Conf {
+	// 		rconf.Conf[k] = v
+	// 	}
+	// 	core.reg, err = registry.New(rconf)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+	//
+	// screds := creds.GetSecretsCreds(conf.Secrets.ID)
+	// sconf := &secrets.Config{
+	// 	Provider: conf.Secrets.ID,
+	// 	Conf:     make(map[string]interface{}),
+	// }
+	// sconf.Conf["addr"] = conf.Secrets.Addr
+	// for k, v := range screds {
+	// 	sconf.Conf[k] = v
+	// }
+	//
+	// core.sec, err = secrets.New(sconf)
 	return err
 }
 
@@ -226,17 +226,17 @@ func (core *Core) executeComponents(stack *thrapb.Stack) []*ActionReport {
 }
 
 func (core *Core) createVcsRepo(stack *thrapb.Stack) *ActionReport {
-	var vcsOpt vcs.Option
+	// var vcsOpt vcs.Option
 	er := &ActionReport{Action: NewAction("create", "vcs.repo."+core.vcs.ID(), stack.ID)}
 	if core.vcs != nil {
-		repo := &vcs.Repository{
-			Name:        stack.ID,
-			Description: stack.Description,
-		}
-		if core.conf.VCS.Repo.Owner != "" {
-			repo.Owner = core.conf.VCS.Repo.Owner
-		}
-		er.Data, er.Error = core.vcs.Create(repo, vcsOpt)
+		// repo := &vcs.Repository{
+		// 	Name:        stack.ID,
+		// 	Description: stack.Description,
+		// }
+		// if core.conf.VCS.Repo.Owner != "" {
+		// 	repo.Owner = core.conf.VCS.Repo.Owner
+		// }
+		// er.Data, er.Error = core.vcs.Create(repo, vcsOpt)
 	} else {
 		er.Error = errProviderNotSpecified
 	}

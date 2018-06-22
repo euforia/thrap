@@ -43,10 +43,12 @@ func ConfigureHomeDir() error {
 			return err
 		}
 	}
+	// fmt.Println(conf.VCS, conf.VCS["github"])
+	configureHomeVars(conf.VCS["github"], varsfile)
 
-	err = configureHomeVars(conf, varsfile)
-	if err != nil {
-		return err
+	b, err := hclencoder.Encode(conf)
+	if err == nil {
+		err = ioutil.WriteFile(varsfile, b, 0644)
 	}
 
 	var cconf *config.CredsConfig
@@ -61,7 +63,7 @@ func ConfigureHomeDir() error {
 		}
 	}
 
-	err = configureCreds(cconf, conf.VCS.ID, credsFile)
+	err = configureVCSCreds(cconf, "github", credsFile)
 	if err != nil {
 		return err
 	}
@@ -74,7 +76,27 @@ func ConfigureHomeDir() error {
 	return err
 }
 
-func configureCreds(conf *config.CredsConfig, vcsID, credsFile string) error {
+func configureHomeVars(conf *config.VCSConfig, varsfile string) {
+	ghvcs, _ := vcs.New(&vcs.Config{Provider: "git"})
+	if conf.Username == "" {
+		conf.Username = ghvcs.DefaultUser()
+	}
+
+	if conf.Username == "" {
+		var vname string
+		prompt := fmt.Sprintf("%s username: ", conf.ID)
+		PromptUntilNoError(prompt, os.Stdout, os.Stdin, func(input []byte) error {
+			vname = string(input)
+			if vname == "" {
+				return fmt.Errorf("%s username required", conf.ID)
+			}
+			return nil
+		})
+		conf.Username = vname
+	}
+}
+
+func configureVCSCreds(conf *config.CredsConfig, vcsID, credsFile string) error {
 
 	token := conf.VCS[vcsID]["token"]
 	if token == "" {
@@ -93,34 +115,6 @@ func configureCreds(conf *config.CredsConfig, vcsID, credsFile string) error {
 	}
 
 	return config.WriteCredsConfig(conf, credsFile)
-}
-
-func configureHomeVars(conf *config.ThrapConfig, varsfile string) error {
-	ghvcs, _ := vcs.New(&vcs.Config{Provider: "git"})
-
-	if conf.VCS.Username == "" {
-		conf.VCS.Username = ghvcs.DefaultUser()
-	}
-
-	if conf.VCS.Username == "" {
-		var vname string
-		prompt := fmt.Sprintf("%s username: ", conf.VCS.ID)
-		PromptUntilNoError(prompt, os.Stdout, os.Stdin, func(input []byte) error {
-			vname = string(input)
-			if vname == "" {
-				return fmt.Errorf("%s username required", conf.VCS.ID)
-			}
-			return nil
-		})
-		conf.VCS.Username = vname
-	}
-
-	b, err := hclencoder.Encode(conf)
-	if err == nil {
-		err = ioutil.WriteFile(varsfile, b, 0644)
-	}
-
-	return err
 }
 
 // ConfigureProjectDir sets up the project .thrap dir. name is the repo name
@@ -143,7 +137,7 @@ func ConfigureProjectDir(name, repoOwner, dir string) error {
 	if err != nil {
 		return err
 	}
-	conf.VCS.Repo = config.VCSRepoConfig{
+	conf.VCS["github"].Repo = config.VCSRepoConfig{
 		Name:  name,
 		Owner: repoOwner,
 	}

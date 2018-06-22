@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/rand"
-	"crypto/sha256"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -12,7 +11,6 @@ import (
 	"github.com/euforia/base58"
 	"github.com/euforia/thrap"
 	"github.com/euforia/thrap/thrapb"
-	"google.golang.org/grpc"
 	"gopkg.in/urfave/cli.v2"
 )
 
@@ -101,67 +99,67 @@ func commandRegister() *cli.Command {
 		},
 		Action: func(ctx *cli.Context) error {
 			// Load global config
-			gconf, err := thrap.ReadGlobalConfig()
-			if err != nil {
-				return err
-			}
-			if gconf.VCS.Username == "" {
-				return errNotConfigured
-			}
+			// gconf, err := thrap.ReadGlobalConfig()
+			// if err != nil {
+			// 	return err
+			// }
+			// if gconf.VCS.Username == "" {
+			// 	return errNotConfigured
+			// }
+			//
+			// kp, err := thrap.LoadUserKeyPair()
+			// if err != nil {
+			// 	return errors.Wrap(err, "loading keypair")
+			// }
+			// pk := kp.PublicKey
+			//
+			// // Init and check identity
+			// ident := thrapb.NewIdentity(ctx.String("email"))
+			// ident.PublicKey = append(pk.X.Bytes(), pk.Y.Bytes()...)
+			// ident.Meta = map[string]string{
+			// 	gconf.VCS.ID + ".username": gconf.VCS.Username,
+			// }
+			// err = ident.Validate()
+			// if err != nil {
+			// 	return err
+			// }
+			//
+			// // Check remote addr
+			// remoteAddr := ctx.String("thrap-addr")
+			// if remoteAddr == "" {
+			// 	return errRemoteRequired
+			// }
+			// cc, err := grpc.Dial(remoteAddr, grpc.WithInsecure())
+			// if err != nil {
+			// 	return err
+			// }
+			//
+			// tclient := thrapb.NewThrapClient(cc)
+			//
+			// // Confirm registration request
+			// confirmCode := ctx.String("code")
+			// if len(confirmCode) > 0 {
+			// 	_, err = confirmUserRegistration(tclient, kp, ident, confirmCode)
+			// 	if err == nil {
+			// 		fmt.Println("Registered!")
+			// 	}
+			// 	return err
+			// }
+			//
+			// // Submit registration request
+			// resp, err := tclient.RegisterIdentity(context.Background(), ident)
+			// if err != nil {
+			// 	return err
+			// }
+			//
+			// // Generate code
+			// h := sha256.New()
+			// sh := resp.SigHash(h)
+			// out := base58.Encode(sh)
+			//
+			// fmt.Printf("%s\n", out)
 
-			kp, err := thrap.LoadUserKeyPair()
-			if err != nil {
-				return errors.Wrap(err, "loading keypair")
-			}
-			pk := kp.PublicKey
-
-			// Init and check identity
-			ident := thrapb.NewIdentity(ctx.String("email"))
-			ident.PublicKey = append(pk.X.Bytes(), pk.Y.Bytes()...)
-			ident.Meta = map[string]string{
-				gconf.VCS.ID + ".username": gconf.VCS.Username,
-			}
-			err = ident.Validate()
-			if err != nil {
-				return err
-			}
-
-			// Check remote addr
-			remoteAddr := ctx.String("thrap-addr")
-			if remoteAddr == "" {
-				return errRemoteRequired
-			}
-			cc, err := grpc.Dial(remoteAddr, grpc.WithInsecure())
-			if err != nil {
-				return err
-			}
-
-			tclient := thrapb.NewThrapClient(cc)
-
-			// Confirm registration request
-			confirmCode := ctx.String("code")
-			if len(confirmCode) > 0 {
-				_, err = confirmUserRegistration(tclient, kp, ident, confirmCode)
-				if err == nil {
-					fmt.Println("Registered!")
-				}
-				return err
-			}
-
-			// Submit registration request
-			resp, err := tclient.RegisterIdentity(context.Background(), ident)
-			if err != nil {
-				return err
-			}
-
-			// Generate code
-			h := sha256.New()
-			sh := resp.SigHash(h)
-			out := base58.Encode(sh)
-
-			fmt.Printf("%s\n", out)
-
-			return nil
+			return errors.New("to be implemented")
 		},
 	}
 }

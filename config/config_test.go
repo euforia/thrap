@@ -8,13 +8,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Config(t *testing.T) {
-	c, err := ParseFile("../etc/config.hcl")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("%s", c)
-}
+// func Test_Config(t *testing.T) {
+// 	c, err := ParseFile("../etc/config.hcl")
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	t.Logf("%s", c)
+// }
 
 func Test_CredsConfig(t *testing.T) {
 	testIn := `
@@ -49,28 +49,28 @@ vcs github {
 
 func Test_ThrapConfig(t *testing.T) {
 	testIn := `
-
 registry {
-    id = "ecr"
+    ecr {}
 }
 
 orchestrator {
-    id = "docker"
-    addr = ""
+    docker {}
 }
 
 secrets {
-    id = "vault"
-    addr = "http://vault.service:4646"
+    vault {
+        addr = "http://vault:4646"
+    }
 }
 
 vcs {
-    id = "github"
-    addr = "github.com"
-    username = "euforia"
-    repo {
-        name = "thrap"
-        owner = "euforia"
+    github {
+        addr = "github.com"
+        username = "euforia"
+        repo {
+            name = "thrap"
+            owner = "euforia"
+        }
     }
 }
 `
@@ -78,8 +78,8 @@ vcs {
 	var conf ThrapConfig
 	err := hcl.Decode(&conf, testIn)
 	assert.Nil(t, err)
-	assert.Equal(t, "thrap", conf.VCS.Repo.Name)
-	assert.Equal(t, "vault", conf.Secrets.ID)
+	assert.Equal(t, "thrap", conf.VCS["github"].Repo.Name)
+	assert.Equal(t, "http://vault:4646", conf.Secrets["vault"].Addr)
 }
 
 func Test_ThrapConfig_Encode(t *testing.T) {
