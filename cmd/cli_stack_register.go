@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/euforia/hclencoder"
-	"github.com/euforia/thrap"
+	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
 	"google.golang.org/grpc"
@@ -19,7 +19,7 @@ func commandStackRegister() *cli.Command {
 		Usage: "Register project",
 		Action: func(ctx *cli.Context) error {
 
-			stack, err := thrap.LoadManifest("")
+			stack, err := manifest.LoadManifest("")
 			if err != nil {
 				return err
 			}
@@ -60,7 +60,7 @@ func commandStackValidate() *cli.Command {
 		ArgsUsage: "[path to manifest]",
 		Action: func(ctx *cli.Context) error {
 			mfile := ctx.Args().Get(0)
-			mf, err := thrap.LoadManifest(mfile)
+			mf, err := manifest.LoadManifest(mfile)
 			if err != nil {
 				return err
 			}

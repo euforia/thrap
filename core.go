@@ -157,14 +157,11 @@ func (core *Core) ConfirmIdentity(ident *thrapb.Identity) (*thrapb.Identity, err
 		return nil, err
 	}
 
-	//pubkey := makePubKeyFromBytes(elliptic.P256(), sident.PublicKey)
-
 	shash := sident.SigHash(sha256.New())
 
 	b58e := base58.Encode(shash)
-	core.log.Printf("Verifying code: %s", b58e)
+	core.log.Printf("Verifying user registration code=%s", b58e)
 
-	core.log.Println(ident.Signature)
 	if !verifySignature(ident.PublicKey, shash, ident.Signature) {
 		return nil, errors.New("signature verification failed")
 	}

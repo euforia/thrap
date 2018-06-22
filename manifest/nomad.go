@@ -2,7 +2,9 @@ package manifest
 
 import (
 	"fmt"
+	"io"
 
+	"github.com/euforia/hclencoder"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/hashicorp/nomad/api"
 )
@@ -16,52 +18,7 @@ const (
 	defaultMemMB      = 256 //mb
 )
 
-func makeNomadTaskDocker(sid, gid string, comp *thrapb.Component) *api.Task {
-	cid := sid + "." + gid + "." + comp.ID
-	portLabel := "default"
-	task := api.NewTask(cid, "docker")
-
-	task.SetConfig("image", fmt.Sprintf("%s:%s", comp.Name, comp.Version))
-	task.SetConfig("port_map", map[string]int{
-		portLabel: -1,
-	})
-	task.SetConfig("labels", map[string]string{
-		"stack":     sid,
-		"group":     gid,
-		"component": comp.ID,
-	})
-	task.SetConfig("logging", map[string]interface{}{
-		"type": "syslog",
-		"config": map[string]interface{}{
-			"tag": cid,
-		},
-	})
-
-	task.Services = []*api.Service{
-		&api.Service{
-			Name:      comp.ID + "." + sid,
-			PortLabel: portLabel,
-			// Checks: []api.ServiceCheck{
-			// 	api.ServiceCheck{
-			// 		Path:     "/v1/status",
-			// 		Method:   "GET",
-			// 		Interval: 25e9,
-			// 		Timeout:  3e9,
-			// 	},
-			// },
-		},
-	}
-
-	return task
-}
-
-func makeNomadBatchJob(id, name string) *api.Job {
-	job := api.NewBatchJob(id, name, defaultRegion, defaultPriority)
-
-	return job
-}
-
-func makeNomadJob(stack *thrapb.Stack) (*api.Job, error) {
+func MakeNomadJob(stack *thrapb.Stack) (*api.Job, error) {
 	id := stack.ID
 	job := api.NewServiceJob(id, stack.Name, defaultRegion, defaultPriority)
 	for _, dc := range []string{"test-dc0", "test-dc1"} {
@@ -114,6 +71,60 @@ func makeNomadJob(stack *thrapb.Stack) (*api.Job, error) {
 
 	job = job.AddTaskGroup(grp)
 	return job, nil
+}
+
+func WriteNomadJob(job *api.Job, w io.Writer) error {
+	wrappedJob := hclWrapNomadJob(job)
+	b, err := hclencoder.Encode(wrappedJob)
+	if err == nil {
+		_, err = w.Write(append(b, []byte("\n")...))
+	}
+	return err
+}
+
+func makeNomadTaskDocker(sid, gid string, comp *thrapb.Component) *api.Task {
+	cid := sid + "." + gid + "." + comp.ID
+	portLabel := "default"
+	task := api.NewTask(cid, "docker")
+
+	task.SetConfig("image", fmt.Sprintf("%s:%s", comp.Name, comp.Version))
+	task.SetConfig("port_map", map[string]int{
+		portLabel: -1,
+	})
+	task.SetConfig("labels", map[string]string{
+		"stack":     sid,
+		"group":     gid,
+		"component": comp.ID,
+	})
+	task.SetConfig("logging", map[string]interface{}{
+		"type": "syslog",
+		"config": map[string]interface{}{
+			"tag": cid,
+		},
+	})
+
+	task.Services = []*api.Service{
+		&api.Service{
+			Name:      comp.ID + "." + sid,
+			PortLabel: portLabel,
+			// Checks: []api.ServiceCheck{
+			// 	api.ServiceCheck{
+			// 		Path:     "/v1/status",
+			// 		Method:   "GET",
+			// 		Interval: 25e9,
+			// 		Timeout:  3e9,
+			// 	},
+			// },
+		},
+	}
+
+	return task
+}
+
+func makeNomadBatchJob(id, name string) *api.Job {
+	job := api.NewBatchJob(id, name, defaultRegion, defaultPriority)
+
+	return job
 }
 
 func defaultServiceCheck() api.ServiceCheck {

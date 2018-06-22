@@ -1,0 +1,11 @@
+name: builder
+
+# Stack components
+components:
+  api:
+    name: api
+    # Type of component.  This determines items that need to be automated
+    type: api
+    language: go:1.10
+    build:
+        dockerfile: multi-stage.Dockerfile

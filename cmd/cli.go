@@ -139,7 +139,7 @@ func commandRegister() *cli.Command {
 			// Confirm registration request
 			confirmCode := ctx.String("code")
 			if len(confirmCode) > 0 {
-				_, err = confirmUserRegistration(tclient, ident, confirmCode)
+				_, err = confirmUserRegistration(tclient, kp, ident, confirmCode)
 				if err == nil {
 					fmt.Println("Registered!")
 				}
@@ -164,20 +164,14 @@ func commandRegister() *cli.Command {
 	}
 }
 
-func confirmUserRegistration(cc thrapb.ThrapClient, ident *thrapb.Identity, confirmCode string) (*thrapb.Identity, error) {
-	kp, err := thrap.LoadUserKeyPair()
-	if err != nil {
-		return nil, errors.Wrap(err, "loading keypair")
-	}
+func confirmUserRegistration(cc thrapb.ThrapClient, kp *ecdsa.PrivateKey, ident *thrapb.Identity, confirmCode string) (*thrapb.Identity, error) {
 
 	code := base58.Decode([]byte(confirmCode))
 	r, s, err := ecdsa.Sign(rand.Reader, kp, code)
 	if err != nil {
 		return nil, err
 	}
-	ident.Signature = append(s.Bytes(), r.Bytes()...)
-
-	fmt.Println(ident.Signature)
+	ident.Signature = append(r.Bytes(), s.Bytes()...)
 
 	return cc.ConfirmIdentity(context.Background(), ident)
 }

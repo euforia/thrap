@@ -7,7 +7,7 @@ option go_package = "github.com/euforia/thrap/thrapb";
 
 message Build {
     string Dockerfile = 1 [(gogoproto.moretags) = "hcl:\"dockerfile\""];
-    string Context    = 2 [(gogoproto.moretags) = "hcl:\"context\""];
+    string Context    = 2 [(gogoproto.moretags) = "hcl:\"context\" hcle:\"omitempty\""];
 }
 
 message Secrets {

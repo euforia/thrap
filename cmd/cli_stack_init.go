@@ -142,7 +142,7 @@ func setupProjPath(ctx *cli.Context) (string, error) {
 		projPath = args.First()
 	}
 
-	projPath, err := thrap.GetLocalPath(projPath)
+	projPath, err := utils.GetLocalPath(projPath)
 	if err == nil {
 		if !utils.FileExists(projPath) {
 			os.MkdirAll(projPath, 0755)

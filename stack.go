@@ -54,7 +54,7 @@ func makeDevComp(stackID, compID string, lang thrapb.LanguageID) *thrapb.Compone
 		Head:     true,
 		Build: &thrapb.Build{
 			Dockerfile: compID + "." + consts.DefaultDockerFile,
-			Context:    consts.DefaultBuildContext,
+			// Context:    consts.DefaultBuildContext,
 		},
 		Env: &thrapb.Envionment{
 			File: consts.DefaultEnvFile,

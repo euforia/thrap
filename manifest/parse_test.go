@@ -43,7 +43,7 @@ manifest "foo" {
 }`
 
 func Test_ParseBytes(t *testing.T) {
-	mf, err := ParseYAML("../thrap.yml")
+	mf, err := ParseYAML("../test-fixtures/thrap.yml")
 	fatal(t, err)
 
 	assert.Equal(t, 2, len(mf.Components))

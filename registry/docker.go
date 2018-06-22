@@ -3,6 +3,9 @@ package registry
 import (
 	"errors"
 
+	"github.com/docker/distribution/manifest"
+	"github.com/docker/distribution/manifest/schema1"
+	"github.com/docker/libtrust"
 	"github.com/heroku/docker-registry-client/registry"
 )
 
@@ -61,8 +64,25 @@ func (hub *dockerRegistry) Type() Type {
 }
 
 // Create a new repository
-func (hub *dockerRegistry) Create(string) (interface{}, error) {
-	return nil, errors.New("to be implemented")
+func (hub *dockerRegistry) Create(name string) (interface{}, error) {
+
+	mfest := schema1.Manifest{
+		Versioned: manifest.Versioned{SchemaVersion: 2},
+	}
+
+	// smf, err := schema2.FromStruct(mfest)
+	key, err := libtrust.GenerateECP256PrivateKey()
+	if err != nil {
+		return nil, err
+	}
+
+	signedManifest, err := schema1.Sign(&mfest, key)
+	if err != nil {
+		return nil, err
+	}
+
+	err = hub.reg.PutManifest(name, "latest", signedManifest)
+	return signedManifest, err
 }
 
 // Get a repository manifest

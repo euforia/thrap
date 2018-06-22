@@ -66,6 +66,6 @@ dependencies:
 
   vault:
     name: vault
-    version: v1
+    version: "0.10.2"
     config:
       addr: "http://vault.service:4646"

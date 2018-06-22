@@ -10,7 +10,6 @@ manifest "thrap" {
 
       build {
         dockerfile = "api.dockerfile"
-        context    = "."
       }
 
       secrets {

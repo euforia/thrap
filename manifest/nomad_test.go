@@ -1,27 +1,18 @@
 package manifest
 
 import (
-	"fmt"
-	"io/ioutil"
+	"os"
 	"testing"
-
-	"github.com/euforia/hclencoder"
-	"github.com/euforia/thrap/thrapb"
-	"github.com/hashicorp/hcl"
 )
 
-func Test_nomad(t *testing.T) {
-	in, _ := ioutil.ReadFile("../thrap.yml")
-
-	var mf thrapb.Stack
-	hcl.Unmarshal(in, &mf)
+func Test_MakeNomadJob(t *testing.T) {
+	mf, _ := LoadManifest("../test-fixtures/thrap.yml")
 	mf.Validate()
 
-	job, err := makeNomadJob(&mf)
+	job, err := MakeNomadJob(mf)
 	fatal(t, err)
+	job.Canonicalize()
 
-	wrappedJob := hclWrapNomadJob(job)
-	b, err := hclencoder.Encode(wrappedJob)
+	err = WriteNomadJob(job, os.Stdout)
 	fatal(t, err)
-	fmt.Printf("\n%s\n", b)
 }
