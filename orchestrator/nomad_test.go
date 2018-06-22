@@ -1,1 +1,29 @@
 package orchestrator
+
+import (
+	"encoding/json"
+	"fmt"
+	"testing"
+
+	"github.com/euforia/thrap/manifest"
+	"github.com/hashicorp/nomad/api"
+	"github.com/stretchr/testify/assert"
+)
+
+func Test_nomad_dryrun(t *testing.T) {
+	conf := &Config{Provider: "nomad", Conf: map[string]interface{}{
+		"addr": "http://nomad.service.owf-dev:4646",
+	}}
+	orch, err := New(conf)
+	assert.Nil(t, err)
+
+	st, _ := manifest.LoadManifest("../thrap.hcl")
+	st.Validate()
+
+	_, ijob, err := orch.Deploy(st, DeployOptions{Dryrun: true})
+	assert.Nil(t, err)
+
+	ijob.(*api.Job).Canonicalize()
+	b, _ := json.MarshalIndent(ijob, "", "  ")
+	fmt.Printf("%s\n", b)
+}

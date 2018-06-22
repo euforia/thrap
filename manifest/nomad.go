@@ -21,7 +21,7 @@ const (
 func MakeNomadJob(stack *thrapb.Stack) (*api.Job, error) {
 	id := stack.ID
 	job := api.NewServiceJob(id, stack.Name, defaultRegion, defaultPriority)
-	for _, dc := range []string{"test-dc0", "test-dc1"} {
+	for _, dc := range []string{defaultRegion} {
 		job = job.AddDatacenter(dc)
 	}
 
@@ -46,22 +46,27 @@ func MakeNomadJob(stack *thrapb.Stack) (*api.Job, error) {
 	for _, comp := range stack.Components {
 		task := makeNomadTaskDocker(id, gid, comp)
 
+		resources := makeResources(defaultCPUMHz, defaultMemMB, defaultNetMbits)
+
 		if comp.External {
 			//api.NewConstraint("${meta.hood}", operand, right)
 		}
 
 		if comp.Head {
 			service := task.Services[0]
-			service.Name = comp.ID + "." + id
-			service.Tags = []string{}
+			// service.Name = comp.ID + "." + id
+			service.Name = stack.ID
+			service.Tags = []string{comp.ID}
 			service.Checks = []api.ServiceCheck{
 				defaultServiceCheck(),
+			}
+			resources.Networks[0].DynamicPorts = []api.Port{
+				api.Port{Label: "default"},
 			}
 			// service.CheckRestart = &api.CheckRestart{Limit: 15}
 		}
 		// task.Constrain(c)
 
-		resources := defaultResources()
 		//resources.Merge(other)
 		task.Require(resources)
 
@@ -88,33 +93,45 @@ func makeNomadTaskDocker(sid, gid string, comp *thrapb.Component) *api.Task {
 	task := api.NewTask(cid, "docker")
 
 	task.SetConfig("image", fmt.Sprintf("%s:%s", comp.Name, comp.Version))
-	task.SetConfig("port_map", map[string]int{
-		portLabel: -1,
+
+	task.SetConfig("labels", []map[string]interface{}{
+		map[string]interface{}{
+			"stack":     sid,
+			"group":     gid,
+			"component": comp.ID,
+		},
 	})
-	task.SetConfig("labels", map[string]string{
-		"stack":     sid,
-		"group":     gid,
-		"component": comp.ID,
+
+	task.SetConfig("logging", []map[string]interface{}{
+		map[string]interface{}{
+			"type": "syslog",
+			"config": []map[string]interface{}{
+				map[string]interface{}{
+					"tag": cid,
+				},
+			},
+		},
 	})
-	task.SetConfig("logging", map[string]interface{}{
-		"type": "syslog",
-		"config": map[string]interface{}{
-			"tag": cid,
+
+	task.SetConfig("port_map", []map[string]interface{}{
+		map[string]interface{}{
+			portLabel: 10000,
 		},
 	})
 
 	task.Services = []*api.Service{
 		&api.Service{
-			Name:      comp.ID + "." + sid,
+			// Name:      sid,
+			// Tags:      []string{comp.ID},
 			PortLabel: portLabel,
-			// Checks: []api.ServiceCheck{
-			// 	api.ServiceCheck{
-			// 		Path:     "/v1/status",
-			// 		Method:   "GET",
-			// 		Interval: 25e9,
-			// 		Timeout:  3e9,
-			// 	},
-			// },
+			// 		Checks: []api.ServiceCheck{
+			// 			api.ServiceCheck{
+			// 				Path:     "/",
+			// 				Method:   "GET",
+			// 				Interval: 25e9,
+			// 				Timeout:  3e9,
+			// 			},
+			// 		},
 		},
 	}
 
@@ -130,23 +147,33 @@ func makeNomadBatchJob(id, name string) *api.Job {
 func defaultServiceCheck() api.ServiceCheck {
 	return api.ServiceCheck{
 		Type:     "http",
+		Path:     "/",
+		Method:   "GET",
 		Timeout:  3e9,  // 3s
 		Interval: 20e9, // 20s
 	}
 }
 
-func defaultResources() *api.Resources {
-	cpu := defaultCPUMHz
-	mem := defaultMemMB
-	mbits := defaultNetMbits
+func makeResources(cpu, mem, mbits int) *api.Resources {
+	// cpu := defaultCPUMHz
+	// mem := defaultMemMB
+	// mbits := defaultNetMbits
 
 	return &api.Resources{
 		CPU:      &cpu,
 		MemoryMB: &mem,
 		Networks: []*api.NetworkResource{
-			&api.NetworkResource{MBits: &mbits},
+			&api.NetworkResource{
+				// DynamicPorts: []api.Port{api.Port{Label: portLabel}},
+				MBits: &mbits},
 		},
 	}
+
+	// if portLabel != "" {
+	// 	rsrc.Networks[0].DynamicPorts = []api.Port{api.Port{Label: portLabel}}
+	// }
+
+	// return rsrc
 }
 
 func hclWrapNomadJob(job *api.Job) map[string]interface{} {

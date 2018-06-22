@@ -69,6 +69,8 @@ func commandStack() *cli.Command {
 			commandStackInit(),
 			commandStackValidate(),
 			commandStackRegister(),
+			commandStackBuild(),
+			commandStackDeploy(),
 		},
 	}
 }

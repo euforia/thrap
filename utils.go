@@ -15,6 +15,14 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 )
 
+// func LoadManifest() (*thrapb.Stack, error) {
+// 	mfile, err := utils.GetLocalPath(consts.DefaultManifestFile)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return manifest.LoadManifest(mfile)
+// }
+
 func ReadGlobalConfig() (*config.ThrapConfig, error) {
 	filename, err := homedir.Expand("~/" + consts.WorkDir + "/" + consts.ConfigFile)
 	if err == nil {

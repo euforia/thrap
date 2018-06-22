@@ -1,6 +1,10 @@
 package orchestrator
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/euforia/thrap/thrapb"
+)
 
 // Config holds the config used to init the orchestrator
 type Config struct {
@@ -10,10 +14,12 @@ type Config struct {
 
 // Orchestrator implements an application/project deployment orchestrator
 type Orchestrator interface {
-	Init(map[string]interface{}) error
-	// NewSpec returns job spec/s based on the orchestrator.  There may be more
-	// than one spec. e.g. kubernetes
-	NewSpec(string) ([]string, error)
+	// Init is called to initialize the orchestrator with the given config
+	Init(config map[string]interface{}) error
+
+	// Deploy should deploy the stack returning the response, deploy object
+	// based on the orchestrator or an error
+	Deploy(stack *thrapb.Stack, opts DeployOptions) (interface{}, interface{}, error)
 }
 
 // New returns a new orchestrator based on the given config

@@ -1,7 +1,7 @@
 package manifest
 
 import (
-	"os"
+	"fmt"
 	"testing"
 )
 
@@ -13,6 +13,7 @@ func Test_MakeNomadJob(t *testing.T) {
 	fatal(t, err)
 	job.Canonicalize()
 
-	err = WriteNomadJob(job, os.Stdout)
-	fatal(t, err)
+	fmt.Printf("%+v", job.TaskGroups[0].Tasks[0])
+	// err = WriteNomadJob(job, os.Stdout)
+	// fatal(t, err)
 }
