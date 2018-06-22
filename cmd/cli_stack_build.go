@@ -13,7 +13,8 @@ import (
 
 func commandStackBuild() *cli.Command {
 	return &cli.Command{
-		Name: "build",
+		Name:  "build",
+		Usage: "Build the stack",
 		Action: func(ctx *cli.Context) error {
 
 			st, err := manifest.LoadManifest("")

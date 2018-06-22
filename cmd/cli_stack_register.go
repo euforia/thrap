@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/euforia/hclencoder"
 	"github.com/euforia/thrap/manifest"
@@ -16,7 +15,7 @@ import (
 func commandStackRegister() *cli.Command {
 	return &cli.Command{
 		Name:  "register",
-		Usage: "Register project",
+		Usage: "Register a new project",
 		Action: func(ctx *cli.Context) error {
 
 			stack, err := manifest.LoadManifest("")
@@ -52,66 +51,3 @@ func commandStackRegister() *cli.Command {
 		},
 	}
 }
-
-func commandStackValidate() *cli.Command {
-	return &cli.Command{
-		Name:      "validate",
-		Usage:     "Validate a manifest",
-		ArgsUsage: "[path to manifest]",
-		Action: func(ctx *cli.Context) error {
-			mfile := ctx.Args().Get(0)
-			mf, err := manifest.LoadManifest(mfile)
-			if err != nil {
-				return err
-			}
-
-			errs := mf.Validate()
-			if errs == nil {
-				writeHCLManifest(mf, os.Stdout)
-			} else {
-				err = utils.FlattenErrors(errs)
-			}
-
-			return err
-		},
-	}
-}
-
-// func loadRegistryProvider(varmap map[string]string) (registry.Registry, error) {
-// 	conf := registry.DefaultConfig()
-// 	conf.Provider = varmap[vars.RegistryID]
-// 	conf.Conf["addr"] = varmap[vars.RegistryAddr]
-//
-// 	return registry.New(conf)
-// }
-
-// func loadVcsProvider(allvars map[string]string) (vcs.VCS, error) {
-// 	creds := make(map[string]string, 1)
-// 	for k, v := range allvars {
-// 		if strings.HasPrefix(k, vars.VcsCreds) {
-// 			key := strings.TrimPrefix(k, vars.VcsCreds+".")
-// 			creds[key] = v
-// 		}
-// 	}
-//
-// 	return vcs.New(&vcs.Config{Provider: allvars[vars.VcsID], Conf: creds})
-// }
-
-// func loadVars(path string) (map[string]string, error) {
-// 	projpath, err := thrap.GetLocalPath(path)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	all, err := thrap.LoadGlobalVars()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	pvars, err := thrap.LoadVars(projpath)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	return thrap.MergeVars(all, pvars), nil
-// }

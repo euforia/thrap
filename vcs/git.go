@@ -20,6 +20,7 @@ const (
 	gitUserConfigFile = ".gitconfig"
 	gitIgnoresFile    = ".gitignore"
 	defaultRemoteName = "origin"
+	defaultVersionTag = "v0.0.0"
 )
 
 // RepoVersion is the calculate repo / project / stack version
@@ -30,6 +31,10 @@ type RepoVersion struct {
 	Count int
 	// Last commit hash
 	Hash plumbing.Hash
+}
+
+func (rver *RepoVersion) String() string {
+	return fmt.Sprintf("%s-%d-%s", rver.Tag, rver.Count, rver.Hash.String()[:8])
 }
 
 // GetRepoVersion returns the latest tag, the count from that tag and the hash

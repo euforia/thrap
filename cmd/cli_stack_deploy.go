@@ -12,7 +12,8 @@ import (
 
 func commandStackDeploy() *cli.Command {
 	return &cli.Command{
-		Name: "deploy",
+		Name:  "deploy",
+		Usage: "Deploy stack",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:    "dryrun",

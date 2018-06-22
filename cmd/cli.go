@@ -44,10 +44,24 @@ func newCLI() *cli.App {
 			commandConfigure(),
 			commandRegister(),
 			commandStack(),
+			commandVersion(),
 		},
 	}
 
+	app.HideVersion = true
+
 	return app
+}
+
+func commandVersion() *cli.Command {
+	return &cli.Command{
+		Name:  "version",
+		Usage: "Show version",
+		Action: func(ctx *cli.Context) error {
+			fmt.Println(version())
+			return nil
+		},
+	}
 }
 
 func commandConfigure() *cli.Command {
@@ -57,20 +71,6 @@ func commandConfigure() *cli.Command {
 		Action: func(ctx *cli.Context) error {
 			// Only configures things that are not configured
 			return thrap.ConfigureHomeDir()
-		},
-	}
-}
-
-func commandStack() *cli.Command {
-	return &cli.Command{
-		Name:  "stack",
-		Usage: "Stack operations",
-		Subcommands: []*cli.Command{
-			commandStackInit(),
-			commandStackValidate(),
-			commandStackRegister(),
-			commandStackBuild(),
-			commandStackDeploy(),
 		},
 	}
 }
