@@ -11,9 +11,8 @@ import (
 	"github.com/euforia/thrap"
 	"github.com/euforia/thrap/analysis"
 	"github.com/euforia/thrap/asm"
-	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
-	"github.com/euforia/thrap/devpack"
+	"github.com/euforia/thrap/packs"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vars"
@@ -68,19 +67,22 @@ func commandStackInit() *cli.Command {
 				projName = filepath.Base(projPath)
 			}
 
-			devpacks := devpack.NewDevPacks("./etc/packs/dev")
+			pks := packs.New("./etc/packs")
+			devpacks := pks.Dev()
+
 			// Set language from input or otherwise and other related params
 			_, err = setLanguage(ctx, devpacks, projPath)
 			if err != nil {
 				return err
 			}
 
-			thrapConf, err := thrap.ReadGlobalConfig()
+			gconf, err := thrap.ReadGlobalConfig()
 			if err != nil {
 				return err
 			}
 
-			defaultVCS := thrapConf.VCS[ctx.String("vcs")]
+			vcsID := ctx.String("vcs")
+			defaultVCS := gconf.VCS[vcsID]
 			if err = setRepoOwner(ctx, defaultVCS.Username, projPath); err != nil {
 				return err
 			}
@@ -88,10 +90,11 @@ func commandStackInit() *cli.Command {
 			repoOwner := ctx.String(vars.VcsRepoOwner)
 
 			// Local project setup
-			err = thrap.ConfigureProjectDir(projName, repoOwner, projPath)
+			pconf, err := thrap.ConfigureProjectDir(projName, defaultVCS.ID, repoOwner, projPath)
 			if err != nil {
 				return err
 			}
+			defaultVCS = pconf.VCS[vcsID]
 
 			mfile := filepath.Join(projPath, consts.DefaultManifestFile)
 			if utils.FileExists(mfile) {
@@ -99,29 +102,30 @@ func commandStackInit() *cli.Command {
 				return fmt.Errorf("manifest %s already exists", consts.DefaultManifestFile)
 			}
 
-			scopeVars, _ := thrap.LoadGlobalScopeVars()
-			// Need the project dir configured before scope vars can be loaded
-			projVars, _ := thrap.LoadProjectScopeVars(projPath)
-			scopeVars = vars.MergeScopeVars(scopeVars, projVars)
-
-			gitRemoteAddr := scopeVars[vars.VcsAddr].Value.(string)
-			vcsp, gitRepo, err := setupGit(projName, repoOwner, projPath, gitRemoteAddr)
+			//gitRemoteAddr := scopeVars[vars.VcsAddr].Value.(string)
+			vcsp, gitRepo, err := setupGit(projName, repoOwner, projPath, defaultVCS.Addr)
 			if err != nil {
 				return err
 			}
 
-			conf, err := config.ParseFile("./etc/config.hcl")
-			if err != nil {
-				return err
-			}
+			// conf, err := config.ParseFile("./etc/config.hcl")
+			// if err != nil {
+			// 	return err
+			// }
 
 			// Prompt for missing
-			stack := promptComps(projName, ctx.String("lang"), conf)
+			stack, err := promptComps(projName, ctx.String("lang"), pks)
+			if err != nil {
+				return err
+			}
+			fmt.Println()
+
 			errs := stack.Validate()
 			if errs != nil {
 				return utils.FlattenErrors(errs)
 			}
 
+			scopeVars := defaultVCS.ScopeVars("vcs.")
 			stAsm, err := asm.NewStackAsm(stack, vcsp, gitRepo, scopeVars, devpacks)
 			if err != nil {
 				return err
@@ -154,7 +158,7 @@ func setupProjPath(ctx *cli.Context) (string, error) {
 
 }
 
-func isLangSupported(val string, supported []string) bool {
+func isSupported(val string, supported []string) bool {
 	for i := range supported {
 		if supported[i] == val {
 			return true
@@ -163,7 +167,7 @@ func isLangSupported(val string, supported []string) bool {
 	return false
 }
 
-func setLanguage(ctx *cli.Context, devpacks *devpack.DevPacks, dir string) (*devpack.DevPack, error) {
+func setLanguage(ctx *cli.Context, devpacks *packs.DevPacks, dir string) (*packs.DevPack, error) {
 	supported, err := devpacks.List()
 	if err != nil {
 		return nil, err
@@ -171,7 +175,7 @@ func setLanguage(ctx *cli.Context, devpacks *devpack.DevPacks, dir string) (*dev
 
 	// Do not prompt if input is valid
 	lang := ctx.String("lang")
-	if isLangSupported(lang, supported) {
+	if isSupported(lang, supported) {
 		return devpacks.Load(lang)
 	}
 
@@ -191,12 +195,9 @@ func setLanguage(ctx *cli.Context, devpacks *devpack.DevPacks, dir string) (*dev
 
 func setRepoOwner(ctx *cli.Context, defRepoOwner, dir string) error {
 	var err error
-	// if ctx.String("lang") == "go" {
-	// 	defRepoOwner = filepath.Base(filepath.Dir(dir))
-	// }
 
 	var repoOwner string
-	promptUntilNoError("Repo owner ["+defRepoOwner+"]: ", os.Stdout, os.Stdin, func(db []byte) error {
+	utils.PromptUntilNoError("Repo owner ["+defRepoOwner+"]: ", os.Stdout, os.Stdin, func(db []byte) error {
 		repoOwner = string(db)
 		if repoOwner == "" {
 			repoOwner = defRepoOwner
@@ -217,37 +218,60 @@ func guessLang(dir string) string {
 	return ""
 }
 
-func promptComps(name, lang string, conf *config.Config) *thrapb.Stack {
-	ds, ws := prompt(conf)
-	st := thrap.NewBasicStack(thrapb.LanguageID(lang), name, ds, ws, conf)
-	fmt.Println()
-	return st
+func promptComps(name, lang string, pks *packs.Packs) (*thrapb.Stack, error) {
+	c := &thrap.BasicStackConfig{
+		Name:     name,
+		Language: thrapb.LanguageID(lang),
+	}
+
+	var err error
+	// ds, ws := prompt(conf)
+	c.WebServer, err = promptPack(pks.Web(), "Web Server")
+	if err != nil {
+		return nil, err
+	}
+	c.DataStore, err = promptPack(pks.Datastore(), "Data Store")
+	if err != nil {
+		return nil, err
+	}
+
+	return thrap.NewBasicStack(c, pks)
 }
 
-func prompt(conf *config.Config) (string, string) {
-	var (
-		prompt    string
-		supported []string
-	)
-
-	// Prompt for datastore
-	supported = make([]string, 0, len(conf.DataStores)+1)
-	for k := range conf.DataStores {
-		supported = append(supported, k)
+func promptPack(wp *packs.BasePacks, prompt string) (string, error) {
+	list, err := wp.List()
+	if err != nil {
+		return "", err
 	}
-	prompt = "Data store"
-	ds := promptForSupported(prompt, supported, "none")
-
-	// Prompt for webserver
-	supported = make([]string, 0, len(conf.WebServers)+1)
-	for k := range conf.WebServers {
-		supported = append(supported, k)
-	}
-	prompt = "Web server"
-	ws := promptForSupported(prompt, supported, "none")
-
-	return ds, ws
+	supported := append(list, "none")
+	return promptForSupported(prompt, supported, "none"), nil
 }
+
+//
+// func prompt(conf *config.Config) (string, string) {
+// 	var (
+// 		prompt    string
+// 		supported []string
+// 	)
+//
+// 	// Prompt for datastore
+// 	supported = make([]string, 0, len(conf.DataStores)+1)
+// 	for k := range conf.DataStores {
+// 		supported = append(supported, k)
+// 	}
+// 	prompt = "Data store"
+// 	ds := promptForSupported(prompt, supported, "none")
+//
+// 	// Prompt for webserver
+// 	supported = make([]string, 0, len(conf.WebServers)+1)
+// 	for k := range conf.WebServers {
+// 		supported = append(supported, k)
+// 	}
+// 	prompt = "Web server"
+// 	ws := promptForSupported(prompt, supported, "none")
+//
+// 	return ds, ws
+// }
 
 func setupGit(projName, repoOwner, projPath, remoteAddr string) (vcs.VCS, *git.Repository, error) {
 	vcsp := vcs.NewGitVCS()

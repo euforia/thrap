@@ -1,10 +1,8 @@
 package thrap
 
 import (
-	"bufio"
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"io"
 	"io/ioutil"
 	"math/big"
 	"path/filepath"
@@ -29,6 +27,11 @@ func ReadGlobalConfig() (*config.ThrapConfig, error) {
 		return config.ReadThrapConfig(filename)
 	}
 	return nil, err
+}
+
+func ReadProjectConfig(projPath string) (*config.ThrapConfig, error) {
+	filename := filepath.Join(projPath, consts.WorkDir, consts.ConfigFile)
+	return config.ReadThrapConfig(filename)
 }
 
 func ReadGlobalCreds() (*config.CredsConfig, error) {
@@ -69,21 +72,6 @@ func LoadVariables(in []byte, prefix string) (scope.Variables, error) {
 
 	return nil, err
 
-}
-
-func PromptUntilNoError(prompt string, out io.Writer, in io.Reader, f func([]byte) error) {
-	var (
-		lb []byte
-	)
-	err := io.ErrUnexpectedEOF
-	for err != nil {
-		out.Write([]byte(prompt))
-
-		rd := bufio.NewReader(in)
-		lb, _ = rd.ReadBytes('\n')
-		lb = lb[:len(lb)-1]
-		err = f(lb)
-	}
 }
 
 func LoadUserKeyPair() (*ecdsa.PrivateKey, error) {

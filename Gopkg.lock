@@ -9,6 +9,27 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/Azure/go-ansiterm"
+  packages = [
+    ".",
+    "winterm"
+  ]
+  revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
+
+[[projects]]
+  name = "github.com/Microsoft/go-winio"
+  packages = ["."]
+  revision = "7da180ee92d8bd8bb8c37fc560e673e6557c392f"
+  version = "v0.4.7"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/Nvveen/Gotty"
+  packages = ["."]
+  revision = "cd527374f1e5bff4938207604a14f2e38a9cf512"
+
+[[projects]]
+  branch = "master"
   name = "github.com/armon/go-metrics"
   packages = ["."]
   revision = "58588f401c2cc130a7308a52ca3bc6c0a76db04b"
@@ -50,6 +71,12 @@
   version = "v1.14.10"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/containerd/continuity"
+  packages = ["pathdriver"]
+  revision = "246e49050efdf45e8f17fbbcf1547ee376f9939e"
+
+[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
@@ -85,6 +112,57 @@
     "reference"
   ]
   revision = "7484e51bf6af0d3b1a849644cdaced3cfcf13617"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/docker/docker"
+  packages = [
+    "api",
+    "api/types",
+    "api/types/blkiodev",
+    "api/types/container",
+    "api/types/events",
+    "api/types/filters",
+    "api/types/image",
+    "api/types/mount",
+    "api/types/network",
+    "api/types/registry",
+    "api/types/strslice",
+    "api/types/swarm",
+    "api/types/swarm/runtime",
+    "api/types/time",
+    "api/types/versions",
+    "api/types/volume",
+    "client",
+    "pkg/archive",
+    "pkg/fileutils",
+    "pkg/idtools",
+    "pkg/ioutils",
+    "pkg/jsonmessage",
+    "pkg/longpath",
+    "pkg/mount",
+    "pkg/pools",
+    "pkg/system",
+    "pkg/term",
+    "pkg/term/windows"
+  ]
+  revision = "af626ba08a4e11b0e140e7512ac2740b09833c29"
+
+[[projects]]
+  name = "github.com/docker/go-connections"
+  packages = [
+    "nat",
+    "sockets",
+    "tlsconfig"
+  ]
+  revision = "3ede32e2033de7505e6500d6c868c2b9ed9f169d"
+  version = "v0.3.0"
+
+[[projects]]
+  name = "github.com/docker/go-units"
+  packages = ["."]
+  revision = "47565b4f722fb6ceae66b95f853feed578a4a51c"
+  version = "v0.3.3"
 
 [[projects]]
   name = "github.com/docker/libtrust"
@@ -124,12 +202,6 @@
     "scope"
   ]
   revision = "8adcd69f48ff3d352b4abf789811a7f27e8eb295"
-
-[[projects]]
-  name = "github.com/ghodss/yaml"
-  packages = ["."]
-  revision = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7"
-  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/go-ini/ini"
@@ -373,6 +445,24 @@
   version = "v1.0.0-rc1"
 
 [[projects]]
+  name = "github.com/opencontainers/image-spec"
+  packages = [
+    "specs-go",
+    "specs-go/v1"
+  ]
+  revision = "d60099175f88c47cd379c4738d158884749ed235"
+  version = "v1.0.1"
+
+[[projects]]
+  name = "github.com/opencontainers/runc"
+  packages = [
+    "libcontainer/system",
+    "libcontainer/user"
+  ]
+  revision = "baf6536d6259209c3edfa2b22237af82942d3dfa"
+  version = "v0.1.1"
+
+[[projects]]
   name = "github.com/pelletier/go-buffruneio"
   packages = ["."]
   revision = "c37440a7cf42ac63b919c752ca73a85067e05992"
@@ -469,6 +559,7 @@
     "idna",
     "internal/timeseries",
     "lex/httplex",
+    "proxy",
     "trace"
   ]
   revision = "f5dfe339be1d06f81b22525fe34671ee7d2c8904"
@@ -651,6 +742,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8370e6f0dc489eea13425cb15ac1044f49fa6cbc4d445f41e1ee184e22fb8c84"
+  inputs-digest = "319f14d8ecf732f51e083e7fa8fd2bba65a29b4f9fb92a923c472f7083230332"
   solver-name = "gps-cdcl"
   solver-version = 1

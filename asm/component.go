@@ -5,8 +5,8 @@ import (
 
 	"github.com/euforia/pseudo/scope"
 	"github.com/euforia/thrap/consts"
-	"github.com/euforia/thrap/devpack"
 	"github.com/euforia/thrap/dockerfile"
+	"github.com/euforia/thrap/packs"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/vars"
 	"github.com/hashicorp/hil/ast"
@@ -14,7 +14,7 @@ import (
 
 type devCompAssembler struct {
 	// devpack
-	pack *devpack.DevPack
+	pack *packs.DevPack
 	// devpack loaded scope vars
 	vars scope.Variables
 
@@ -29,7 +29,7 @@ type devCompAssembler struct {
 	files map[string][]byte
 }
 
-func newDevCompAssembler(c *thrapb.Component, langpack *devpack.DevPack) *devCompAssembler {
+func newDevCompAssembler(c *thrapb.Component, langpack *packs.DevPack) *devCompAssembler {
 	asm := &devCompAssembler{
 		comp:          c,
 		pack:          langpack,
@@ -64,6 +64,8 @@ func (asm *devCompAssembler) assemblePack(svars scope.Variables) (err error) {
 	if asm.pack == nil {
 		return
 	}
+
+	asm.dockerignores = append(asm.dockerignores, asm.pack.IgnoreFiles...)
 
 	asm.dockerfile, err = asm.pack.Dockerfile(svars)
 	if err == nil {

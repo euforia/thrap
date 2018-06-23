@@ -13,7 +13,7 @@ func fatal(t *testing.T, err error) {
 }
 
 func Test_core(t *testing.T) {
-	err := ConfigureHomeDir()
+	err := ConfigureHomeDir(true)
 	fatal(t, err)
 
 	c, err := NewCore(nil)

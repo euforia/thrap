@@ -34,6 +34,14 @@ var (
 	errDatastoreHead    = errors.New("datastore cannot be a head")
 )
 
+func NewComponent(name, version string, typ CompType) *Component {
+	return &Component{
+		Name:    name,
+		Type:    typ,
+		Version: version,
+	}
+}
+
 // IsBuildable returns true if a build file has been specified signifying the
 // component is buildable
 func (comp *Component) IsBuildable() bool {

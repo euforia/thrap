@@ -43,9 +43,9 @@ type VCS interface {
 	// Name of ignores file used by this vcs
 	IgnoresFile() string
 	// Returns the default configured user.  This is used for commit info
-	DefaultUser() string
+	GlobalUser() string
 	// Returns the default configured email. This is used for commit info
-	DefaultEmail() string
+	GlobalEmail() string
 	// Unique id for provider
 	ID() string
 }

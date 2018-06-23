@@ -81,7 +81,10 @@ func New(conf *Config) (Registry, error) {
 		reg = &awsContainerRegistry{}
 
 	case "docker":
-		reg = &dockerRegistry{}
+		reg = &dockerHub{}
+
+	case "local.docker":
+		reg = &localDocker{}
 
 	default:
 		err = fmt.Errorf("unsupported container registry: '%s'", conf.Provider)

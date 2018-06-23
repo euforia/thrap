@@ -1,4 +1,4 @@
-package devpack
+package packs
 
 import (
 	"testing"

@@ -12,80 +12,13 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/config"
-	"gopkg.in/src-d/go-git.v4/plumbing"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
 const (
 	gitUserConfigFile = ".gitconfig"
 	gitIgnoresFile    = ".gitignore"
 	defaultRemoteName = "origin"
-	defaultVersionTag = "v0.0.0"
 )
-
-// RepoVersion is the calculate repo / project / stack version
-type RepoVersion struct {
-	// Last known tag.  Defaults to v0.0.0
-	Tag string
-	// Count from the tag
-	Count int
-	// Last commit hash
-	Hash plumbing.Hash
-}
-
-func (rver *RepoVersion) String() string {
-	return fmt.Sprintf("%s-%d-%s", rver.Tag, rver.Count, rver.Hash.String()[:8])
-}
-
-// GetRepoVersion returns the latest tag, the count from that tag and the hash
-// of the last commit
-func GetRepoVersion(path string) *RepoVersion {
-	tagLabel := "v0.0.0"
-
-	repo, _ := git.PlainOpen(path)
-
-	tags, _ := repo.Tags()
-
-	var rc *object.Commit
-	lastTag, _ := tags.Next()
-	if lastTag != nil {
-		tagLabel = lastTag.Name().Short()
-		to, _ := repo.TagObject(lastTag.Hash())
-		if to != nil {
-			rc, _ = to.Commit()
-		}
-	}
-
-	cmtIter, _ := repo.CommitObjects()
-
-	var c int
-
-	if rc == nil {
-
-		cmtIter.ForEach(func(arg1 *object.Commit) error {
-			c++
-			return nil
-		})
-
-	} else {
-		// Calculate the total and mark where the tag was found
-		var t int
-		cmtIter.ForEach(func(arg1 *object.Commit) error {
-			t++
-			if arg1.ID().String() == rc.ID().String() {
-				c = t
-			}
-
-			return nil
-		})
-		// Subtract tag count from total to get the count from the tag
-		c = t - c
-	}
-
-	head, _ := repo.Head()
-
-	return &RepoVersion{tagLabel, c, head.Hash()}
-}
 
 // DefaultGitRemoteURL returns the default url scheme scheme for remote access
 func DefaultGitRemoteURL(addr, owner, name string) string {
@@ -94,8 +27,8 @@ func DefaultGitRemoteURL(addr, owner, name string) string {
 
 // GitVCS implements a git version controlled interface
 type GitVCS struct {
-	defaultUser  string
-	defaultEmail string
+	globalUser  string
+	globalEmail string
 }
 
 func NewGitVCS() *GitVCS {
@@ -121,6 +54,8 @@ func (g *GitVCS) Init(conf map[string]interface{}) error {
 	return err
 }
 
+// loadFromGitConfig loads settings from the git config file in the users home
+// directory.  It does not return an error is the name and email are missing
 func (g *GitVCS) loadFromGitConfig(fpath string) error {
 	f, err := ini.Load(fpath)
 	if err != nil {
@@ -130,27 +65,26 @@ func (g *GitVCS) loadFromGitConfig(fpath string) error {
 	sec := f.Section("user")
 
 	nkey, err := sec.GetKey("name")
-	if err != nil {
-		return err
+	if err == nil {
+		g.globalUser = nkey.Value()
 	}
-	g.defaultUser = nkey.Value()
 
 	nkey, err = sec.GetKey("email")
 	if err == nil {
-		g.defaultEmail = nkey.Value()
+		g.globalEmail = nkey.Value()
 	}
 
-	return err
+	return nil
 }
 
-// DefaultUser satisfies the VCS interface
-func (g *GitVCS) DefaultUser() string {
-	return g.defaultUser
+// GlobalUser satisfies the VCS interface
+func (g *GitVCS) GlobalUser() string {
+	return g.globalUser
 }
 
-// DefaultEmail satisfies the VCS interface
-func (g *GitVCS) DefaultEmail() string {
-	return g.defaultEmail
+// GlobalEmail satisfies the VCS interface
+func (g *GitVCS) GlobalEmail() string {
+	return g.globalEmail
 }
 
 // IgnoresFile satisfies the VCS interface

@@ -20,7 +20,7 @@ import (
 )
 
 // ConfigureHomeDir checks for the global working directory
-func ConfigureHomeDir() error {
+func ConfigureHomeDir(noprompt bool) error {
 	hdir, err := homedir.Dir()
 	if err != nil {
 		return err
@@ -44,7 +44,7 @@ func ConfigureHomeDir() error {
 		}
 	}
 	// fmt.Println(conf.VCS, conf.VCS["github"])
-	configureHomeVars(conf.VCS["github"], varsfile)
+	configureHomeVars(conf.VCS["github"], varsfile, noprompt)
 
 	b, err := hclencoder.Encode(conf)
 	if err == nil {
@@ -76,24 +76,27 @@ func ConfigureHomeDir() error {
 	return err
 }
 
-func configureHomeVars(conf *config.VCSConfig, varsfile string) {
+func configureHomeVars(conf *config.VCSConfig, varsfile string, noprompt bool) {
 	ghvcs, _ := vcs.New(&vcs.Config{Provider: "git"})
 	if conf.Username == "" {
-		conf.Username = ghvcs.DefaultUser()
+		conf.Username = ghvcs.GlobalUser()
 	}
 
-	if conf.Username == "" {
-		var vname string
-		prompt := fmt.Sprintf("%s username: ", conf.ID)
-		PromptUntilNoError(prompt, os.Stdout, os.Stdin, func(input []byte) error {
-			vname = string(input)
-			if vname == "" {
-				return fmt.Errorf("%s username required", conf.ID)
-			}
-			return nil
-		})
-		conf.Username = vname
+	if conf.Username != "" || noprompt {
+		return
 	}
+
+	var vname string
+	prompt := fmt.Sprintf("%s username: ", conf.ID)
+	utils.PromptUntilNoError(prompt, os.Stdout, os.Stdin, func(input []byte) error {
+		vname = string(input)
+		if vname == "" {
+			return fmt.Errorf("%s username required", conf.ID)
+		}
+		return nil
+	})
+	conf.Username = vname
+
 }
 
 func configureVCSCreds(conf *config.CredsConfig, vcsID, credsFile string) error {
@@ -102,7 +105,7 @@ func configureVCSCreds(conf *config.CredsConfig, vcsID, credsFile string) error 
 	if token == "" {
 
 		prompt := fmt.Sprintf("%s token: ", vcsID)
-		PromptUntilNoError(prompt, os.Stdout, os.Stdin, func(input []byte) error {
+		utils.PromptUntilNoError(prompt, os.Stdout, os.Stdin, func(input []byte) error {
 			vcsToken := string(input)
 			if vcsToken == "" {
 				return fmt.Errorf("%s access token required", vcsID)
@@ -118,10 +121,10 @@ func configureVCSCreds(conf *config.CredsConfig, vcsID, credsFile string) error 
 }
 
 // ConfigureProjectDir sets up the project .thrap dir. name is the repo name
-func ConfigureProjectDir(name, repoOwner, dir string) error {
+func ConfigureProjectDir(name, vcsp, repoOwner, dir string) (*config.ThrapConfig, error) {
 	apath, err := filepath.Abs(dir)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	tdir := filepath.Join(apath, consts.WorkDir)
@@ -129,15 +132,18 @@ func ConfigureProjectDir(name, repoOwner, dir string) error {
 
 	varsfile := filepath.Join(tdir, consts.ConfigFile)
 	if utils.FileExists(varsfile) {
-		return nil
+		return config.ReadThrapConfig(varsfile)
 	}
 
+	// Read global config
 	filename, _ := homedir.Expand("~/" + consts.WorkDir + "/" + consts.ConfigFile)
 	conf, err := config.ReadThrapConfig(filename)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	conf.VCS["github"].Repo = config.VCSRepoConfig{
+
+	// Add project settings
+	conf.VCS[vcsp].Repo = &config.VCSRepoConfig{
 		Name:  name,
 		Owner: repoOwner,
 	}
@@ -147,7 +153,7 @@ func ConfigureProjectDir(name, repoOwner, dir string) error {
 		err = ioutil.WriteFile(varsfile, b, 0644)
 	}
 
-	return err
+	return conf, err
 }
 
 func generateKeyPair(filename string) (*ecdsa.PrivateKey, error) {

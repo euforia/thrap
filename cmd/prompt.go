@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"os"
 	"strings"
+
+	"github.com/euforia/thrap/utils"
 )
 
 func promptForSupported(prompt string, supported []string, defaultVal string) string {
@@ -17,7 +17,7 @@ func promptForSupported(prompt string, supported []string, defaultVal string) st
 
 	val := defaultVal
 
-	promptUntilNoError(prompt, os.Stdout, os.Stdin, func(db []byte) error {
+	utils.PromptUntilNoError(prompt, os.Stdout, os.Stdin, func(db []byte) error {
 		input := string(db)
 		if input == "" && val != "" {
 			return nil
@@ -62,17 +62,17 @@ func promptForSupported(prompt string, supported []string, defaultVal string) st
 // 	return selected
 // }
 
-func promptUntilNoError(prompt string, out io.Writer, in io.Reader, f func([]byte) error) {
-	var (
-		lb []byte
-	)
-	err := io.ErrUnexpectedEOF
-	for err != nil {
-		out.Write([]byte(prompt))
-
-		rd := bufio.NewReader(in)
-		lb, _ = rd.ReadBytes('\n')
-		lb = lb[:len(lb)-1]
-		err = f(lb)
-	}
-}
+// func promptUntilNoError(prompt string, out io.Writer, in io.Reader, f func([]byte) error) {
+// 	var (
+// 		lb []byte
+// 	)
+// 	err := io.ErrUnexpectedEOF
+// 	for err != nil {
+// 		out.Write([]byte(prompt))
+//
+// 		rd := bufio.NewReader(in)
+// 		lb, _ = rd.ReadBytes('\n')
+// 		lb = lb[:len(lb)-1]
+// 		err = f(lb)
+// 	}
+// }

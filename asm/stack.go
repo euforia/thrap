@@ -9,8 +9,8 @@ import (
 	"github.com/euforia/hclencoder"
 	"github.com/euforia/pseudo/scope"
 	"github.com/euforia/thrap/consts"
-	"github.com/euforia/thrap/devpack"
 	"github.com/euforia/thrap/dockerfile"
+	"github.com/euforia/thrap/packs"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vars"
@@ -23,7 +23,7 @@ type StackAsm struct {
 	// vars available to the assembler as a whole
 	vars scope.Variables
 	// available devpacks
-	packs *devpack.DevPacks
+	packs *packs.DevPacks
 
 	vcs     vcs.VCS
 	gitrepo *git.Repository
@@ -36,7 +36,7 @@ type StackAsm struct {
 // NewStackAsm returns a new stack assembler
 func NewStackAsm(stack *thrapb.Stack,
 	vcsp vcs.VCS, gitrepo *git.Repository,
-	globalVars scope.Variables, packs *devpack.DevPacks) (*StackAsm, error) {
+	globalVars scope.Variables, packs *packs.DevPacks) (*StackAsm, error) {
 
 	asm := &StackAsm{
 		vcs:     vcsp,
@@ -109,10 +109,10 @@ func (asm *StackAsm) materializeDevComp(casm *devCompAssembler) error {
 	files[casm.comp.Build.Dockerfile] = []byte(casm.dockerfile.String())
 
 	// TODO: check if file exists. load and confirm values
-	files[dockerfile.DockerIgnoresFile] = []byte(strings.Join(casm.dockerignores, "\n"))
+	files[dockerfile.DockerIgnoresFile] = []byte(strings.Join(casm.dockerignores, "\n") + "\n")
 
 	// Default files to write independent of language pack
-	name, content := asm.vcsIgnoreFile(casm.pack.IgnoreExts...)
+	name, content := asm.vcsIgnoreFile(casm.pack.IgnoreFiles...)
 	files[name] = content
 
 	if _, ok := casm.files[consts.DefaultReadmeFile]; !ok {

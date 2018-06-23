@@ -47,8 +47,9 @@ func ParseHCLBytes(in []byte) (*pb.Stack, error) {
 	}
 
 	var stack *pb.Stack
-	for _, v := range ms["manifest"] {
+	for k, v := range ms["manifest"] {
 		stack = v
+		stack.ID = k
 		break
 	}
 	return stack, nil

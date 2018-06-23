@@ -35,7 +35,7 @@ func newCLI() *cli.App {
 			},
 		},
 		Before: func(ctx *cli.Context) error {
-			return thrap.ConfigureHomeDir()
+			return thrap.ConfigureHomeDir(false)
 		},
 		Commands: []*cli.Command{
 			commandAgent(),
@@ -68,7 +68,7 @@ func commandConfigure() *cli.Command {
 		Usage: "Configure global settings",
 		Action: func(ctx *cli.Context) error {
 			// Only configures things that are not configured
-			return thrap.ConfigureHomeDir()
+			return thrap.ConfigureHomeDir(false)
 		},
 	}
 }

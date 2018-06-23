@@ -1,4 +1,4 @@
-package builder
+package orchestrator
 
 import (
 	"os"
@@ -10,7 +10,8 @@ import (
 )
 
 func Test_dockerImageBuilder(t *testing.T) {
-	bldr, err := newDockerImageBuilder()
+	bldr := &DockerOrchestrator{}
+	err := bldr.Init(nil)
 	if err != nil {
 		t.Fatal(err)
 	}

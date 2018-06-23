@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/euforia/thrap/thrapb"
-	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 )
 
 func fatal(t *testing.T, err error) {

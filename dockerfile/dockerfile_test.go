@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	// "github.com/moby/buildkit/frontend/dockerfile/instructions"
+	// "github.com/moby/buildkit/frontend/dockerfile/parser"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -93,3 +95,28 @@ func Test_KeyVolume(t *testing.T) {
 	v := &Volume{[]string{"/foo", "/bar"}}
 	t.Log(v)
 }
+
+// func Test_orig_dockerfile(t *testing.T) {
+// 	df, err := parseDOckerfile("../test-fixtures/multi-stage.Dockerfile")
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	for _, s := range df {
+// 	       instructions.CmdCommand{}.
+// 	}
+// }
+//
+// func parseDOckerfile(filename string) ([]instructions.Stage, error) {
+// 	fh, err := os.Open(filename)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer fh.Close()
+//
+// 	p, err := parser.Parse(fh)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	stages, _, err := instructions.Parse(p.AST)
+// 	return stages, err
+// }

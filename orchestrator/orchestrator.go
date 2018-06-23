@@ -19,7 +19,7 @@ type Orchestrator interface {
 
 	// Deploy should deploy the stack returning the response, deploy object
 	// based on the orchestrator or an error
-	Deploy(stack *thrapb.Stack, opts DeployOptions) (interface{}, interface{}, error)
+	Deploy(stack *thrapb.Stack, opts DeployOptions) (resp interface{}, def interface{}, err error)
 }
 
 // New returns a new orchestrator based on the given config
@@ -32,6 +32,9 @@ func New(conf *Config) (Orchestrator, error) {
 	switch conf.Provider {
 	case "nomad":
 		orch = &nomadOrchestrator{}
+
+	case "docker":
+		orch = &DockerOrchestrator{}
 
 	default:
 		err = fmt.Errorf("unsupported orchestrator: '%s'", conf.Provider)

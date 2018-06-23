@@ -68,8 +68,8 @@ func Test_git_init(t *testing.T) {
 	vcs := NewGitVCS()
 	err := vcs.Init(nil)
 	assert.Nil(t, err)
-	assert.NotEmpty(t, vcs.defaultUser)
-	t.Log(vcs.defaultUser)
+	assert.NotEmpty(t, vcs.globalUser)
+	// t.Log(vcs.globalUser)
 }
 
 func Test_parseURL(t *testing.T) {

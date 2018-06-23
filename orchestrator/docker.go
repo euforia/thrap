@@ -1,7 +1,7 @@
-package builder
+package orchestrator
 
 import (
-	"fmt"
+	"errors"
 	"io"
 	"os"
 
@@ -14,30 +14,24 @@ import (
 	"golang.org/x/net/context"
 )
 
-// Builder implements a code builder ie. test and build/compile/assemble etc
-type Builder interface {
-	Build(*thrapb.Component, io.Writer) error
-}
-
-// New returns a new builder given the config
-func New(conf interface{}) (Builder, error) {
-	return newDockerImageBuilder()
-}
-
-type dockerImageBuilder struct {
+type DockerOrchestrator struct {
 	cli *client.Client
 }
 
-func newDockerImageBuilder() (*dockerImageBuilder, error) {
+func (orch *DockerOrchestrator) Init(config map[string]interface{}) error {
 	os.Setenv("DOCKER_API_VERSION", "1.37")
 	cli, err := client.NewEnvClient()
 	if err == nil {
-		return &dockerImageBuilder{cli}, nil
+		orch.cli = cli
 	}
-	return nil, err
+	return err
 }
 
-func (builder *dockerImageBuilder) Build(comp *thrapb.Component, output io.Writer) error {
+func (orch *DockerOrchestrator) Deploy(stack *thrapb.Stack, opts DeployOptions) (interface{}, interface{}, error) {
+	return nil, nil, errors.New("tbi")
+}
+
+func (orch *DockerOrchestrator) Build(comp *thrapb.Component, output io.Writer) error {
 	bc := comp.Build
 
 	tarOpt := &archive.TarOptions{}
@@ -53,15 +47,15 @@ func (builder *dockerImageBuilder) Build(comp *thrapb.Component, output io.Write
 	}
 	defer rdc.Close()
 
-	fmt.Println(comp.ID)
 	opt := types.ImageBuildOptions{
 		Tags:       []string{},
 		BuildID:    comp.ID,
 		Dockerfile: bc.Dockerfile,
+		// BuildArgs:  make(map[string]*string),
 	}
 
 	ctx := context.Background()
-	resp, err := builder.cli.ImageBuild(ctx, rdc, opt)
+	resp, err := orch.cli.ImageBuild(ctx, rdc, opt)
 	if err != nil {
 		return err
 	}

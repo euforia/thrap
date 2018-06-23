@@ -57,12 +57,12 @@ func (gh *githubVCS) Init(conf map[string]interface{}) error {
 	return err
 }
 
-func (gh *githubVCS) DefaultUser() string {
-	return gh.git.defaultUser
+func (gh *githubVCS) GlobalUser() string {
+	return gh.git.globalUser
 }
 
-func (gh *githubVCS) DefaultEmail() string {
-	return gh.git.defaultEmail
+func (gh *githubVCS) GlobalEmail() string {
+	return gh.git.globalEmail
 }
 
 func (gh *githubVCS) Get(repo *Repository, opt Option) (interface{}, error) {

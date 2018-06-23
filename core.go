@@ -22,11 +22,18 @@ import (
 )
 
 var (
-	errProviderNotSpecified = errors.New("provider not specified")
+	errProviderNotConfigured = errors.New("provider not configured")
 )
 
+type CoreConfig struct {
+	*config.ThrapConfig
+	Creds  *config.CredsConfig
+	Logger *log.Logger
+}
+
 type Core struct {
-	conf *config.ThrapConfig
+	conf  *config.ThrapConfig
+	creds *config.CredsConfig
 
 	vcs  vcs.VCS                   // remote vcs
 	reg  registry.Registry         // remote registry
@@ -39,23 +46,32 @@ type Core struct {
 	log *log.Logger
 }
 
-func NewCore(logger *log.Logger) (*Core, error) {
-	conf, err := ReadGlobalConfig()
+// NewCore loads the core engine with the global configs
+func NewCore(conf *CoreConfig) (*Core, error) {
+	gconf, err := ReadGlobalConfig()
 	if err != nil {
 		return nil, err
 	}
+	gconf.Merge(conf.ThrapConfig)
+
 	creds, err := ReadGlobalCreds()
 	if err != nil {
 		return nil, err
 	}
+	creds.Merge(creds)
 
-	c := &Core{conf: conf}
-	if logger == nil {
+	c := &Core{
+		conf:  gconf,
+		creds: creds,
+		log:   conf.Logger,
+	}
+
+	if c.log == nil {
 		c.log = log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds)
 	}
 
-	err = c.initResourceProviders(conf, creds)
-	if err != nil {
+	err = c.initProviders()
+	if err == nil {
 		return nil, err
 	}
 
@@ -64,52 +80,79 @@ func NewCore(logger *log.Logger) (*Core, error) {
 	return c, err
 }
 
-func (core *Core) initResourceProviders(conf *config.ThrapConfig, creds *config.CredsConfig) (err error) {
-	// vconf := &vcs.Config{
-	// 	Provider: conf.VCS.ID,
-	// 	Conf:     map[string]interface{}{"username": conf.VCS.Username},
-	// }
-	//
-	// vcreds := creds.GetVCSCreds(conf.VCS.ID)
-	// for k, v := range vcreds {
-	// 	vconf.Conf[k] = v
-	// }
-	//
-	// core.vcs, err = vcs.New(vconf)
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// if conf.Registry.ID != "" {
-	// 	rconf := registry.DefaultConfig()
-	// 	rconf.Provider = conf.Registry.ID
-	// 	for k, v := range conf.Registry.Conf {
-	// 		rconf.Conf[k] = v
-	// 	}
-	// 	core.reg, err = registry.New(rconf)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-	//
-	// screds := creds.GetSecretsCreds(conf.Secrets.ID)
-	// sconf := &secrets.Config{
-	// 	Provider: conf.Secrets.ID,
-	// 	Conf:     make(map[string]interface{}),
-	// }
-	// sconf.Conf["addr"] = conf.Secrets.Addr
-	// for k, v := range screds {
-	// 	sconf.Conf[k] = v
-	// }
-	//
-	// core.sec, err = secrets.New(sconf)
+func (core *Core) initProviders() (err error) {
+	if err = core.initVCS(); err != nil {
+		return err
+	}
+	if err = core.initRegistry(); err != nil {
+		return err
+	}
+
+	return core.initSecrets()
+}
+
+func (core *Core) initVCS() (err error) {
+	vc := core.conf.GetDefaultVCS()
+	vconf := &vcs.Config{
+		Provider: vc.ID,
+		Conf:     map[string]interface{}{"username": vc.Username},
+	}
+
+	vcreds := core.creds.GetVCSCreds(vc.ID)
+	for k, v := range vcreds {
+		vconf.Conf[k] = v
+	}
+
+	core.vcs, err = vcs.New(vconf)
+	if err == nil {
+		core.log.Println("VCS loaded:", vc.ID)
+	}
+	return err
+}
+
+func (core *Core) initRegistry() (err error) {
+	rc := core.conf.GetDefaultRegistry()
+	if rc == nil || rc.ID == "" {
+		return nil
+	}
+
+	rconf := registry.DefaultConfig()
+	rconf.Provider = rc.ID
+	for k, v := range rc.Config {
+		rconf.Conf[k] = v
+	}
+	core.reg, err = registry.New(rconf)
+	if err == nil {
+		core.log.Println("Registry loaded:", rc.ID)
+	}
+
+	return err
+}
+
+func (core *Core) initSecrets() (err error) {
+	sc := core.conf.GetDefaultSecrets()
+
+	screds := core.creds.GetSecretsCreds(sc.ID)
+	sconf := &secrets.Config{
+		Provider: sc.ID,
+		Conf:     make(map[string]interface{}),
+	}
+	sconf.Conf["addr"] = sc.Addr
+	for k, v := range screds {
+		sconf.Conf[k] = v
+	}
+
+	core.sec, err = secrets.New(sconf)
+	if err == nil {
+		core.log.Println("Secrets loaded:", sc.ID)
+	}
 	return err
 }
 
 func (core *Core) initStores() error {
-
 	dir := "~/" + consts.WorkDir + "/db"
 	dbdir, _ := homedir.Expand(dir)
+
 	if !utils.FileExists(dbdir) {
 		core.log.Println("Initializing new db:", dbdir)
 		os.MkdirAll(dbdir, 0755)
@@ -126,7 +169,7 @@ func (core *Core) initStores() error {
 		return err
 	}
 
-	iobj := store.NewBadgerObjectStore(db, sha256.New, "/stack")
+	iobj := store.NewBadgerObjectStore(db, sha256.New, "/identity")
 	core.ist = store.NewIdentityStore(iobj)
 	return nil
 }
@@ -198,14 +241,14 @@ func (core *Core) RegisterStack(stack *thrapb.Stack) (*thrapb.Stack, []*ActionRe
 
 func (core *Core) ensureStackResources(stack *thrapb.Stack) []*ActionReport {
 	report := core.createVcsRepo(stack)
-	reports := core.executeComponents(stack)
+	reports := core.ensureComponentResources(stack)
 
 	// Concat results from both of the above
 	return append([]*ActionReport{report}, reports...)
 }
 
 // returns the report and an error if any component failed
-func (core *Core) executeComponents(stack *thrapb.Stack) []*ActionReport {
+func (core *Core) ensureComponentResources(stack *thrapb.Stack) []*ActionReport {
 
 	r := make([]*ActionReport, 0, len(stack.Components))
 	for i, comp := range stack.Components {
@@ -226,20 +269,26 @@ func (core *Core) executeComponents(stack *thrapb.Stack) []*ActionReport {
 }
 
 func (core *Core) createVcsRepo(stack *thrapb.Stack) *ActionReport {
-	// var vcsOpt vcs.Option
+
 	er := &ActionReport{Action: NewAction("create", "vcs.repo."+core.vcs.ID(), stack.ID)}
-	if core.vcs != nil {
-		// repo := &vcs.Repository{
-		// 	Name:        stack.ID,
-		// 	Description: stack.Description,
-		// }
-		// if core.conf.VCS.Repo.Owner != "" {
-		// 	repo.Owner = core.conf.VCS.Repo.Owner
-		// }
-		// er.Data, er.Error = core.vcs.Create(repo, vcsOpt)
-	} else {
-		er.Error = errProviderNotSpecified
+
+	if core.vcs == nil {
+		er.Error = errProviderNotConfigured
+		return er
 	}
+
+	var vcsOpt vcs.Option
+	repo := &vcs.Repository{
+		Name:        stack.ID,
+		Description: stack.Description,
+	}
+	vc := core.conf.VCS[core.vcs.ID()]
+	if vc.Repo.Owner != "" {
+		repo.Owner = vc.Repo.Owner
+	}
+
+	er.Data, er.Error = core.vcs.Create(repo, vcsOpt)
+
 	return er
 }
 
@@ -258,12 +307,14 @@ func (core *Core) createRegistryRepo(stackID, compID string) *ActionReport {
 	er := &ActionReport{
 		Action: NewAction("create", "registry.repo", compID),
 	}
-	if core.reg != nil {
-		// Create registry repo
-		er.Data, er.Error = core.reg.Create(repoName)
-	} else {
-		er.Error = errProviderNotSpecified
+
+	if core.reg == nil {
+		er.Error = errProviderNotConfigured
+		return er
 	}
+
+	// Create registry repo
+	er.Data, er.Error = core.reg.Create(repoName)
 
 	return er
 }

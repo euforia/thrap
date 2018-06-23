@@ -25,6 +25,7 @@ func (header *ChainHeader) Hash(h hash.Hash) []byte {
 	return h.Sum(nil)
 }
 
+// ScopeVars returns the scoped variables usable for interpolation
 func (stack *Stack) ScopeVars() scope.Variables {
 	return scope.Variables{
 		vars.StackDescription: ast.Variable{
@@ -37,6 +38,10 @@ func (stack *Stack) ScopeVars() scope.Variables {
 		},
 		vars.StackID: ast.Variable{
 			Value: stack.ID,
+			Type:  ast.TypeString,
+		},
+		vars.StackVersion: ast.Variable{
+			Value: stack.Version,
 			Type:  ast.TypeString,
 		},
 	}

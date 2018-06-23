@@ -3,6 +3,7 @@ package orchestrator
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/euforia/thrap/manifest"
@@ -12,7 +13,7 @@ import (
 
 func Test_nomad_dryrun(t *testing.T) {
 	conf := &Config{Provider: "nomad", Conf: map[string]interface{}{
-		"addr": "http://nomad.service.owf-dev:4646",
+		"addr": os.Getenv("NOMAD_ADDR"),
 	}}
 	orch, err := New(conf)
 	assert.Nil(t, err)

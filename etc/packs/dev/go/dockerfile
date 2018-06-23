@@ -1,10 +1,9 @@
 FROM golang:${lang.version} as build
 WORKDIR /go/src/${vcs.addr}/${vcs.repo.owner}/${vcs.repo.name}
-
-# Move this out
+RUN go get github.com/golang/dep/cmd/dep
+COPY Gopkg.* ./
+RUN dep ensure -v -vendor-only
 COPY . .
-
-RUN make deps
 RUN make test
 RUN make dist
 

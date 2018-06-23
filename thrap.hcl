@@ -23,18 +23,21 @@ manifest "thrap" {
         file = ".env"
 
         vars {
-          APP_VERSION = ""
+          APP_VERSION = "${stack.version}"
+          VAULT_ADDR = ""
         }
+
       }
     }
   }
 
   dependencies {
+      
     github {
-      name = "github"
-      version = "v3"
-      external = true
-      config {}
+        name     = "github"
+        version  = "v3"
+        external = true
+        config {}
     }
 
     ecr {
@@ -44,6 +47,11 @@ manifest "thrap" {
     vault {
         name = "vault"
         version = "0.10.2"
+    }
+
+    docker {
+        name = "docker"
+        version = "1.37"
     }
 
   }

@@ -1,48 +1,59 @@
 package thrap
 
 import (
-	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
+	"github.com/euforia/thrap/packs"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/vars"
 )
 
+type BasicStackConfig struct {
+	Name      string
+	Language  thrapb.LanguageID
+	DataStore string
+	WebServer string
+}
+
 // NewBasicStack builds a skeleton stack inferring as much information as
 // possible to assemble the stack.  It only inits the object with the minimal
 // valid defaults
-func NewBasicStack(lang thrapb.LanguageID, name, dataStore, webServer string, conf *config.Config) *thrapb.Stack {
+func NewBasicStack(c *BasicStackConfig, pks *packs.Packs) (*thrapb.Stack, error) {
 
 	stack := thrapb.Stack{
-		ID:   name,
-		Name: name,
+		ID:   c.Name,
+		Name: c.Name,
 	}
 
 	comps := map[string]*thrapb.Component{
-		consts.DefaultAPICompID: makeDevComp(name, consts.DefaultAPICompID, lang),
+		consts.DefaultAPICompID: makeDevComp(c.Name, consts.DefaultAPICompID, c.Language),
 	}
 
-	if dataStore != "none" {
-		dsconf := conf.DataStores[dataStore]
-		comps[consts.DefaultDSCompID] = makeComp(dsconf)
+	if c.DataStore != "none" {
+		//dsc := conf.DataStores[dataStore]
+		dspacks := pks.Datastore()
+		ds, err := dspacks.Load(c.DataStore)
+		if err != nil {
+			return nil, err
+		}
+
+		comp := thrapb.NewComponent(ds.Image, ds.DefaultVersion, thrapb.CompTypeDatastore)
+		comps[consts.DefaultDSCompID] = comp
 	}
 
-	if webServer != "none" {
-		wss := conf.WebServers[webServer]
-		wsComp := makeComp(wss)
-		comps[consts.DefaultWebCompID] = wsComp
+	if c.WebServer != "none" {
+		//wss := conf.WebServers[webServer]
+		wpacks := pks.Web()
+		ws, err := wpacks.Load(c.WebServer)
+		if err != nil {
+			return nil, err
+		}
+		comp := thrapb.NewComponent(ws.Image, ws.DefaultVersion, thrapb.CompTypeWeb)
+		comps[consts.DefaultWebCompID] = comp
 	}
 
 	stack.Components = comps
 
-	return &stack
-}
-
-func makeComp(conf *config.ImageVersionConfig) *thrapb.Component {
-	return &thrapb.Component{
-		Name:    conf.Image,
-		Type:    thrapb.CompTypeWeb,
-		Version: conf.DefaultVersion,
-	}
+	return &stack, nil
 }
 
 func makeDevComp(stackID, compID string, lang thrapb.LanguageID) *thrapb.Component {
@@ -54,12 +65,11 @@ func makeDevComp(stackID, compID string, lang thrapb.LanguageID) *thrapb.Compone
 		Head:     true,
 		Build: &thrapb.Build{
 			Dockerfile: compID + "." + consts.DefaultDockerFile,
-			// Context:    consts.DefaultBuildContext,
 		},
 		Env: &thrapb.Envionment{
 			File: consts.DefaultEnvFile,
 			Vars: map[string]string{
-				consts.EnvVarVersion: "",
+				consts.EnvVarVersion: "${" + vars.StackVersion + "}",
 			},
 		},
 		Secrets: &thrapb.Secrets{

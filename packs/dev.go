@@ -1,4 +1,4 @@
-package devpack
+package packs
 
 //
 // Package devpack implements development packages for programming languages
@@ -18,31 +18,6 @@ import (
 	"github.com/hashicorp/hil/ast"
 	"github.com/pkg/errors"
 )
-
-const packManfiestFile = "manifest.hcl"
-
-// packs of a singular kind
-type basePackSet struct {
-	typ string
-	dir string
-}
-
-func (packs *basePackSet) Type() string {
-	return packs.typ
-}
-
-func (packs *basePackSet) List() ([]string, error) {
-	files, err := ioutil.ReadDir(packs.dir)
-	if err == nil {
-		packs := make([]string, 0, len(files))
-		for _, f := range files {
-			packs = append(packs, f.Name())
-		}
-		return packs, nil
-	}
-
-	return nil, err
-}
 
 // DevPacks holds all dev packs that are available
 type DevPacks struct {

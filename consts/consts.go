@@ -11,14 +11,17 @@ const (
 	// KeyFile is the keypair file
 	KeyFile = "ecdsa256"
 	// EnvVarVersion is the env. var. name for the version injected by thrap
-	EnvVarVersion = "APP_VERSION"
+	EnvVarVersion = "STACK_VERSION"
 )
 
 const (
 	// DefaultManifestFile is the default manifest filename
 	DefaultManifestFile = "thrap.hcl"
-	// DefaultWorkDir is the default working directory set if not provided
+	// DefaultWorkDir is the default container working directory set if not
+	// provided
 	DefaultWorkDir = "/"
+	// DefaultBuildContext is the container build context
+	DefaultBuildContext = "."
 )
 
 const (
@@ -26,12 +29,19 @@ const (
 	DefaultReadmeFile = "README.md"
 	// DefaultSecretsFile is the secrets filename
 	DefaultSecretsFile = "secrets.hcl"
-	DefaultMakefile    = "Makefile"
-	DefaultEnvFile     = ".env"
-	DefaultDockerFile  = "dockerfile"
-	// DefaultBuildContext is the container build context
-	DefaultBuildContext = "."
-	DefaultWebCompID    = "www"
-	DefaultAPICompID    = "api"
-	DefaultDSCompID     = "db"
+	// DefaultMakefile is the makefile filename
+	DefaultMakefile = "Makefile"
+	// DefaultEnvFile is the env filename
+	DefaultEnvFile = ".env"
+	// DefaultDockerFile is the docker filename
+	DefaultDockerFile = "dockerfile"
+)
+
+const (
+	// DefaultWebCompID is the default web Component id
+	DefaultWebCompID = "www"
+	// DefaultAPICompID is the default api Component id
+	DefaultAPICompID = "api"
+	// DefaultDSCompID is the default datastore Component id
+	DefaultDSCompID = "db"
 )

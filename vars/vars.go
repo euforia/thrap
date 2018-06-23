@@ -3,15 +3,21 @@ package vars
 const (
 	OrchestratorID   = "orchestrator.id"
 	OrchestratorAddr = "orchestrator.addr"
+)
 
+const (
 	RegistryID       = "registry.id"
 	RegistryAddr     = "registry.addr"
 	RegistryCreds    = "registry.creds"
 	RegistryRepoName = "registry.repo.name"
+)
 
+const (
 	SecretsID   = "secrets.id"
 	SecretsAddr = "secrets.addr"
+)
 
+const (
 	VcsID        = "vcs.id"
 	VcsAddr      = "vcs.addr"
 	VcsUsername  = "vcs.username"
@@ -22,8 +28,11 @@ const (
 
 const (
 	StackID          = "stack.id"
+	StackVersion     = "stack.version"
 	StackName        = "stack.name"
 	StackDescription = "stack.description"
-	LangID           = "lang.id"
-	LangVersion      = "lang.version"
+)
+const (
+	LangID      = "lang.id"
+	LangVersion = "lang.version"
 )

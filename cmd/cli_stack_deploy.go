@@ -2,11 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/orchestrator"
 	"github.com/euforia/thrap/utils"
+	"github.com/euforia/thrap/vcs"
 	"gopkg.in/urfave/cli.v2"
 )
 
@@ -27,6 +29,10 @@ func commandStackDeploy() *cli.Command {
 			if err != nil {
 				return err
 			}
+
+			lpath, _ := utils.GetLocalPath("")
+			st.Version = vcs.GetRepoVersion(lpath).String()
+			fmt.Println(st.ID, st.Version)
 
 			if errs := st.Validate(); errs != nil {
 				return utils.FlattenErrors(errs)

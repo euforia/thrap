@@ -37,14 +37,21 @@ func commandStackValidate() *cli.Command {
 				return err
 			}
 
-			errs := mf.Validate()
-			if errs == nil {
-				writeHCLManifest(mf, os.Stdout)
-			} else {
-				err = utils.FlattenErrors(errs)
+			rpath, err := utils.GetLocalPath("")
+			if err != nil {
+				return err
 			}
 
-			return err
+			mf.Version = vcs.GetRepoVersion(rpath).String()
+			errs := mf.Validate()
+			if errs != nil {
+				return utils.FlattenErrors(errs)
+
+			}
+
+			writeHCLManifest(mf, os.Stdout)
+
+			return nil
 		},
 	}
 }

@@ -1,7 +1,7 @@
 Versions       = ["~> 1.10.0", "~> 1.9.0"]
 DefaultVersion = "1.10.3"
 FileExts       = [".go"]
-IgnoreExts     = [".a"]
+IgnoreFiles    = [".a", "vendor/"]
 DevImages      = ["golang"]
 PubImages      = ["alpine"]
 ScaffoldFiles  = [

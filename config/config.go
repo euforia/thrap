@@ -3,133 +3,50 @@ package config
 import (
 	"io/ioutil"
 
-	"github.com/euforia/hclencoder"
 	"github.com/euforia/pseudo/scope"
 	"github.com/hashicorp/hcl"
-	"github.com/hashicorp/hil/ast"
 )
-
-// CredsConfig holds creds
-type CredsConfig struct {
-	Registry     map[string]map[string]string `hcl:"registry"`
-	VCS          map[string]map[string]string `hcl:"vcs"`
-	Secrets      map[string]map[string]string `hcl:"secrets"`
-	Orchestrator map[string]map[string]string `hcl:"id"`
-}
-
-func (cc *CredsConfig) GetRegistryCreds(id string) map[string]string {
-	return cc.Registry[id]
-}
-func (cc *CredsConfig) GetVCSCreds(id string) map[string]string {
-	return cc.VCS[id]
-}
-func (cc *CredsConfig) GetSecretsCreds(id string) map[string]string {
-	return cc.Secrets[id]
-}
-func (cc *CredsConfig) GetOrchestratorCreds(id string) map[string]string {
-	return cc.Orchestrator[id]
-}
-
-func ReadCredsConfig(fpath string) (*CredsConfig, error) {
-	b, err := ioutil.ReadFile(fpath)
-	if err != nil {
-		return nil, err
-	}
-
-	var cc CredsConfig
-	err = hcl.Unmarshal(b, &cc)
-
-	return &cc, err
-}
-
-func WriteCredsConfig(cc *CredsConfig, fpath string) error {
-	b, err := hclencoder.Encode(cc)
-	if err == nil {
-		err = ioutil.WriteFile(fpath, b, 0644)
-	}
-	return err
-}
-
-func DefaultCredsConfig() *CredsConfig {
-	return &CredsConfig{
-		Registry: make(map[string]map[string]string),
-		VCS: map[string]map[string]string{
-			"github": map[string]string{"token": ""},
-		},
-		Secrets:      make(map[string]map[string]string),
-		Orchestrator: make(map[string]map[string]string),
-	}
-}
-
-type VCSRepoConfig struct {
-	Name  string `hcl:"name"`
-	Owner string `hcl:"owner"`
-}
-
-type VCSConfig struct {
-	ID       string        `hcl:"id" hcle:"omit"`
-	Addr     string        `hcl:"addr" hcle:"omitempty"`
-	Username string        `hcl:"username"`
-	Repo     VCSRepoConfig `hcl:"repo" hcle:"omitempty"`
-}
-
-func (conf *VCSConfig) ScopeVars() scope.Variables {
-	return scope.Variables{
-		"id": ast.Variable{
-			Value: conf.ID,
-			Type:  ast.TypeString,
-		},
-		"addr": ast.Variable{
-			Value: conf.Addr,
-			Type:  ast.TypeString,
-		},
-		"username": ast.Variable{
-			Value: conf.Repo.Name,
-			Type:  ast.TypeString,
-		},
-		"repo.owner": ast.Variable{
-			Value: conf.Repo.Owner,
-			Type:  ast.TypeString,
-		},
-	}
-}
 
 type OrchestratorConfig struct {
 	ID   string `hcl:"id" hcle:"omit"`
 	Addr string `hcl:"addr" hcle:"omitempty"`
 }
 
-type RegistryRepoConfig struct {
-	Name string `hcl:"name"`
-}
+// Merge merges the other config into the one. Only non-empty fields are
+// considered
+func (conf *OrchestratorConfig) Merge(other *OrchestratorConfig) {
+	if other == nil {
+		return
+	}
 
-type RegistryConfig struct {
-	ID   string                 `hcl:"id" hcle:"omit"`
-	Addr string                 `hcl:"addr" hcle:"omitempty"`
-	Repo *RegistryRepoConfig    `hcl:"repo" hcle:"omitempty"`
-	Conf map[string]interface{} `hcl:"conf" hcle:"omitempty"`
-}
+	if other.ID != "" {
+		conf.ID = other.ID
+	}
 
-func (conf *RegistryConfig) ScopeVars() scope.Variables {
-	return scope.Variables{
-		"id": ast.Variable{
-			Value: conf.ID,
-			Type:  ast.TypeString,
-		},
-		"addr": ast.Variable{
-			Value: conf.Addr,
-			Type:  ast.TypeString,
-		},
-		"repo.name": ast.Variable{
-			Value: conf.Repo.Name,
-			Type:  ast.TypeString,
-		},
+	if other.Addr != "" {
+		conf.Addr = other.Addr
 	}
 }
 
 type SecretsConfig struct {
-	ID   string `hcl:"id" hcle:"omit"`
+	ID   string `hcl:"id"   hcle:"omit"`
 	Addr string `hcl:"addr" hcle:"omitempty"`
+}
+
+// Merge merges the other config into the one. Only non-empty fields are
+// considered
+func (conf *SecretsConfig) Merge(other *SecretsConfig) {
+	if other == nil {
+		return
+	}
+
+	if other.ID != "" {
+		conf.ID = other.ID
+	}
+
+	if other.Addr != "" {
+		conf.Addr = other.Addr
+	}
 }
 
 type ThrapConfig struct {
@@ -139,41 +56,98 @@ type ThrapConfig struct {
 	Secrets      map[string]*SecretsConfig      `hcl:"secrets"`
 }
 
-func (conf *ThrapConfig) GetVCS(id string) *VCSConfig {
-	return conf.VCS["id"]
-}
-func (conf *ThrapConfig) GetOrchestrator(id string) *OrchestratorConfig {
-	return conf.Orchestrator["id"]
-}
-func (conf *ThrapConfig) GetRegistry(id string) *RegistryConfig {
-	return conf.Registry["id"]
-}
-func (conf *ThrapConfig) GetSecrets(id string) *SecretsConfig {
-	return conf.Secrets["id"]
+// Merge merges the other config into the one. Only non-empty fields are
+// considered
+func (conf *ThrapConfig) Merge(other *ThrapConfig) {
+	if other == nil {
+		return
+	}
+
+	if other.VCS != nil {
+		for k, v := range other.VCS {
+			if cv, ok := conf.VCS[k]; ok {
+				cv.Merge(v)
+			} else {
+				conf.VCS[k] = other.VCS[k]
+			}
+		}
+	}
+
+	if other.Orchestrator != nil {
+		for k, v := range other.Orchestrator {
+			if cv, ok := conf.Orchestrator[k]; ok {
+				cv.Merge(v)
+			} else {
+				conf.Orchestrator[k] = other.Orchestrator[k]
+			}
+		}
+	}
+
+	if other.Registry != nil {
+		for k, v := range other.Registry {
+			if cv, ok := conf.Registry[k]; ok {
+				cv.Merge(v)
+			} else {
+				conf.Registry[k] = other.Registry[k]
+			}
+		}
+	}
+
+	if other.Secrets != nil {
+		for k, v := range other.Secrets {
+			if cv, ok := conf.Secrets[k]; ok {
+				cv.Merge(v)
+			} else {
+				conf.Secrets[k] = other.Secrets[k]
+			}
+		}
+	}
+
 }
 
+func (conf *ThrapConfig) GetDefaultVCS() *VCSConfig {
+	for _, v := range conf.VCS {
+		return v
+	}
+	return nil
+}
+func (conf *ThrapConfig) GetDefaultOrchestrator() *OrchestratorConfig {
+	for _, v := range conf.Orchestrator {
+		return v
+	}
+	return nil
+}
+func (conf *ThrapConfig) GetDefaultRegistry() *RegistryConfig {
+	for _, v := range conf.Registry {
+		return v
+	}
+	return nil
+}
+func (conf *ThrapConfig) GetDefaultSecrets() *SecretsConfig {
+	for _, v := range conf.Secrets {
+		return v
+	}
+	return nil
+}
+
+// ScopeVars returns the scoped variables usable for interpolation
 func (conf *ThrapConfig) ScopeVars() scope.Variables {
 	svars := make(scope.Variables)
 	for k, v := range conf.VCS {
-		vars := v.ScopeVars()
+		vars := v.ScopeVars("vcs." + k + ".")
 		for k1, v1 := range vars {
-			svars["vcs."+k+"."+k1] = v1
+			// svars["vcs."+k+"."+k1] = v1
+			svars[k1] = v1
 		}
 	}
 
 	for k, v := range conf.Registry {
-		vars := v.ScopeVars()
+		vars := v.ScopeVars("registry." + k + ".")
 		for k1, v1 := range vars {
-			svars["registry."+k+"."+k1] = v1
+			// svars["registry."+k+"."+k1] = v1
+			svars[k1] = v1
 		}
 	}
-
-	// svars := conf.VCS.ScopeVars()
-
-	// rvars := conf.Registry.ScopeVars()
-	// for k, v := range rvars {
-	// 	svars[k] = v
-	// }
 
 	return svars
 }
@@ -206,5 +180,22 @@ func ReadThrapConfig(filename string) (*ThrapConfig, error) {
 	}
 	var conf ThrapConfig
 	err = hcl.Unmarshal(b, &conf)
-	return &conf, err
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range conf.VCS {
+		v.ID = k
+	}
+	for k, v := range conf.Orchestrator {
+		v.ID = k
+	}
+	for k, v := range conf.Registry {
+		v.ID = k
+	}
+	for k, v := range conf.Secrets {
+		v.ID = k
+	}
+
+	return &conf, nil
 }
