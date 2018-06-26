@@ -80,9 +80,7 @@ func (ar *awsContainerRegistry) GetManifest(name, tag string) (interface{}, erro
 	if err != nil {
 		return nil, err
 	}
-
 	return resp.Images[0], nil
-
 }
 
 func (ar *awsContainerRegistry) Get(name string) (interface{}, error) {

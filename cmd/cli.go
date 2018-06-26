@@ -9,7 +9,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/euforia/base58"
-	"github.com/euforia/thrap"
+	"github.com/euforia/thrap/config"
+	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/thrapb"
 	"gopkg.in/urfave/cli.v2"
 )
@@ -34,12 +35,9 @@ func newCLI() *cli.App {
 				EnvVars: []string{"THRAP_ADDR"},
 			},
 		},
-		Before: func(ctx *cli.Context) error {
-			return thrap.ConfigureHomeDir(false)
-		},
 		Commands: []*cli.Command{
-			commandAgent(),
 			commandConfigure(),
+			commandAgent(),
 			commandRegister(),
 			commandStack(),
 			commandVersion(),
@@ -66,9 +64,38 @@ func commandConfigure() *cli.Command {
 	return &cli.Command{
 		Name:  "configure",
 		Usage: "Configure global settings",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "vcs.id",
+				Usage: "version control `provider`",
+				Value: "github",
+			},
+			&cli.StringFlag{
+				Name:  "vcs.username",
+				Usage: "version control `username`",
+			},
+			&cli.StringFlag{
+				Name:  "data-dir",
+				Usage: "data `directory`",
+				Value: "~/",
+			},
+			&cli.BoolFlag{
+				Name:  "no-prompt",
+				Usage: "do not prompt for input",
+			},
+		},
 		Action: func(ctx *cli.Context) error {
+			opts := core.ConfigureOptions{
+				VCS: &config.VCSConfig{
+					ID:       ctx.String("vcs.id"),
+					Username: ctx.String("vcs.username"),
+				},
+				DataDir:  ctx.String("data-dir"),
+				NoPrompt: ctx.Bool("no-prompt"),
+			}
+
 			// Only configures things that are not configured
-			return thrap.ConfigureHomeDir(false)
+			return core.ConfigureGlobal(opts)
 		},
 	}
 }

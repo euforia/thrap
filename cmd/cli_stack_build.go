@@ -25,6 +25,13 @@ func commandStackBuild() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
+			// conf := &thrap.CoreConfig{}
+			// core, err := thrap.NewCore(conf)
+			// if err != nil {
+			// 	return err
+			// }
+			// core.BuildStack(st)
+
 			oconf := &orchestrator.Config{Provider: "docker"}
 			orch, err := orchestrator.New(oconf)
 			if err != nil {
@@ -37,12 +44,14 @@ func commandStackBuild() *cli.Command {
 				if !comp.IsBuildable() {
 					continue
 				}
+
 				if comp.Build.Context == "" {
 					comp.Build.Context = consts.DefaultBuildContext
 				}
 
 				fmt.Printf("Building component.%s\n", comp.ID)
-				err = bldr.Build(comp, os.Stdout)
+				opts := orchestrator.RequestOptions{Output: os.Stdout}
+				err = bldr.Build(st.ID, comp, opts)
 				if err != nil {
 					return err
 				}

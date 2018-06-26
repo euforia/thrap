@@ -2,9 +2,13 @@ package config
 
 import (
 	"io/ioutil"
+	"path/filepath"
 
+	"github.com/euforia/hclencoder"
 	"github.com/euforia/pseudo/scope"
+	"github.com/euforia/thrap/consts"
 	"github.com/hashicorp/hcl"
+	homedir "github.com/mitchellh/go-homedir"
 )
 
 type OrchestratorConfig struct {
@@ -172,6 +176,14 @@ func DefaultThrapConfig() *ThrapConfig {
 	}
 }
 
+func WriteThrapConfig(conf *ThrapConfig, filename string) error {
+	b, err := hclencoder.Encode(conf)
+	if err == nil {
+		err = ioutil.WriteFile(filename, b, 0644)
+	}
+	return err
+}
+
 // ReadThrapConfig reads an hcl thrap config from filename
 func ReadThrapConfig(filename string) (*ThrapConfig, error) {
 	b, err := ioutil.ReadFile(filename)
@@ -198,4 +210,25 @@ func ReadThrapConfig(filename string) (*ThrapConfig, error) {
 	}
 
 	return &conf, nil
+}
+
+func ReadGlobalConfig() (*ThrapConfig, error) {
+	filename, err := homedir.Expand("~/" + consts.WorkDir + "/" + consts.ConfigFile)
+	if err == nil {
+		return ReadThrapConfig(filename)
+	}
+	return nil, err
+}
+
+func ReadProjectConfig(projPath string) (*ThrapConfig, error) {
+	filename := filepath.Join(projPath, consts.WorkDir, consts.ConfigFile)
+	return ReadThrapConfig(filename)
+}
+
+func ReadGlobalCreds() (*CredsConfig, error) {
+	filename, err := homedir.Expand("~/" + consts.WorkDir + "/" + consts.CredsFile)
+	if err == nil {
+		return ReadCredsConfig(filename)
+	}
+	return nil, err
 }

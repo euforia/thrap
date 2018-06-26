@@ -16,6 +16,7 @@ const (
 	defaultNetMbits   = 1
 	defaultCPUMHz     = 200 //mhz
 	defaultMemMB      = 256 //mb
+	defaultPortLabel  = "default"
 )
 
 func MakeNomadJob(stack *thrapb.Stack) (*api.Job, error) {
@@ -49,19 +50,19 @@ func MakeNomadJob(stack *thrapb.Stack) (*api.Job, error) {
 		resources := makeResources(defaultCPUMHz, defaultMemMB, defaultNetMbits)
 
 		if comp.External {
-			//api.NewConstraint("${meta.hood}", operand, right)
+			//api.NewConstraint("${meta.hood}", "operand", "right")
 		}
 
 		if comp.Head {
 			service := task.Services[0]
 			// service.Name = comp.ID + "." + id
-			service.Name = stack.ID
-			service.Tags = []string{comp.ID}
+			// service.Name = stack.ID
+			// service.Tags = []string{comp.ID}
 			service.Checks = []api.ServiceCheck{
 				defaultServiceCheck(),
 			}
 			resources.Networks[0].DynamicPorts = []api.Port{
-				api.Port{Label: "default"},
+				api.Port{Label: defaultPortLabel},
 			}
 			// service.CheckRestart = &api.CheckRestart{Limit: 15}
 		}
@@ -89,7 +90,6 @@ func WriteNomadJob(job *api.Job, w io.Writer) error {
 
 func makeNomadTaskDocker(sid, gid string, comp *thrapb.Component) *api.Task {
 	cid := sid + "." + gid + "." + comp.ID
-	portLabel := "default"
 	task := api.NewTask(cid, "docker")
 
 	task.SetConfig("image", fmt.Sprintf("%s:%s", comp.Name, comp.Version))
@@ -115,15 +115,15 @@ func makeNomadTaskDocker(sid, gid string, comp *thrapb.Component) *api.Task {
 
 	task.SetConfig("port_map", []map[string]interface{}{
 		map[string]interface{}{
-			portLabel: 10000,
+			defaultPortLabel: 10000,
 		},
 	})
 
 	task.Services = []*api.Service{
 		&api.Service{
-			// Name:      sid,
-			// Tags:      []string{comp.ID},
-			PortLabel: portLabel,
+			Name:      sid,
+			Tags:      []string{comp.ID},
+			PortLabel: defaultPortLabel,
 			// 		Checks: []api.ServiceCheck{
 			// 			api.ServiceCheck{
 			// 				Path:     "/",
@@ -165,7 +165,8 @@ func makeResources(cpu, mem, mbits int) *api.Resources {
 		Networks: []*api.NetworkResource{
 			&api.NetworkResource{
 				// DynamicPorts: []api.Port{api.Port{Label: portLabel}},
-				MBits: &mbits},
+				MBits: &mbits,
+			},
 		},
 	}
 

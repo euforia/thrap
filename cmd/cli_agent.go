@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/euforia/thrap"
+	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/thrapb"
 	"google.golang.org/grpc"
 	"gopkg.in/urfave/cli.v2"
@@ -25,7 +26,7 @@ func commandAgent() *cli.Command {
 			},
 		},
 		Action: func(ctx *cli.Context) error {
-			core, err := thrap.NewCore(nil)
+			core, err := core.NewCore(nil)
 			if err != nil {
 				return err
 			}

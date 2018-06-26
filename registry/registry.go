@@ -57,8 +57,6 @@ type Registry interface {
 	Type() Type
 	// Create a new repository
 	Create(string) (interface{}, error)
-	// Get a repository manifest
-	GetManifest(name string, tag string) (interface{}, error)
 }
 
 // New returns a new registry based on the config.
@@ -82,9 +80,6 @@ func New(conf *Config) (Registry, error) {
 
 	case "docker":
 		reg = &dockerHub{}
-
-	case "local.docker":
-		reg = &localDocker{}
 
 	default:
 		err = fmt.Errorf("unsupported container registry: '%s'", conf.Provider)

@@ -1,4 +1,4 @@
-package thrap
+package core
 
 // Action represents any noteworthy command, transaction etc.
 type Action struct {
@@ -10,6 +10,7 @@ type Action struct {
 	Identifier string
 }
 
+// NewAction returns an action with the given parameters
 func NewAction(name, rsrc, id string) *Action {
 	return &Action{
 		Name:       name,

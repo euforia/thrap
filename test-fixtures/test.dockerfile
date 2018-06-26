@@ -1,20 +1,11 @@
-FROM golang:1.10.3
-
+FROM golang:1.10.3 as build
+WORKDIR /
 RUN go get github.com/golang/dep/cmd/dep
 
-WORKDIR /go/src/github.com/euforia/thrap
-
-COPY Gopkg.* ./
-
-RUN dep ensure -v -vendor-only
-
-COPY . .
-
-RUN make test
-RUN make dist
+RUN ping -c 1 consul.test > consul-ping.log
+RUN ping -c 1 vault.test > vault-ping.log
 
 FROM alpine
-VOLUME /secrets.hcl
 WORKDIR /
-COPY --from=build /go/src/github.com/euforia/thrap/dist/thrap-linux /usr/bin/thrap
-CMD ["thrap"]
+COPY --from=build /consul-ping.log /
+COPY --from=build /vault-ping.log /

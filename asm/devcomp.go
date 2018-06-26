@@ -12,6 +12,14 @@ import (
 	"github.com/hashicorp/hil/ast"
 )
 
+const defaultSecretsContent = `# HCL formatted file
+# Examples:
+#
+# key = "value"
+# foo.bar = 5
+# feature.enabled = false
+`
+
 type devCompAssembler struct {
 	// devpack
 	pack *packs.DevPack
@@ -103,7 +111,7 @@ func (asm *devCompAssembler) assemble(variables scope.Variables) (err error) {
 
 	if asm.comp.HasSecrets() {
 		// Local file
-		asm.files[asm.comp.Secrets.Destination] = []byte{}
+		asm.files[asm.comp.Secrets.Destination] = []byte(defaultSecretsContent)
 		asm.dockerignores = append(asm.dockerignores, asm.comp.Secrets.Destination)
 		err = asm.addSecretsVolume(lastIdx, workdirs[lastIdx])
 	}

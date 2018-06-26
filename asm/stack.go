@@ -19,6 +19,8 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
+// StackAsm is the stack assembler.  It performs all local stack operations for the 'init'
+// call
 type StackAsm struct {
 	// vars available to the assembler as a whole
 	vars scope.Variables
@@ -174,6 +176,7 @@ func (asm *StackAsm) writeFile(basename string, contents []byte, force bool) err
 func (asm *StackAsm) vcsIgnoreFile(add ...string) (string, []byte) {
 	list := append(vcs.DefaultGitIgnores(), add...)
 	content := strings.Join(list, "\n")
+
 	return asm.vcs.IgnoresFile(), []byte(content)
 }
 
@@ -181,6 +184,7 @@ func (asm *StackAsm) readmeFile() []byte {
 	return []byte("# " + asm.stack.Name + "\n" + asm.stack.Description + "\n\n")
 }
 
+// WriteManifest writes the manifest file in the project dir
 func (asm *StackAsm) WriteManifest() error {
 
 	key := `manifest "` + asm.stack.ID + `"`

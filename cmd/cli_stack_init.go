@@ -4,20 +4,19 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"gopkg.in/urfave/cli.v2"
 
-	"github.com/euforia/thrap"
 	"github.com/euforia/thrap/analysis"
 	"github.com/euforia/thrap/asm"
+	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
+	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/packs"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vars"
 	"github.com/euforia/thrap/vcs"
-	"gopkg.in/src-d/go-git.v4"
 )
 
 var usageTextInit = `thrap init [command options] [directory]
@@ -54,21 +53,28 @@ func commandStackInit() *cli.Command {
 			},
 		},
 		Action: func(ctx *cli.Context) error {
-
-			//
+			// Create project directory if not found
 			projPath, err := setupProjPath(ctx)
 			if err != nil {
 				return err
 			}
-
 			// Project name
 			projName := ctx.String("name")
 			if len(projName) == 0 {
 				projName = filepath.Base(projPath)
 			}
 
-			pks := packs.New("./etc/packs")
+			// Load packs
+			pks, err := packs.New("./etc/packs")
+			if err != nil {
+				return err
+			}
 			devpacks := pks.Dev()
+
+			gconf, err := config.ReadGlobalConfig()
+			if err != nil {
+				return err
+			}
 
 			// Set language from input or otherwise and other related params
 			_, err = setLanguage(ctx, devpacks, projPath)
@@ -76,21 +82,26 @@ func commandStackInit() *cli.Command {
 				return err
 			}
 
-			gconf, err := thrap.ReadGlobalConfig()
-			if err != nil {
-				return err
-			}
-
 			vcsID := ctx.String("vcs")
 			defaultVCS := gconf.VCS[vcsID]
-			if err = setRepoOwner(ctx, defaultVCS.Username, projPath); err != nil {
+			if err = setRepoOwner(ctx, defaultVCS.ID, defaultVCS.Username, projPath); err != nil {
 				return err
 			}
 
 			repoOwner := ctx.String(vars.VcsRepoOwner)
 
 			// Local project setup
-			pconf, err := thrap.ConfigureProjectDir(projName, defaultVCS.ID, repoOwner, projPath)
+			opts := core.ConfigureOptions{
+				DataDir: projPath,
+				VCS: &config.VCSConfig{
+					ID: defaultVCS.ID,
+					Repo: &config.VCSRepoConfig{
+						Name:  projName,
+						Owner: repoOwner,
+					},
+				},
+			}
+			pconf, err := core.ConfigureLocal(opts)
 			if err != nil {
 				return err
 			}
@@ -102,16 +113,10 @@ func commandStackInit() *cli.Command {
 				return fmt.Errorf("manifest %s already exists", consts.DefaultManifestFile)
 			}
 
-			//gitRemoteAddr := scopeVars[vars.VcsAddr].Value.(string)
-			vcsp, gitRepo, err := setupGit(projName, repoOwner, projPath, defaultVCS.Addr)
+			vcsp, gitRepo, err := vcs.SetupLocalGitRepo(projName, repoOwner, projPath, defaultVCS.Addr)
 			if err != nil {
 				return err
 			}
-
-			// conf, err := config.ParseFile("./etc/config.hcl")
-			// if err != nil {
-			// 	return err
-			// }
 
 			// Prompt for missing
 			stack, err := promptComps(projName, ctx.String("lang"), pks)
@@ -155,7 +160,6 @@ func setupProjPath(ctx *cli.Context) (string, error) {
 	}
 
 	return projPath, err
-
 }
 
 func isSupported(val string, supported []string) bool {
@@ -180,7 +184,7 @@ func setLanguage(ctx *cli.Context, devpacks *packs.DevPacks, dir string) (*packs
 	}
 
 	// Set guestimate as default
-	lang = guessLang(dir)
+	lang = analysis.EstimateLanguage(dir)
 
 	prompt := "Language"
 	lang = promptForSupported(prompt, supported, lang)
@@ -193,11 +197,12 @@ func setLanguage(ctx *cli.Context, devpacks *packs.DevPacks, dir string) (*packs
 	return devpack, err
 }
 
-func setRepoOwner(ctx *cli.Context, defRepoOwner, dir string) error {
+func setRepoOwner(ctx *cli.Context, vcsID, defRepoOwner, dir string) error {
 	var err error
 
 	var repoOwner string
-	utils.PromptUntilNoError("Repo owner ["+defRepoOwner+"]: ", os.Stdout, os.Stdin, func(db []byte) error {
+	prompt := vcsID + " repo owner [" + defRepoOwner + "]: "
+	utils.PromptUntilNoError(prompt, os.Stdout, os.Stdin, func(db []byte) error {
 		repoOwner = string(db)
 		if repoOwner == "" {
 			repoOwner = defRepoOwner
@@ -209,17 +214,8 @@ func setRepoOwner(ctx *cli.Context, defRepoOwner, dir string) error {
 	return err
 }
 
-func guessLang(dir string) string {
-	fts := analysis.BuildFileTypeSpread(dir)
-	highest := fts.Highest()
-	if highest != nil && highest.Percent > 50 {
-		return strings.ToLower(highest.Language)
-	}
-	return ""
-}
-
 func promptComps(name, lang string, pks *packs.Packs) (*thrapb.Stack, error) {
-	c := &thrap.BasicStackConfig{
+	c := &asm.BasicStackConfig{
 		Name:     name,
 		Language: thrapb.LanguageID(lang),
 	}
@@ -235,7 +231,7 @@ func promptComps(name, lang string, pks *packs.Packs) (*thrapb.Stack, error) {
 		return nil, err
 	}
 
-	return thrap.NewBasicStack(c, pks)
+	return asm.NewBasicStack(c, pks)
 }
 
 func promptPack(wp *packs.BasePacks, prompt string) (string, error) {
@@ -245,48 +241,4 @@ func promptPack(wp *packs.BasePacks, prompt string) (string, error) {
 	}
 	supported := append(list, "none")
 	return promptForSupported(prompt, supported, "none"), nil
-}
-
-//
-// func prompt(conf *config.Config) (string, string) {
-// 	var (
-// 		prompt    string
-// 		supported []string
-// 	)
-//
-// 	// Prompt for datastore
-// 	supported = make([]string, 0, len(conf.DataStores)+1)
-// 	for k := range conf.DataStores {
-// 		supported = append(supported, k)
-// 	}
-// 	prompt = "Data store"
-// 	ds := promptForSupported(prompt, supported, "none")
-//
-// 	// Prompt for webserver
-// 	supported = make([]string, 0, len(conf.WebServers)+1)
-// 	for k := range conf.WebServers {
-// 		supported = append(supported, k)
-// 	}
-// 	prompt = "Web server"
-// 	ws := promptForSupported(prompt, supported, "none")
-//
-// 	return ds, ws
-// }
-
-func setupGit(projName, repoOwner, projPath, remoteAddr string) (vcs.VCS, *git.Repository, error) {
-	vcsp := vcs.NewGitVCS()
-
-	rr := &vcs.Repository{Name: projName}
-	opt := vcs.Option{
-		Path:   projPath,
-		Remote: vcs.DefaultGitRemoteURL(remoteAddr, repoOwner, projName),
-	}
-
-	resp, err := vcsp.Create(rr, opt)
-	if err != nil {
-		return vcsp, nil, err
-	}
-
-	return vcsp, resp.(*git.Repository), nil
-
 }

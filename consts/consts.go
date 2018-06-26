@@ -29,6 +29,8 @@ const (
 	DefaultReadmeFile = "README.md"
 	// DefaultSecretsFile is the secrets filename
 	DefaultSecretsFile = "secrets.hcl"
+	// DefaultSecretsFileFormat is the secrets format
+	DefaultSecretsFileFormat = "hcl"
 	// DefaultMakefile is the makefile filename
 	DefaultMakefile = "Makefile"
 	// DefaultEnvFile is the env filename

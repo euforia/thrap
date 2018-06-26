@@ -1,12 +1,11 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 
+	"github.com/euforia/thrap/config"
+	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/manifest"
-	"github.com/euforia/thrap/orchestrator"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vcs"
 	"gopkg.in/urfave/cli.v2"
@@ -25,6 +24,7 @@ func commandStackDeploy() *cli.Command {
 			},
 		},
 		Action: func(ctx *cli.Context) error {
+
 			st, err := manifest.LoadManifest("")
 			if err != nil {
 				return err
@@ -34,25 +34,41 @@ func commandStackDeploy() *cli.Command {
 			st.Version = vcs.GetRepoVersion(lpath).String()
 			fmt.Println(st.ID, st.Version)
 
-			if errs := st.Validate(); errs != nil {
-				return utils.FlattenErrors(errs)
-			}
-			conf := &orchestrator.Config{
-				Provider: "nomad",
-			}
-			orch, err := orchestrator.New(conf)
+			pconf, err := config.ReadProjectConfig(lpath)
 			if err != nil {
 				return err
 			}
 
-			opt := orchestrator.DeployOptions{Dryrun: ctx.Bool("dryrun")}
-			_, job, err := orch.Deploy(st, opt)
-			if err == nil {
-				b, _ := json.MarshalIndent(job, "", "  ")
-				os.Stdout.Write(b)
-				os.Stdout.Write([]byte("\n"))
-			}
+			conf := &core.CoreConfig{ThrapConfig: pconf}
+			_, err = core.NewCore(conf)
+			// if err != nil {
+			// 	return err
+			// }
+
+			// opt := orchestrator.RequestOptions{
+			// 	Dryrun: ctx.Bool("dryrun"),
+			// 	Output: os.Stdout,
+			// }
+
+			//err = core.DeployStack(st, opt)
 			return err
+
+			// conf := &orchestrator.Config{
+			// 	Provider: "nomad",
+			// }
+			// orch, err := orchestrator.New(conf)
+			// if err != nil {
+			// 	return err
+			// }
+
+			// opt := orchestrator.RequestOptions{Dryrun: ctx.Bool("dryrun")}
+			// _, job, err := orch.Deploy(st, opt)
+			// if err == nil {
+			// 	b, _ := json.MarshalIndent(job, "", "  ")
+			// 	os.Stdout.Write(b)
+			// 	os.Stdout.Write([]byte("\n"))
+			// }
+			// return err
 		},
 	}
 }

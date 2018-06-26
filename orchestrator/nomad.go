@@ -9,15 +9,12 @@ import (
 	//"github.com/hashicorp/nomad/nomad/structs"
 )
 
-// DeployOptions holds available deployment options
-type DeployOptions struct {
-	// If true only a report of actions to be taken is generated. An actual
-	// deploy is not performed
-	Dryrun bool
-}
-
 type nomadOrchestrator struct {
 	client *nomad.Client
+}
+
+func (orch *nomadOrchestrator) ID() string {
+	return "nomad"
 }
 
 // Environment Variables:
@@ -39,7 +36,7 @@ func (orch *nomadOrchestrator) Init(conf map[string]interface{}) error {
 	return err
 }
 
-func (orch *nomadOrchestrator) Deploy(st *thrapb.Stack, opts DeployOptions) (resp interface{}, job interface{}, err error) {
+func (orch *nomadOrchestrator) Deploy(st *thrapb.Stack, opts RequestOptions) (resp interface{}, job interface{}, err error) {
 	var njob *nomad.Job
 	njob, err = manifest.MakeNomadJob(st)
 	if err != nil {

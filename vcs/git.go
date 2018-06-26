@@ -20,6 +20,26 @@ const (
 	defaultRemoteName = "origin"
 )
 
+// SetupLocalGitRepo initializes a new git repo.  It returns an error
+// if it already has been initialized or fails
+func SetupLocalGitRepo(projName, repoOwner, projPath, remoteAddr string) (VCS, *git.Repository, error) {
+	vcsp := NewGitVCS()
+
+	rr := &Repository{Name: projName}
+	opt := Option{
+		Path:   projPath,
+		Remote: DefaultGitRemoteURL(remoteAddr, repoOwner, projName),
+	}
+
+	resp, err := vcsp.Create(rr, opt)
+	if err != nil {
+		return vcsp, nil, err
+	}
+
+	return vcsp, resp.(*git.Repository), nil
+
+}
+
 // DefaultGitRemoteURL returns the default url scheme scheme for remote access
 func DefaultGitRemoteURL(addr, owner, name string) string {
 	return "ssh://git@" + addr + "/" + owner + "/" + name

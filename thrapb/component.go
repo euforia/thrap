@@ -6,7 +6,9 @@ import (
 	"hash"
 	"sort"
 
+	"github.com/euforia/pseudo/scope"
 	version "github.com/hashicorp/go-version"
+	"github.com/hashicorp/hil/ast"
 )
 
 // CompType is the component type
@@ -39,6 +41,16 @@ func NewComponent(name, version string, typ CompType) *Component {
 		Name:    name,
 		Type:    typ,
 		Version: version,
+	}
+}
+
+func (comp *Component) ScopeVars(prefix string) scope.Variables {
+
+	return scope.Variables{
+		prefix + "version": ast.Variable{
+			Type:  ast.TypeString,
+			Value: comp.Version,
+		},
 	}
 }
 

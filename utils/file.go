@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func FileExists(fpath string) bool {
@@ -27,4 +29,13 @@ func GetLocalPath(in string) (dirpath string, err error) {
 	}
 
 	return
+}
+
+func ParseIgnoresFile(filename string) ([]string, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err == nil {
+		return strings.Split(string(b), "\n"), nil
+	}
+
+	return nil, err
 }

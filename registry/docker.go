@@ -4,21 +4,20 @@ package registry
 
 import (
 	"context"
-	"errors"
 	"os"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/jsonmessage"
 )
 
-const defaultDockerRegAddr = "https://registry.hub.docker.com"
-
-// localDocker implements a container registry using the local docker
-// registry
-type localDocker struct {
+// DockerRuntime implements a container registry using the local docker runtime
+type DockerRuntime struct {
 	cli *client.Client
 }
 
-func (local *localDocker) Init(config Config) error {
+func (local *DockerRuntime) Init(config Config) error {
 	os.Setenv("DOCKER_API_VERSION", "1.37")
 
 	cli, err := client.NewEnvClient()
@@ -29,21 +28,44 @@ func (local *localDocker) Init(config Config) error {
 	return err
 }
 
-func (local *localDocker) Type() Type {
-	return TypeContainer
+// ImagePull pulls in image from the docker registry using docker. This uses
+// dockers built in mechanism to communicate to the registry
+func (local *DockerRuntime) ImagePull(ctx context.Context, ref string) error {
+	var options types.ImagePullOptions
+	rd, err := local.cli.ImagePull(ctx, ref, options)
+	if err != nil {
+		return err
+	}
+
+	defer rd.Close()
+
+	return jsonmessage.DisplayJSONMessagesStream(rd, os.Stdout, 100, true, nil)
 }
 
-func (local *localDocker) ID() string {
-	return "local.docker"
+// ImageConfig returns an image config for the given name and tagged image
+func (local *DockerRuntime) ImageConfig(name, tag string) (*container.Config, error) {
+	inf, _, err := local.cli.ImageInspectWithRaw(context.Background(), name+":"+tag)
+	if err != nil {
+		return nil, err
+	}
+	return inf.Config, nil
 }
+
+// func (local *DockerRuntime) Type() Type {
+// 	return TypeContainer
+// }
+
+// func (local *DockerRuntime) ID() string {
+// 	return "local.docker"
+// }
 
 // Create a new repository
-func (local *localDocker) Create(string) (interface{}, error) {
-	return nil, errors.New("tbi")
-}
+// func (local *DockerRuntime) Create(string) (interface{}, error) {
+// 	return nil, errors.New("tbi")
+// }
 
 // Get a repository manifest
-func (local *localDocker) GetManifest(name string, tag string) (interface{}, error) {
-	inf, _, err := local.cli.ImageInspectWithRaw(context.Background(), name+":"+tag)
-	return inf, err
-}
+// func (local *DockerRuntime) GetManifest(name string, tag string) (interface{}, error) {
+// 	inf, _, err := local.cli.ImageInspectWithRaw(context.Background(), name+":"+tag)
+// 	return inf, err
+// }

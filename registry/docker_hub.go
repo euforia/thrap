@@ -9,6 +9,8 @@ import (
 	"github.com/heroku/docker-registry-client/registry"
 )
 
+const defaultDockerRegAddr = "https://registry.hub.docker.com"
+
 type dockerHub struct {
 	url string
 	reg *registry.Registry
@@ -84,6 +86,9 @@ func (hub *dockerHub) Create(name string) (interface{}, error) {
 }
 
 // Get a repository manifest
-func (hub *dockerHub) GetManifest(name, tag string) (interface{}, error) {
-	return hub.reg.ManifestV2(name, tag)
-}
+// func (hub *dockerHub) GetManifest(name, tag string) (interface{}, error) {
+// 	mf,err:= hub.reg.ManifestV2(name, tag)
+// 	if err!=nil {
+// 		return
+// 	}
+// }

@@ -4,20 +4,23 @@ import (
 	"context"
 	"log"
 
+	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/thrapb"
 	"google.golang.org/grpc/metadata"
 )
 
+// GRPCService implements the server-side grpc service for thrap
 type GRPCService struct {
-	core *Core
+	core *core.Core
 	log  *log.Logger
 }
 
-func NewService(core *Core, logger *log.Logger) *GRPCService {
+// NewService returns a new grpc service with the given core
+func NewService(core *core.Core, logger *log.Logger) *GRPCService {
 	s := &GRPCService{core: core, log: logger}
-	if s.log == nil {
-		s.log = s.core.log
-	}
+	// if s.log == nil {
+	// 	s.log = s.core.log
+	// }
 	return s
 }
 
@@ -29,13 +32,16 @@ func (s *GRPCService) handleIncomingContext(ctx context.Context, call string) {
 	}
 }
 
+// RegisterStack implements the server-side grpc call
 func (s *GRPCService) RegisterStack(ctx context.Context, st *thrapb.Stack) (*thrapb.Stack, error) {
 	s.handleIncomingContext(ctx, "stack."+st.ID+".register")
 
-	stack, _, err := s.core.RegisterStack(st)
+	stk := s.core.Stack()
+	stack, _, err := stk.Register(st)
 	return stack, err
 }
 
+// RegisterIdentity implements the server-side grpc call
 func (s *GRPCService) RegisterIdentity(ctx context.Context, ident *thrapb.Identity) (*thrapb.Identity, error) {
 	s.handleIncomingContext(ctx, "identity."+ident.ID+".register")
 
@@ -43,6 +49,7 @@ func (s *GRPCService) RegisterIdentity(ctx context.Context, ident *thrapb.Identi
 	return nident, err
 }
 
+// ConfirmIdentity implements the server-side grpc call
 func (s *GRPCService) ConfirmIdentity(ctx context.Context, ident *thrapb.Identity) (*thrapb.Identity, error) {
 	s.handleIncomingContext(ctx, "identity."+ident.ID+".confirm")
 
