@@ -44,9 +44,10 @@ func commandStackInit() *cli.Command {
 				Usage:   "programming `language`",
 			},
 			&cli.StringFlag{
-				Name:  "vcs",
-				Usage: "version control `provider` (experimental)",
-				Value: "github",
+				Name:   vars.VcsID,
+				Usage:  "version control `provider` (experimental)",
+				Value:  "github",
+				Hidden: true,
 			},
 			&cli.StringFlag{
 				Name:  vars.VcsRepoOwner,
@@ -88,7 +89,7 @@ func commandStackInit() *cli.Command {
 			}
 
 			gconf := cr.Config()
-			vcsID := ctx.String("vcs")
+			vcsID := ctx.String(vars.VcsID)
 			defaultVCS := gconf.VCS[vcsID]
 			repoOwner := setRepoOwner(ctx, defaultVCS.ID, defaultVCS.Username)
 

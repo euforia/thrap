@@ -6,6 +6,8 @@ import (
 	"crypto/rand"
 	"fmt"
 
+	"github.com/euforia/thrap/vars"
+
 	"github.com/pkg/errors"
 
 	"github.com/euforia/base58"
@@ -37,8 +39,8 @@ func newCLI() *cli.App {
 		},
 		Commands: []*cli.Command{
 			commandConfigure(),
-			commandAgent(),
-			commandRegister(),
+			//commandAgent(),
+			//commandRegister(),
 			commandStack(),
 			commandVersion(),
 		},
@@ -66,12 +68,13 @@ func commandConfigure() *cli.Command {
 		Usage: "Configure global settings",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:  "vcs.id",
-				Usage: "version control `provider`",
-				Value: "github",
+				Name:   vars.VcsID,
+				Usage:  "version control `provider`",
+				Value:  "github",
+				Hidden: true,
 			},
 			&cli.StringFlag{
-				Name:  "vcs.username",
+				Name:  vars.VcsUsername,
 				Usage: "version control `username`",
 			},
 			&cli.StringFlag{
@@ -87,8 +90,8 @@ func commandConfigure() *cli.Command {
 		Action: func(ctx *cli.Context) error {
 			opts := core.ConfigureOptions{
 				VCS: &config.VCSConfig{
-					ID:       ctx.String("vcs.id"),
-					Username: ctx.String("vcs.username"),
+					ID:       ctx.String(vars.VcsID),
+					Username: ctx.String(vars.VcsUsername),
 				},
 				DataDir:  ctx.String("data-dir"),
 				NoPrompt: ctx.Bool("no-prompt"),

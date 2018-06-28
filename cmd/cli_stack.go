@@ -22,7 +22,7 @@ func commandStack() *cli.Command {
 			commandStackBuild(),
 			commandStackDeploy(),
 			commandStackInit(),
-			commandStackRegister(),
+			// commandStackRegister(),
 			commandStackValidate(),
 			commandStackVersion(),
 		},
