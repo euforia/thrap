@@ -34,6 +34,7 @@ manifest "thrap" {
         vars {
           APP_VERSION = "${stack.version}"
           VAULT_ADDR  = "${comps.vault.container.default.addr}"
+          NOMAD_ADDR  = ""
         }
       }
     }
