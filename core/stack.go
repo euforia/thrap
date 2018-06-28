@@ -194,13 +194,15 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack) error {
 	return nil
 }
 
-func (st *Stack) Destroy(ctx context.Context, stack *thrapb.Stack) {
+func (st *Stack) Destroy(ctx context.Context, stack *thrapb.Stack) []*ActionReport {
+	ar := make([]*ActionReport, 0, len(stack.Components))
 
 	for _, c := range stack.Components {
-		if err := st.crt.Remove(ctx, c.ID+"."+stack.ID); err != nil {
-			fmt.Println(err)
-		}
+		r := &ActionReport{Action: NewAction("component", c.ID, "remove")}
+		r.Error = st.crt.Remove(ctx, c.ID+"."+stack.ID)
+		ar = append(ar, r)
 	}
+	return ar
 }
 
 func (st *Stack) Deploy(stack *thrapb.Stack) error {
