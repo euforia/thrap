@@ -205,11 +205,12 @@ func DefaultThrapConfig() *ThrapConfig {
 	return &ThrapConfig{
 		VCS: map[string]*VCSConfig{
 			"github": &VCSConfig{
+				ID:   "github",
 				Addr: "github.com",
 			},
 		},
 		Orchestrator: map[string]*OrchestratorConfig{
-			"docker": &OrchestratorConfig{},
+			"nomad": &OrchestratorConfig{},
 		},
 		Registry: make(map[string]*RegistryConfig),
 		Secrets: map[string]*SecretsConfig{
