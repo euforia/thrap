@@ -16,6 +16,16 @@ type OrchestratorConfig struct {
 	Addr string `hcl:"addr" hcle:"omitempty"`
 }
 
+func (conf *OrchestratorConfig) Clone() *OrchestratorConfig {
+	if conf == nil {
+		return nil
+	}
+	return &OrchestratorConfig{
+		ID:   conf.ID,
+		Addr: conf.Addr,
+	}
+}
+
 // Merge merges the other config into the one. Only non-empty fields are
 // considered
 func (conf *OrchestratorConfig) Merge(other *OrchestratorConfig) {
@@ -35,6 +45,13 @@ func (conf *OrchestratorConfig) Merge(other *OrchestratorConfig) {
 type SecretsConfig struct {
 	ID   string `hcl:"id"   hcle:"omit"`
 	Addr string `hcl:"addr" hcle:"omitempty"`
+}
+
+func (conf *SecretsConfig) Clone() *SecretsConfig {
+	if conf == nil {
+		return nil
+	}
+	return &SecretsConfig{ID: conf.ID, Addr: conf.Addr}
 }
 
 // Merge merges the other config into the one. Only non-empty fields are
@@ -58,6 +75,34 @@ type ThrapConfig struct {
 	Orchestrator map[string]*OrchestratorConfig `hcl:"orchestrator"`
 	Registry     map[string]*RegistryConfig     `hcl:"registry"`
 	Secrets      map[string]*SecretsConfig      `hcl:"secrets"`
+}
+
+func (conf *ThrapConfig) Clone() *ThrapConfig {
+	if conf == nil {
+		return nil
+	}
+
+	c := &ThrapConfig{
+		VCS:          make(map[string]*VCSConfig, len(conf.VCS)),
+		Orchestrator: make(map[string]*OrchestratorConfig, len(conf.Orchestrator)),
+		Registry:     make(map[string]*RegistryConfig, len(conf.Registry)),
+		Secrets:      make(map[string]*SecretsConfig, len(conf.Secrets)),
+	}
+
+	for k, v := range conf.VCS {
+		c.VCS[k] = v.Clone()
+	}
+	for k, v := range conf.Orchestrator {
+		c.Orchestrator[k] = v.Clone()
+	}
+	for k, v := range conf.Registry {
+		c.Registry[k] = v.Clone()
+	}
+	for k, v := range conf.Secrets {
+		c.Secrets[k] = v.Clone()
+	}
+
+	return conf
 }
 
 // Merge merges the other config into the one. Only non-empty fields are

@@ -2,8 +2,10 @@ package manifest
 
 import (
 	"errors"
+	"io"
 	"strings"
 
+	"github.com/euforia/hclencoder"
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
@@ -36,4 +38,19 @@ func LoadManifest(mfile string) (*thrapb.Stack, error) {
 	}
 
 	return st, err
+}
+
+func WriteManifest(st *thrapb.Stack, w io.Writer) error {
+	key := `manifest "` + st.ID + `"`
+	out := map[string]interface{}{
+		key: st,
+	}
+
+	b, err := hclencoder.Encode(&out)
+	if err == nil {
+		b = append(append([]byte("\n"), b...), []byte("\n")...)
+		_, err = w.Write(b)
+	}
+
+	return err
 }

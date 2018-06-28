@@ -1,8 +1,11 @@
 package core
 
 import (
+	"context"
 	"testing"
 
+	"github.com/euforia/thrap/manifest"
+	"github.com/euforia/thrap/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,5 +30,23 @@ func Test_core(t *testing.T) {
 	assert.NotNil(t, c.vcs)
 	assert.NotNil(t, c.orch)
 	assert.NotNil(t, c.packs)
-	assert.Equal(t, "docker", c.orch.ID())
+	assert.Equal(t, "nomad", c.orch.ID())
+
+	stack, err := manifest.LoadManifest("../test-fixtures/thrap.hcl")
+	fatal(t, err)
+	errs := stack.Validate()
+	if len(errs) > 0 {
+		fatal(t, utils.FlattenErrors(errs))
+	}
+
+	st := c.Stack()
+	st.populatePorts(stack)
+	assert.Equal(t, 1, len(stack.Components["vault"].Ports))
+	assert.Equal(t, 5, len(stack.Components["consul"].Ports))
+
+	err = st.Build(context.Background(), stack)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 }

@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"os"
 
+	"github.com/euforia/thrap/crt"
+
 	"github.com/euforia/thrap/packs"
 
 	"github.com/pkg/errors"
@@ -63,6 +65,8 @@ type Core struct {
 
 	packs *packs.Packs
 
+	crt *crt.Docker
+
 	sst *store.StackStore    // local store
 	ist *store.IdentityStore // local store
 
@@ -72,7 +76,15 @@ type Core struct {
 // NewCore loads the core engine with the global configs
 func NewCore(conf *CoreConfig) (*Core, error) {
 
-	c := &Core{}
+	dkr, err := crt.NewDocker()
+	if err != nil {
+		return nil, err
+	}
+
+	c := &Core{
+		crt: dkr,
+	}
+
 	gconf, err := config.ReadGlobalConfig()
 	if err != nil {
 		return nil, err
@@ -108,6 +120,10 @@ func NewCore(conf *CoreConfig) (*Core, error) {
 	return c, err
 }
 
+func (core *Core) Config() *config.ThrapConfig {
+	return core.conf
+}
+
 func (core *Core) initPacks(dir string) error {
 	pks, err := packs.New(dir)
 	if err != nil {
@@ -115,7 +131,7 @@ func (core *Core) initPacks(dir string) error {
 	}
 
 	core.packs = pks
-	if !utils.FileExists(dir) {
+	if !utils.FileExists(pks.Dir()) {
 		err = core.packs.Load(defaultPacksRepoURL)
 	}
 	return err
@@ -175,6 +191,10 @@ func (core *Core) initRegistry() error {
 	}
 
 	return nil
+}
+
+func (core *Core) Packs() *packs.Packs {
+	return core.packs
 }
 
 func (core *Core) initSecrets() (err error) {
@@ -278,7 +298,8 @@ func (core *Core) ConfirmIdentity(ident *thrapb.Identity) (*thrapb.Identity, err
 func (core *Core) Stack() *Stack {
 	return &Stack{
 		regs:  core.regs,
-		conf:  core.conf,
+		crt:   core.crt,
+		conf:  core.conf.Clone(),
 		vcs:   core.vcs,
 		packs: core.packs,
 		sst:   core.sst,

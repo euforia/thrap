@@ -9,6 +9,15 @@ type RegistryRepoConfig struct {
 	Name string `hcl:"name"`
 }
 
+func (conf *RegistryRepoConfig) Clone() *RegistryRepoConfig {
+	if conf == nil {
+		return nil
+	}
+	return &RegistryRepoConfig{
+		Name: conf.Name,
+	}
+}
+
 // Merge merges the other config into the one. Only non-empty fields are
 // considered
 func (conf *RegistryRepoConfig) Merge(other *RegistryRepoConfig) {
@@ -24,6 +33,23 @@ type RegistryConfig struct {
 	Addr   string                 `hcl:"addr"   hcle:"omitempty"`
 	Repo   *RegistryRepoConfig    `hcl:"repo"   hcle:"omitempty"`
 	Config map[string]interface{} `hcl:"config" hcle:"omitempty"`
+}
+
+func (conf *RegistryConfig) Clone() *RegistryConfig {
+	if conf == nil {
+		return nil
+	}
+	rc := &RegistryConfig{
+		ID:     conf.ID,
+		Addr:   conf.Addr,
+		Repo:   conf.Repo.Clone(),
+		Config: make(map[string]interface{}, len(conf.Config)),
+	}
+	for k, v := range conf.Config {
+		rc.Config[k] = v
+	}
+
+	return rc
 }
 
 // Merge merges the other config into the one. Only non-empty fields are

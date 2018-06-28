@@ -1,14 +1,18 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vcs"
 	"gopkg.in/urfave/cli.v2"
 )
+
+const defaultPacksDir = "~/.thrap/packs"
 
 func commandStack() *cli.Command {
 	return &cli.Command{
@@ -42,16 +46,21 @@ func commandStackValidate() *cli.Command {
 				return err
 			}
 
-			mf.Version = vcs.GetRepoVersion(rpath).String()
-			errs := mf.Validate()
-			if errs != nil {
-				return utils.FlattenErrors(errs)
-
+			core, err := core.NewCore(&core.CoreConfig{PacksDir: defaultPacksDir})
+			if err != nil {
+				return err
 			}
 
-			writeHCLManifest(mf, os.Stdout)
+			stm := core.Stack()
+			err = stm.Validate(mf, rpath)
+			// mf.Version = vcs.GetRepoVersion(rpath).String()
+			// errs := mf.Validate()
+			if err == nil {
+				// return utils.FlattenErrors(errs)
+				writeHCLManifest(mf, os.Stdout)
+			}
 
-			return nil
+			return err
 		},
 	}
 }
@@ -66,6 +75,28 @@ func commandStackVersion() *cli.Command {
 				fmt.Println(vcs.GetRepoVersion(lpath))
 			}
 			return err
+		},
+	}
+}
+
+func commandStackBuild() *cli.Command {
+	return &cli.Command{
+		Name:  "build",
+		Usage: "Build the stack",
+		Action: func(ctx *cli.Context) error {
+
+			stack, err := manifest.LoadManifest("")
+			if err != nil {
+				return err
+			}
+
+			core, err := core.NewCore(&core.CoreConfig{PacksDir: defaultPacksDir})
+			if err != nil {
+				return err
+			}
+
+			stm := core.Stack()
+			return stm.Build(context.Background(), stack)
 		},
 	}
 }

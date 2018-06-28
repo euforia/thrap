@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/euforia/pseudo/scope"
+	"github.com/euforia/thrap/consts"
 	version "github.com/hashicorp/go-version"
 	"github.com/hashicorp/hil/ast"
 )
@@ -46,12 +47,21 @@ func NewComponent(name, version string, typ CompType) *Component {
 
 func (comp *Component) ScopeVars(prefix string) scope.Variables {
 
-	return scope.Variables{
-		prefix + "version": ast.Variable{
+	svars := scope.Variables{
+		prefix + comp.ID + ".version": ast.Variable{
 			Type:  ast.TypeString,
 			Value: comp.Version,
 		},
 	}
+
+	for k, p := range comp.Ports {
+		svars[prefix+comp.ID+".container."+k+".port"] = ast.Variable{
+			Value: p,
+			Type:  ast.TypeInt,
+		}
+	}
+
+	return svars
 }
 
 // IsBuildable returns true if a build file has been specified signifying the
@@ -93,6 +103,9 @@ func (comp *Component) validateCommon() error {
 	if comp.IsBuildable() {
 		// Make sure the language is valid
 		err = comp.Language.Validate()
+		if err == nil && comp.Build.Context == "" {
+			comp.Build.Context = consts.DefaultBuildContext
+		}
 	} else {
 		// Check component version is provided if not a buildable
 		_, err = version.NewVersion(comp.Version)
@@ -119,6 +132,19 @@ func (comp *Component) Hash(h hash.Hash) {
 		h.Write([]byte(comp.Secrets.Destination))
 		h.Write([]byte(comp.Secrets.Format))
 	}
+
+	if comp.Ports != nil {
+		keys := make([]string, 0, len(comp.Ports))
+		for k := range comp.Ports {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			h.Write([]byte(k))
+			binary.Write(h, binary.BigEndian, comp.Ports[k])
+		}
+	}
+
 	if comp.Env != nil {
 		h.Write([]byte(comp.Env.File))
 		if comp.Env.Vars != nil {

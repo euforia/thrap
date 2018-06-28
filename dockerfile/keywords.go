@@ -63,6 +63,8 @@ func ParseInstruction(r *RawInstruction) (Instruction, error) {
 		return ParseExpose(r.Data)
 	case KeyCopy:
 		return ParseCopy(r.Data)
+	case KeyComment:
+		return ParseComment(r.Data)
 
 	default:
 		return nil, errUnsupportInstruction
@@ -119,6 +121,16 @@ func (cmt *Comment) String() string {
 // Key returns the instruction key
 func (cmt *Comment) Key() string {
 	return KeyComment
+}
+
+func ParseComment(b []byte) (*Comment, error) {
+	s := strings.TrimSpace(string(b))
+	if s[0] != '#' {
+		return nil, errors.New("invalid comment")
+	}
+	return &Comment{
+		Text: strings.TrimSpace(s[1:]),
+	}, nil
 }
 
 type Run struct {

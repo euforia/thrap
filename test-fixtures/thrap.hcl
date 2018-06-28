@@ -1,16 +1,17 @@
-manifest "nomad" {
-  name = "nomad"
+manifest "test" {
+  name = "test"
 
   components {
     consul {
       name    = "consul"
       version = "1.1.0"
+      type    = "api"
     }
 
     vault {
       name    = "vault"
       version = "0.10.3"
-      head    = true
+      type    = "api"
 
       env {
         vars {
@@ -20,10 +21,13 @@ manifest "nomad" {
     } // end vault
 
     app {
-      name = "app"
+      name     = "app"
+      type     = "api"
+      language = "go"
 
       build {
-        dockerfile = "api.dockerfile"
+        dockerfile = "test.dockerfile"
+        context    = "../test-fixtures"
       }
 
       secrets {

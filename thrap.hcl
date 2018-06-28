@@ -2,6 +2,16 @@ manifest "thrap" {
   name = "thrap"
 
   components {
+    vault {
+      name    = "vault"
+      version = "0.10.3"
+      type    = "api"
+
+      ports {
+        default = 8200
+      }
+    }
+
     registry {
       name     = "registry"
       type     = "api"
@@ -23,6 +33,7 @@ manifest "thrap" {
 
         vars {
           APP_VERSION = "${stack.version}"
+          VAULT_ADDR  = "${comps.vault.container.default.addr}"
         }
       }
     }

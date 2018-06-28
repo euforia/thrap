@@ -27,7 +27,7 @@ func (header *ChainHeader) Hash(h hash.Hash) []byte {
 
 // ScopeVars returns the scoped variables usable for interpolation
 func (stack *Stack) ScopeVars() scope.Variables {
-	return scope.Variables{
+	svars := scope.Variables{
 		vars.StackDescription: ast.Variable{
 			Value: stack.Description,
 			Type:  ast.TypeString,
@@ -45,6 +45,21 @@ func (stack *Stack) ScopeVars() scope.Variables {
 			Type:  ast.TypeString,
 		},
 	}
+
+	for _, c := range stack.Components {
+		sv := c.ScopeVars("comps.")
+		for k, v := range sv {
+			svars[k] = v
+		}
+	}
+	for _, c := range stack.Dependencies {
+		sv := c.ScopeVars("deps.")
+		for k, v := range sv {
+			svars[k] = v
+		}
+	}
+
+	return svars
 }
 
 // Hash returns the hash of the object using the given hash function

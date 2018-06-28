@@ -10,6 +10,17 @@ type VCSRepoConfig struct {
 	Owner string `hcl:"owner"`
 }
 
+func (conf *VCSRepoConfig) Clone() *VCSRepoConfig {
+	if conf == nil {
+		return nil
+	}
+
+	return &VCSRepoConfig{
+		Name:  conf.Name,
+		Owner: conf.Owner,
+	}
+}
+
 // Merge merges the other config into the one. Only non-empty fields are
 // considered
 func (conf *VCSRepoConfig) Merge(other *VCSRepoConfig) {
@@ -33,6 +44,19 @@ type VCSConfig struct {
 	Repo     *VCSRepoConfig `hcl:"repo" hcle:"omitempty"`
 }
 
+func (conf *VCSConfig) Clone() *VCSConfig {
+	if conf == nil {
+		return nil
+	}
+
+	return &VCSConfig{
+		ID:       conf.ID,
+		Addr:     conf.Addr,
+		Username: conf.Username,
+		Repo:     conf.Repo.Clone(),
+	}
+}
+
 // Merge merges the other config into the one. Only non-empty fields are
 // considered
 func (conf *VCSConfig) Merge(other *VCSConfig) {
@@ -51,6 +75,9 @@ func (conf *VCSConfig) Merge(other *VCSConfig) {
 		conf.Username = other.Username
 	}
 
+	if conf.Repo == nil {
+		conf.Repo = &VCSRepoConfig{}
+	}
 	conf.Repo.Merge(other.Repo)
 }
 

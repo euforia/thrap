@@ -44,8 +44,8 @@ func New(conf *Config) (Orchestrator, error) {
 	case "nomad":
 		orch = &nomadOrchestrator{}
 
-	case "docker":
-		orch = &DockerOrchestrator{}
+	// case "docker":
+	// orch = &DockerOrchestrator{}
 
 	default:
 		err = fmt.Errorf("unsupported orchestrator: '%s'", conf.Provider)

@@ -38,18 +38,21 @@ message Component {
     // Secrets for this component
     Secrets Secrets = 7 [(gogoproto.moretags) = "hcl:\"secrets\" yaml:\",omitempty\""];
 
+    // Port map so ports can be referenced by variables
+    map<string,int32> Ports = 8 [(gogoproto.moretags) = "hcl:\"ports\" hcle:\"omitempty\" yaml:\",omitempty\""];;
+    
     // If dep then true is an external dep. If stack item then true exposes
     // to the internet
-    bool External = 8 [(gogoproto.moretags) = "hcl:\"external\" hcle:\"omitempty\" yaml:\",omitempty\""];
+    bool External = 9 [(gogoproto.moretags) = "hcl:\"external\" hcle:\"omitempty\" yaml:\",omitempty\""];
 
     // True if this is the head of the stack i.e. consumable api.
-    bool Head = 9 [(gogoproto.moretags) = "hcl:\"head\" hcle:\"omitempty\" yaml:\",omitempty\""];
+    bool Head = 10 [(gogoproto.moretags) = "hcl:\"head\" hcle:\"omitempty\" yaml:\",omitempty\""];
 
     // Envionment variables
-    Envionment Env = 10 [(gogoproto.moretags) = "hcl:\"env\" hcle:\"omitempty\" yaml:\",omitempty\""];
+    Envionment Env = 11 [(gogoproto.moretags) = "hcl:\"env\" hcle:\"omitempty\" yaml:\",omitempty\""];
 
     // Arbitrary KV config map
-	map<string, string> Config = 11 [(gogoproto.moretags) = "hcl:\"config\" hcle:\"omitempty\" yaml:\",omitempty\""];
+	map<string, string> Config = 12 [(gogoproto.moretags) = "hcl:\"config\" hcle:\"omitempty\" yaml:\",omitempty\""];
 }
 
 message PackManifest {

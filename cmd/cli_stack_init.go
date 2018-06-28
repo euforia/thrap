@@ -12,11 +12,12 @@ import (
 	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/core"
+	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/packs"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vars"
-	"github.com/euforia/thrap/vcs"
+	"github.com/pkg/errors"
 )
 
 var usageTextInit = `thrap init [command options] [directory]
@@ -44,7 +45,7 @@ func commandStackInit() *cli.Command {
 			},
 			&cli.StringFlag{
 				Name:  "vcs",
-				Usage: "version control `provider`",
+				Usage: "version control `provider` (experimental)",
 				Value: "github",
 			},
 			&cli.StringFlag{
@@ -53,6 +54,15 @@ func commandStackInit() *cli.Command {
 			},
 		},
 		Action: func(ctx *cli.Context) error {
+			coreConf := &core.CoreConfig{
+				PacksDir: defaultPacksDir,
+			}
+
+			cr, err := core.NewCore(coreConf)
+			if err != nil {
+				return err
+			}
+
 			// Create project directory if not found
 			projPath, err := setupProjPath(ctx)
 			if err != nil {
@@ -64,31 +74,23 @@ func commandStackInit() *cli.Command {
 				projName = filepath.Base(projPath)
 			}
 
-			// Load packs
-			pks, err := packs.New("./etc/packs")
-			if err != nil {
-				return err
-			}
-			devpacks := pks.Dev()
-
-			gconf, err := config.ReadGlobalConfig()
-			if err != nil {
-				return err
+			mfile := filepath.Join(projPath, consts.DefaultManifestFile)
+			if utils.FileExists(mfile) {
+				// TODO: ???
+				return fmt.Errorf("manifest %s already exists", consts.DefaultManifestFile)
 			}
 
+			pks := cr.Packs()
 			// Set language from input or otherwise and other related params
-			_, err = setLanguage(ctx, devpacks, projPath)
+			_, err = setLanguage(ctx, pks.Dev(), projPath)
 			if err != nil {
 				return err
 			}
 
+			gconf := cr.Config()
 			vcsID := ctx.String("vcs")
 			defaultVCS := gconf.VCS[vcsID]
-			if err = setRepoOwner(ctx, defaultVCS.ID, defaultVCS.Username, projPath); err != nil {
-				return err
-			}
-
-			repoOwner := ctx.String(vars.VcsRepoOwner)
+			repoOwner := setRepoOwner(ctx, defaultVCS.ID, defaultVCS.Username)
 
 			// Local project setup
 			opts := core.ConfigureOptions{
@@ -101,47 +103,22 @@ func commandStackInit() *cli.Command {
 					},
 				},
 			}
-			pconf, err := core.ConfigureLocal(opts)
-			if err != nil {
-				return err
-			}
-			defaultVCS = pconf.VCS[vcsID]
-
-			mfile := filepath.Join(projPath, consts.DefaultManifestFile)
-			if utils.FileExists(mfile) {
-				// TODO: ???
-				return fmt.Errorf("manifest %s already exists", consts.DefaultManifestFile)
-			}
-
-			vcsp, gitRepo, err := vcs.SetupLocalGitRepo(projName, repoOwner, projPath, defaultVCS.Addr)
-			if err != nil {
-				return err
-			}
 
 			// Prompt for missing
-			stack, err := promptComps(projName, ctx.String("lang"), pks)
+			bsc, err := promptComps(projName, ctx.String("lang"), pks)
 			if err != nil {
 				return err
 			}
+
 			fmt.Println()
 
-			errs := stack.Validate()
-			if errs != nil {
-				return utils.FlattenErrors(errs)
-			}
-
-			scopeVars := defaultVCS.ScopeVars("vcs.")
-			stAsm, err := asm.NewStackAsm(stack, vcsp, gitRepo, scopeVars, devpacks)
+			stm := cr.Stack()
+			stack, err := stm.Init(bsc, opts)
 			if err != nil {
 				return err
 			}
 
-			err = stAsm.Assemble()
-			if err != nil {
-				return err
-			}
-
-			return stAsm.WriteManifest()
+			return manifest.WriteManifest(stack, os.Stdout)
 		},
 	}
 }
@@ -179,15 +156,14 @@ func setLanguage(ctx *cli.Context, devpacks *packs.DevPacks, dir string) (*packs
 
 	// Do not prompt if input is valid
 	lang := ctx.String("lang")
-	if isSupported(lang, supported) {
-		return devpacks.Load(lang)
+	if !isSupported(lang, supported) {
+
+		// Set guestimate as default
+		lang = analysis.EstimateLanguage(dir)
+
+		prompt := "Language"
+		lang = promptForSupported(prompt, supported, lang)
 	}
-
-	// Set guestimate as default
-	lang = analysis.EstimateLanguage(dir)
-
-	prompt := "Language"
-	lang = promptForSupported(prompt, supported, lang)
 
 	devpack, err := devpacks.Load(lang)
 	if err == nil {
@@ -197,31 +173,32 @@ func setLanguage(ctx *cli.Context, devpacks *packs.DevPacks, dir string) (*packs
 	return devpack, err
 }
 
-func setRepoOwner(ctx *cli.Context, vcsID, defRepoOwner, dir string) error {
-	var err error
+func setRepoOwner(ctx *cli.Context, vcsID, defRepoOwner string) string {
+	//var err error
 
 	var repoOwner string
 	prompt := vcsID + " repo owner [" + defRepoOwner + "]: "
 	utils.PromptUntilNoError(prompt, os.Stdout, os.Stdin, func(db []byte) error {
 		repoOwner = string(db)
 		if repoOwner == "" {
+			if defRepoOwner == "" {
+				return errors.New("repo owner required")
+			}
 			repoOwner = defRepoOwner
 		}
 		return nil
 	})
 
-	err = ctx.Set(vars.VcsRepoOwner, repoOwner)
-	return err
+	return repoOwner
 }
 
-func promptComps(name, lang string, pks *packs.Packs) (*thrapb.Stack, error) {
+func promptComps(name, lang string, pks *packs.Packs) (*asm.BasicStackConfig, error) {
 	c := &asm.BasicStackConfig{
 		Name:     name,
 		Language: thrapb.LanguageID(lang),
 	}
 
 	var err error
-	// ds, ws := prompt(conf)
 	c.WebServer, err = promptPack(pks.Web(), "Web Server")
 	if err != nil {
 		return nil, err
@@ -231,7 +208,7 @@ func promptComps(name, lang string, pks *packs.Packs) (*thrapb.Stack, error) {
 		return nil, err
 	}
 
-	return asm.NewBasicStack(c, pks)
+	return c, nil
 }
 
 func promptPack(wp *packs.BasePacks, prompt string) (string, error) {

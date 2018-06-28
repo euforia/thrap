@@ -64,6 +64,11 @@ func New(dir string) (*Packs, error) {
 	return &Packs{dir: dir}, nil
 }
 
+// Dir returns the packs data directory
+func (packs *Packs) Dir() string {
+	return packs.dir
+}
+
 func (packs *Packs) Load(httpURL string) error {
 	if utils.FileExists(packs.dir) {
 		return errPackDirExists

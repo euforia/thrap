@@ -71,7 +71,12 @@ func GetRepoVersion(path string) RepoVersion {
 		c = t - c
 	}
 
-	head, _ := repo.Head()
+	rp := RepoVersion{Tag: tagLabel, Count: c}
 
-	return RepoVersion{tagLabel, c, head.Hash()}
+	head, err := repo.Head()
+	if err == nil {
+		rp.Hash = head.Hash()
+	}
+
+	return rp
 }
