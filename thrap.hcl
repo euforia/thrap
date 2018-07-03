@@ -11,9 +11,9 @@ manifest "thrap" {
         http = 4646
       }
 
-      # build {
-      #   dockerfile = "nomad.dockerfile"
-      # }
+      build {
+        dockerfile = "nomad.dockerfile"
+      }
     }
 
     vault {
@@ -54,8 +54,8 @@ manifest "thrap" {
         vars {
           # Should be available by default  
           STACK_VERSION = "${stack.version}"
-          VAULT_ADDR    = "http://${comps.vault.container.ip}:${comps.vault.container.default.port}"
-          NOMAD_ADDR    = "http://${comps.nomad.container.ip}:${comps.nomad.container.http.port}"
+          VAULT_ADDR    = "http://${comps.vault.container.addr.default}"
+          NOMAD_ADDR    = "http://${comps.nomad.container.addr.http}"
         }
       }
     }

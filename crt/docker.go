@@ -1,11 +1,10 @@
 package crt
 
 import (
-	"fmt"
+	"errors"
 	"io"
 	"math/rand"
 	"os"
-	"path/filepath"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -44,28 +43,30 @@ func NewDocker() (*Docker, error) {
 }
 
 // Run creates and runs a container with the given config
-func (orch *Docker) Run(ctx context.Context, cfg *thrapb.Container, opts RequestOptions) error {
+func (orch *Docker) Run(ctx context.Context, cfg *thrapb.Container) ([]string, error) {
+
 	resp, err := orch.cli.ContainerCreate(ctx, cfg.Container, cfg.Host, cfg.Network, cfg.Name)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	logline := cfg.Name + ": created\n"
+	//logline := cfg.Name + ": created\n"
 	// Append warnings
-	if len(resp.Warnings) > 0 {
-		for _, w := range resp.Warnings {
-			logline += "  " + cfg.Name + ": " + w + "\n"
-		}
-	}
+	// if len(resp.Warnings) > 0 {
+	// 	var logline string
+	// 	for _, w := range resp.Warnings {
+	// 		logline += "  " + cfg.Name + ": " + w + "\n"
+	// 	}
+	// 	opts.Output.Write([]byte(logline))
+	// }
 	// Write log line
-	opts.Output.Write([]byte(logline))
 
 	err = orch.cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{})
-	if err == nil {
-		fmt.Fprintf(opts.Output, "%s: started\n", cfg.Name)
-	}
+	// if err == nil {
+	// 	fmt.Fprintf(opts.Output, "%s: started\n", cfg.Name)
+	// }
 
-	return err
+	return resp.Warnings, err
 }
 
 // CreateNetwork sets up a user-defined bridge network only if one does not
@@ -132,13 +133,22 @@ func (orch *Docker) Remove(ctx context.Context, cid string) error {
 	return orch.cli.ContainerRemove(ctx, cid, opts)
 }
 
-func (orch *Docker) Build2(ctx context.Context, req *BuildRequest) error {
+func (orch *Docker) Build(ctx context.Context, req *BuildRequest) error {
 	ign, err := dockerfile.ReadIgnoresFile(req.ContextDir)
 	if err != nil {
 		return err
 	}
+
+	if req.TarOpts == nil {
+		req.TarOpts = &archive.TarOptions{}
+	}
+
+	if len(req.TarOpts.ExcludePatterns) == 0 {
+		req.TarOpts.ExcludePatterns = ign
+	} else {
+		return errors.New("merging ignores currently not supported")
+	}
 	// TODO: dedup ignores and append
-	req.TarOpts.ExcludePatterns = ign
 
 	rdc, err := archive.TarWithOptions(req.ContextDir, req.TarOpts)
 	if err != nil {
@@ -157,49 +167,50 @@ func (orch *Docker) Build2(ctx context.Context, req *BuildRequest) error {
 }
 
 // Build builds a single component of a stack using 'docker build'
-func (orch *Docker) BuildComponent(ctx context.Context, stackID string, comp *thrapb.Component, opts RequestOptions) error {
-	bc := comp.Build
+// func (orch *Docker) BuildComponent(ctx context.Context, stackID string, comp *thrapb.Component, opts RequestOptions) error {
+// 	bc := comp.Build
 
-	tarOpt := &archive.TarOptions{}
+// 	tarOpt := &archive.TarOptions{}
 
-	ign, err := dockerfile.ReadIgnoresFile(bc.Context)
-	if err == nil {
-		tarOpt.ExcludePatterns = ign
-	}
+// 	ign, err := dockerfile.ReadIgnoresFile(bc.Context)
+// 	if err == nil {
+// 		tarOpt.ExcludePatterns = ign
+// 	}
 
-	rdc, err := archive.TarWithOptions(bc.Context, tarOpt)
-	if err != nil {
-		return err
-	}
-	defer rdc.Close()
+// 	rdc, err := archive.TarWithOptions(bc.Context, tarOpt)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer rdc.Close()
 
-	name := filepath.Join(stackID, comp.ID)
-	opt := types.ImageBuildOptions{
-		Tags:        []string{name},
-		BuildID:     comp.ID, // todo add vcs repo version
-		Dockerfile:  bc.Dockerfile,
-		NetworkMode: stackID,
-		// Remove:      true,
-	}
+// 	name := filepath.Join(stackID, comp.ID)
+// 	opt := types.ImageBuildOptions{
+// 		Tags:        []string{name},
+// 		BuildID:     comp.ID, // todo add vcs repo version
+// 		Dockerfile:  bc.Dockerfile,
+// 		NetworkMode: stackID,
+// 		// Remove:      true,
+// 	}
 
-	if comp.HasEnvVars() {
-		opt.BuildArgs = make(map[string]*string, len(comp.Env.Vars))
-		for k := range comp.Env.Vars {
-			v := comp.Env.Vars[k]
-			opt.BuildArgs[k] = &v
-		}
-	}
+// 	if comp.HasEnvVars() {
+// 		opt.BuildArgs = make(map[string]*string, len(comp.Env.Vars))
+// 		for k := range comp.Env.Vars {
+// 			v := comp.Env.Vars[k]
+// 			opt.BuildArgs[k] = &v
+// 		}
+// 	}
 
-	fmt.Printf("%+v\n", opt)
-	resp, err := orch.cli.ImageBuild(ctx, rdc, opt)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	// params: reader, output writer, descriptor, isTerminal, auxCallback
-	err = jsonmessage.DisplayJSONMessagesStream(resp.Body, opts.Output, uintptr(rand.Uint32()), true, nil)
-	return err
-}
+// 	//fmt.Printf("%+v\n", opt)
+
+// 	resp, err := orch.cli.ImageBuild(ctx, rdc, opt)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer resp.Body.Close()
+// 	// params: reader, output writer, descriptor, isTerminal, auxCallback
+// 	err = jsonmessage.DisplayJSONMessagesStream(resp.Body, opts.Output, uintptr(rand.Uint32()), true, nil)
+// 	return err
+// }
 
 // ImagePull pulls in image from the docker registry using docker. This uses
 // dockers built in mechanism to communicate to the registry

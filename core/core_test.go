@@ -39,7 +39,7 @@ func Test_core(t *testing.T) {
 	err := ConfigureGlobal(opt)
 	fatal(t, err)
 
-	conf := &CoreConfig{PacksDir: "../etc/packs"}
+	conf := &Config{PacksDir: "../etc/packs"}
 	c, err := NewCore(conf)
 	fatal(t, err)
 
@@ -72,7 +72,8 @@ func Test_core(t *testing.T) {
 func Test_core_stack(t *testing.T) {
 
 	lconf, _ := config.ReadProjectConfig("../")
-	conf := &CoreConfig{PacksDir: "~/.thrap/packs",
+	conf := &Config{
+		PacksDir:    "~/.thrap/packs",
 		ThrapConfig: lconf,
 	}
 

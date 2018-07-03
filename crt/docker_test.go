@@ -1,15 +1,5 @@
 package crt
 
-import (
-	"os"
-	"testing"
-
-	"github.com/euforia/thrap/manifest"
-	"github.com/euforia/thrap/thrapb"
-	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
-)
-
 // func Test_scopeVars(t *testing.T) {
 // 	stack, err := manifest.LoadManifest("../test-fixtures/thrap.hcl")
 // 	if err != nil {
@@ -73,32 +63,32 @@ import (
 // 	}
 // }
 
-func Test_Docker_Build(t *testing.T) {
-	bldr, err := NewDocker()
-	if err != nil {
-		t.Fatal(err)
-	}
+// func Test_Docker_Build(t *testing.T) {
+// 	bldr, err := NewDocker()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 
-	st, err := manifest.LoadManifest("../test-fixtures/builder.yml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	st.Validate()
+// 	st, err := manifest.LoadManifest("../test-fixtures/builder.yml")
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	st.Validate()
 
-	var bcomp *thrapb.Component
-	for _, comp := range st.Components {
-		if comp.IsBuildable() {
-			bcomp = comp
-			bcomp.Build.Context = "../test-fixtures"
-			break
-		}
-	}
-	ctx := context.Background()
+// 	var bcomp *thrapb.Component
+// 	for _, comp := range st.Components {
+// 		if comp.IsBuildable() {
+// 			bcomp = comp
+// 			bcomp.Build.Context = "../test-fixtures"
+// 			break
+// 		}
+// 	}
+// 	ctx := context.Background()
 
-	err = bldr.BuildComponent(ctx, "default", bcomp, RequestOptions{Output: os.Stdout})
-	assert.Nil(t, err)
+// 	err = bldr.BuildComponent(ctx, "default", bcomp, RequestOptions{Output: os.Stdout})
+// 	assert.Nil(t, err)
 
-}
+// }
 
 // func Test_DockerOrchestrator_Deploy(t *testing.T) {
 // 	st := &thrapb.Stack{ID: "test",

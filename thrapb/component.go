@@ -59,7 +59,7 @@ func (comp *Component) ScopeVars(prefix string) scope.Variables {
 	}
 
 	for k, p := range comp.Ports {
-		vname := comp.ScopeVarName(prefix, "container."+k+".port")
+		vname := comp.ScopeVarName(prefix, "container.port."+k)
 		svars[vname] = ast.Variable{
 			Value: int(p),
 			Type:  ast.TypeInt,

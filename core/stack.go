@@ -6,7 +6,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/docker/docker/api/types"
 	"github.com/hashicorp/hil"
 	"github.com/hashicorp/hil/ast"
 
@@ -174,13 +176,80 @@ func (st *Stack) scopeVars(stack *thrapb.Stack) scope.Variables {
 	svars := stack.ScopeVars()
 	for k, v := range stack.Components {
 
-		svars[v.ScopeVarName("comps.", "container.ip")] = ast.Variable{
+		ipvar := ast.Variable{
 			Type:  ast.TypeString,
 			Value: k + "." + stack.ID,
 		}
 
+		// Set container ip var
+		svars[v.ScopeVarName("comps.", "container.ip")] = ipvar
+		// Set container.addr var per port label
+		for pl, p := range v.Ports {
+			svars[v.ScopeVarName("comps.", "container.addr."+pl)] = ast.Variable{
+				Type:  ast.TypeString,
+				Value: fmt.Sprintf("%s:%d", ipvar.Value, p),
+			}
+		}
+
 	}
+
 	return svars
+}
+
+// startServices starts services needed to perform the build that themselves do not need
+// to be built
+func (st *Stack) startServices(ctx context.Context, stack *thrapb.Stack, scopeVars scope.Variables) error {
+	var (
+		err error
+		//opt = crt.RequestOptions{Output: os.Stdout}
+	)
+
+	fmt.Printf("\nServices:\n\n")
+
+	for _, comp := range stack.Components {
+		if comp.IsBuildable() {
+			continue
+		}
+
+		// eval hcl/hil
+		if err = st.evalComponent(comp, scopeVars); err != nil {
+			break
+		}
+
+		if err = st.startContainer(ctx, stack.ID, comp); err != nil {
+			break
+		}
+
+		fmt.Println(comp.ID)
+
+	}
+
+	return err
+}
+
+func (st *Stack) startContainer(ctx context.Context, sid string, comp *thrapb.Component) error {
+	cfg := thrapb.NewContainer(sid, comp.ID)
+	cfg.Container.Image = comp.Name + ":" + comp.Version
+
+	if comp.HasEnvVars() {
+		cfg.Container.Env = make([]string, 0, len(comp.Env.Vars))
+		for k, v := range comp.Env.Vars {
+			cfg.Container.Env = append(cfg.Container.Env, k+"="+v)
+		}
+	}
+
+	// Non-blocking
+	warnings, err := st.crt.Run(ctx, cfg)
+	if err != nil {
+		return err
+	}
+
+	if len(warnings) > 0 {
+		for _, w := range warnings {
+			fmt.Printf("%s: %s\n", cfg.Name, w)
+		}
+	}
+	return nil
 }
 
 // Build starts all require services, then starts all the builds
@@ -189,47 +258,39 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack) error {
 		return utils.FlattenErrors(errs)
 	}
 
-	opts := crt.RequestOptions{
-		Output: os.Stdout,
-	}
-
 	err := st.crt.CreateNetwork(ctx, stack.ID)
 	if err != nil {
 		return err
 	}
 
 	scopeVars := st.scopeVars(stack)
-	st.log.Printf("DEBUG Scoped variables: %+v", scopeVars)
+	fmt.Printf("\nScope:\n\n")
+	fmt.Println(strings.Join(scopeVars.Names(), "\n"))
+	fmt.Println()
+	// st.log.Printf("DEBUG Scope: %v", scopeVars.Names())
 
 	defer st.Destroy(ctx, stack)
 
 	// Start containers needed for build
-	for _, comp := range stack.Components {
-		if comp.IsBuildable() {
-			continue
-		}
-
-		// eval hcl/hil
-		if err = st.evalComponent(comp, scopeVars); err != nil {
-			return err
-		}
-
-		cfg := thrapb.NewContainer(stack.ID, comp.ID)
-		cfg.Container.Image = comp.Name + ":" + comp.Version
-
-		if comp.HasEnvVars() {
-			cfg.Container.Env = make([]string, 0, len(comp.Env.Vars))
-			for k, v := range comp.Env.Vars {
-				cfg.Container.Env = append(cfg.Container.Env, k+"="+v)
-			}
-		}
-
-		// Non-blocking
-		err := st.crt.Run(ctx, cfg, opts)
-		if err != nil {
-			return err
-		}
+	err = st.startServices(ctx, stack, scopeVars)
+	if err != nil {
+		return err
 	}
+
+	// Start non-head builds
+	err = st.startBuilds(ctx, stack, scopeVars, false)
+	if err != nil {
+		return err
+	}
+
+	// Start head builds
+	err = st.startBuilds(ctx, stack, scopeVars, true)
+
+	return err
+}
+
+func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, scopeVars scope.Variables, head bool) error {
+	var err error
 
 	// Start build containers after
 	for _, comp := range stack.Components {
@@ -237,20 +298,66 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack) error {
 			continue
 		}
 
-		// TODO: add vars
-		// eval hcl/hil
-		if err = st.evalComponent(comp, scopeVars); err != nil {
-			return err
+		// Build based on whether head was requested
+		if comp.Head != head {
+			continue
 		}
 
-		// Blocking
-		err = st.crt.BuildComponent(ctx, stack.ID, comp, opts)
+		// eval hcl/hil
+		if err = st.evalComponent(comp, scopeVars); err != nil {
+			break
+		}
+
+		err = st.doBuild(ctx, stack.ID, comp)
 		if err != nil {
-			return err
+			break
+		}
+
+		// Start container from image that was just built, if this component
+		// is not the head
+		if !comp.Head {
+			fmt.Printf("%s\n", comp.ID)
+			err = st.startContainer(ctx, stack.ID, comp)
+			if err != nil {
+				break
+			}
 		}
 	}
 
-	return nil
+	return err
+}
+
+func (st *Stack) doBuild(ctx context.Context, sid string, comp *thrapb.Component) error {
+	tbase := filepath.Join(sid, comp.ID)
+	req := &crt.BuildRequest{
+		Output:     os.Stdout,
+		ContextDir: comp.Build.Context,
+		BuildOpts: &types.ImageBuildOptions{
+			Tags:        []string{tbase},
+			BuildID:     comp.ID, // todo add vcs repo version
+			Dockerfile:  comp.Build.Dockerfile,
+			NetworkMode: sid,
+			// Remove:      true,
+		},
+	}
+	if len(comp.Version) > 0 {
+		req.BuildOpts.Tags = append(req.BuildOpts.Tags, tbase+":"+comp.Version)
+	}
+
+	if comp.HasEnvVars() {
+		req.BuildOpts.BuildArgs = make(map[string]*string, len(comp.Env.Vars))
+		fmt.Printf("\nBuild arguments:\n\n")
+		for k := range comp.Env.Vars {
+			v := comp.Env.Vars[k]
+			fmt.Println(k)
+			req.BuildOpts.BuildArgs[k] = &v
+		}
+		fmt.Println()
+	}
+
+	// Blocking
+	fmt.Printf("Building %s:\n\n", comp.ID)
+	return st.crt.Build(ctx, req)
 }
 
 func (st *Stack) evalComponent(comp *thrapb.Component, scopeVars scope.Variables) error {
@@ -269,7 +376,7 @@ func (st *Stack) evalComponent(comp *thrapb.Component, scopeVars scope.Variables
 			return fmt.Errorf("env value must be string key=%s value=%s", k, v)
 		}
 		comp.Env.Vars[k] = result.Value.(string)
-		st.log.Printf("DEBUG env.%s='%s'", k, comp.Env.Vars[k])
+		// st.log.Printf("DEBUG env.%s='%s'", k, comp.Env.Vars[k])
 	}
 
 	return nil
@@ -322,8 +429,6 @@ func (st *Stack) Deploy(stack *thrapb.Stack) error {
 		return err
 	}
 
-	opts := crt.RequestOptions{Output: os.Stdout}
-
 	// Deploy non-buildable components
 	for _, comp := range stack.Components {
 		cfg := thrapb.NewContainer(stack.ID, comp.ID)
@@ -336,7 +441,7 @@ func (st *Stack) Deploy(stack *thrapb.Stack) error {
 			cfg.Container.Image = comp.Name + ":" + comp.Version
 		}
 
-		err = st.crt.Run(ctx, cfg, opts)
+		_, err = st.crt.Run(ctx, cfg)
 		if err != nil {
 			break
 		}

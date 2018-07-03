@@ -39,7 +39,7 @@ func commandStackDeploy() *cli.Command {
 				return err
 			}
 
-			conf := &core.CoreConfig{ThrapConfig: pconf}
+			conf := &core.Config{ThrapConfig: pconf}
 			_, err = core.NewCore(conf)
 			// if err != nil {
 			// 	return err

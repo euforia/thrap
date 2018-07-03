@@ -33,18 +33,14 @@ func commandStackValidate() *cli.Command {
 		Usage:     "Validate a manifest",
 		ArgsUsage: "[path to manifest]",
 		Action: func(ctx *cli.Context) error {
+
 			mfile := ctx.Args().Get(0)
 			mf, err := manifest.LoadManifest(mfile)
 			if err != nil {
 				return err
 			}
 
-			// rpath, err := utils.GetLocalPath("")
-			// if err != nil {
-			// 	return err
-			// }
-
-			core, err := core.NewCore(&core.CoreConfig{PacksDir: defaultPacksDir})
+			core, err := core.NewCore(&core.Config{PacksDir: defaultPacksDir})
 			if err != nil {
 				return err
 			}
@@ -91,7 +87,7 @@ func commandStackBuild() *cli.Command {
 				return err
 			}
 
-			core, err := core.NewCore(&core.CoreConfig{PacksDir: defaultPacksDir})
+			core, err := core.NewCore(&core.Config{PacksDir: defaultPacksDir})
 			if err != nil {
 				return err
 			}

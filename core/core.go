@@ -40,8 +40,8 @@ const (
 // 	Build(stackID string, comp *thrapb.Component, opts orchestrator.RequestOptions) error
 // }
 
-// CoreConfig holds the core configuration
-type CoreConfig struct {
+// Config holds the core configuration
+type Config struct {
 	// This is the local config merged with the global for the
 	// instance
 	*config.ThrapConfig
@@ -74,7 +74,7 @@ type Core struct {
 }
 
 // NewCore loads the core engine with the global configs
-func NewCore(conf *CoreConfig) (*Core, error) {
+func NewCore(conf *Config) (*Core, error) {
 
 	dkr, err := crt.NewDocker()
 	if err != nil {
@@ -167,7 +167,7 @@ func (core *Core) initVCS() (err error) {
 
 	core.vcs, err = vcs.New(vconf)
 	if err == nil {
-		core.log.Println("VCS loaded:", vc.ID)
+		core.log.Println("DEBUG VCS:", vc.ID)
 	}
 	return err
 }
@@ -187,7 +187,7 @@ func (core *Core) initRegistry() error {
 		}
 
 		core.regs[k] = reg
-		core.log.Println("Registry loaded:", rc.ID)
+		core.log.Println("DEBUG Registry:", rc.ID)
 	}
 
 	return nil
@@ -212,7 +212,7 @@ func (core *Core) initSecrets() (err error) {
 
 	core.sec, err = secrets.New(sconf)
 	if err == nil {
-		core.log.Println("Secrets loaded:", sc.ID)
+		core.log.Println("DEBUG Secrets:", sc.ID)
 	}
 	return err
 }
@@ -221,6 +221,9 @@ func (core *Core) initOrchestrator() (err error) {
 	c := core.conf.GetDefaultOrchestrator()
 	conf := &orchestrator.Config{Provider: c.ID}
 	core.orch, err = orchestrator.New(conf)
+	if err == nil {
+		core.log.Println("DEBUG Orchestrator:", core.orch.ID())
+	}
 	return
 }
 

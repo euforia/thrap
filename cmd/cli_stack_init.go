@@ -55,7 +55,7 @@ func commandStackInit() *cli.Command {
 			},
 		},
 		Action: func(ctx *cli.Context) error {
-			coreConf := &core.CoreConfig{
+			coreConf := &core.Config{
 				PacksDir: defaultPacksDir,
 			}
 
@@ -69,6 +69,7 @@ func commandStackInit() *cli.Command {
 			if err != nil {
 				return err
 			}
+
 			// Project name
 			projName := ctx.String("name")
 			if len(projName) == 0 {
