@@ -76,11 +76,7 @@ func defaultCompEnvVars(pre string) map[string]string {
 	upre := strings.ToUpper(pre)
 	return map[string]string{
 		upre + "_CONTAINER_IP": "${comps." + pre + ".container.ip}",
-		// upre + "_CONTAINER_PORT": "${comps." + pre + ".container.port}",
-		// upre + "_CONTAINER_ADDR": "${comps." + pre + ".container.addr}",
-		upre + "_HOST_IP": "${comps." + pre + ".host.ip}",
-		// upre + "_HOST_PORT":      "${comps." + pre + ".host.port}",
-		// upre + "_HOST_ADDR":      "${comps." + pre + ".host.addr}",
+		// upre + "_HOST_IP":      "${comps." + pre + ".host.ip}",
 	}
 }
 
@@ -99,8 +95,6 @@ func makeDevComp(compID string, lang thrapb.LanguageID) *thrapb.Component {
 			File: consts.DefaultEnvFile,
 			Vars: map[string]string{
 				consts.EnvVarVersion: "${" + vars.StackVersion + "}",
-				// strings.ToUpper(compID) + "_CONTAINER_IP": "${comps." + compID + ".container.ip}",
-				// strings.ToUpper(compID) + "_HOST_IP":      "${comps." + compID + ".host.ip}",
 			},
 		},
 		Secrets: &thrapb.Secrets{

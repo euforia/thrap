@@ -3,6 +3,7 @@ package crt
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"path/filepath"
 
@@ -19,6 +20,13 @@ import (
 // RequestOptions are the common request options for crt's
 type RequestOptions struct {
 	Output io.Writer
+}
+
+type BuildRequest struct {
+	ContextDir string
+	TarOpts    *archive.TarOptions
+	BuildOpts  *types.ImageBuildOptions
+	Output     io.Writer
 }
 
 // Docker implements a docker backed orchestrator
@@ -124,8 +132,32 @@ func (orch *Docker) Remove(ctx context.Context, cid string) error {
 	return orch.cli.ContainerRemove(ctx, cid, opts)
 }
 
+func (orch *Docker) Build2(ctx context.Context, req *BuildRequest) error {
+	ign, err := dockerfile.ReadIgnoresFile(req.ContextDir)
+	if err != nil {
+		return err
+	}
+	// TODO: dedup ignores and append
+	req.TarOpts.ExcludePatterns = ign
+
+	rdc, err := archive.TarWithOptions(req.ContextDir, req.TarOpts)
+	if err != nil {
+		return err
+	}
+	defer rdc.Close()
+
+	resp, err := orch.cli.ImageBuild(ctx, rdc, *req.BuildOpts)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	// params: reader, output writer, descriptor, isTerminal, auxCallback
+	err = jsonmessage.DisplayJSONMessagesStream(resp.Body, req.Output, uintptr(rand.Uint32()), true, nil)
+	return err
+}
+
 // Build builds a single component of a stack using 'docker build'
-func (orch *Docker) Build(ctx context.Context, stackID string, comp *thrapb.Component, opts RequestOptions) error {
+func (orch *Docker) BuildComponent(ctx context.Context, stackID string, comp *thrapb.Component, opts RequestOptions) error {
 	bc := comp.Build
 
 	tarOpt := &archive.TarOptions{}
@@ -144,23 +176,28 @@ func (orch *Docker) Build(ctx context.Context, stackID string, comp *thrapb.Comp
 	name := filepath.Join(stackID, comp.ID)
 	opt := types.ImageBuildOptions{
 		Tags:        []string{name},
-		BuildID:     comp.ID,
+		BuildID:     comp.ID, // todo add vcs repo version
 		Dockerfile:  bc.Dockerfile,
 		NetworkMode: stackID,
-		// BuildArgs:  make(map[string]*string),
 		// Remove:      true,
 	}
 
+	if comp.HasEnvVars() {
+		opt.BuildArgs = make(map[string]*string, len(comp.Env.Vars))
+		for k := range comp.Env.Vars {
+			v := comp.Env.Vars[k]
+			opt.BuildArgs[k] = &v
+		}
+	}
+
+	fmt.Printf("%+v\n", opt)
 	resp, err := orch.cli.ImageBuild(ctx, rdc, opt)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-
-	err = jsonmessage.DisplayJSONMessagesStream(resp.Body, opts.Output, 100, true, nil)
-	if err == nil {
-		fmt.Fprintf(opts.Output, "%s: built\n", name)
-	}
+	// params: reader, output writer, descriptor, isTerminal, auxCallback
+	err = jsonmessage.DisplayJSONMessagesStream(resp.Body, opts.Output, uintptr(rand.Uint32()), true, nil)
 	return err
 }
 

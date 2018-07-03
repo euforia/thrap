@@ -20,6 +20,10 @@ const (
 	defaultRemoteName = "origin"
 )
 
+var (
+	errPathNotSpecified = errors.New("path not specified")
+)
+
 // SetupLocalGitRepo initializes a new git repo.  It returns an error
 // if it already has been initialized or fails
 func SetupLocalGitRepo(projName, repoOwner, projPath, remoteAddr string) (VCS, *git.Repository, error) {
@@ -121,7 +125,7 @@ func (g *GitVCS) Create(repo *Repository, opt Option) (interface{}, error) {
 	)
 
 	if len(opt.Path) == 0 {
-		return nil, errors.New("path not specified")
+		return nil, errPathNotSpecified
 	}
 
 	gitRepo, err = git.PlainInit(opt.Path, false)
@@ -143,6 +147,13 @@ func (g *GitVCS) Create(repo *Repository, opt Option) (interface{}, error) {
 	err = g.setupRemote(gitRepo, opt.Remote)
 
 	return gitRepo, err
+}
+
+func (g *GitVCS) Open(repo *Repository, opt Option) (interface{}, error) {
+	if len(opt.Path) == 0 {
+		return nil, errPathNotSpecified
+	}
+	return git.PlainOpen(opt.Path)
 }
 
 // Delete removes the .git directory leaving all other files intact

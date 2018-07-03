@@ -45,18 +45,23 @@ func NewComponent(name, version string, typ CompType) *Component {
 	}
 }
 
-func (comp *Component) ScopeVars(prefix string) scope.Variables {
+func (comp *Component) ScopeVarName(prefix, key string) string {
+	return prefix + comp.ID + "." + key
+}
 
+func (comp *Component) ScopeVars(prefix string) scope.Variables {
+	// prefix + comp.ID + ".version"
 	svars := scope.Variables{
-		prefix + comp.ID + ".version": ast.Variable{
+		comp.ScopeVarName(prefix, "version"): ast.Variable{
 			Type:  ast.TypeString,
 			Value: comp.Version,
 		},
 	}
 
 	for k, p := range comp.Ports {
-		svars[prefix+comp.ID+".container."+k+".port"] = ast.Variable{
-			Value: p,
+		vname := comp.ScopeVarName(prefix, "container."+k+".port")
+		svars[vname] = ast.Variable{
+			Value: int(p),
 			Type:  ast.TypeInt,
 		}
 	}
@@ -96,16 +101,31 @@ func (comp *Component) Validate() error {
 	return comp.validateCommon()
 }
 
+func (comp *Component) HasEnvVars() bool {
+	return comp.Env != nil && len(comp.Env.Vars) > 0
+}
+
+func (comp *Component) HasLanguage() bool {
+	return comp.Language.Lang() != ""
+}
+
 func (comp *Component) validateCommon() error {
 
 	var err error
 
 	if comp.IsBuildable() {
 		// Make sure the language is valid
-		err = comp.Language.Validate()
-		if err == nil && comp.Build.Context == "" {
+		if comp.HasLanguage() {
+			err = comp.Language.Validate()
+			if err != nil {
+				return err
+			}
+		}
+
+		if comp.Build.Context == "" {
 			comp.Build.Context = consts.DefaultBuildContext
 		}
+
 	} else {
 		// Check component version is provided if not a buildable
 		_, err = version.NewVersion(comp.Version)

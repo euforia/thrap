@@ -83,7 +83,7 @@ func (conf *VCSConfig) Merge(other *VCSConfig) {
 
 // ScopeVars returns the scoped variables usable for interpolation
 func (conf *VCSConfig) ScopeVars(prefix string) scope.Variables {
-	return scope.Variables{
+	svars := scope.Variables{
 		prefix + "id": ast.Variable{
 			Value: conf.ID,
 			Type:  ast.TypeString,
@@ -93,16 +93,21 @@ func (conf *VCSConfig) ScopeVars(prefix string) scope.Variables {
 			Type:  ast.TypeString,
 		},
 		prefix + "username": ast.Variable{
-			Value: conf.Repo.Name,
-			Type:  ast.TypeString,
-		},
-		prefix + "repo.owner": ast.Variable{
-			Value: conf.Repo.Owner,
-			Type:  ast.TypeString,
-		},
-		prefix + "repo.name": ast.Variable{
-			Value: conf.Repo.Name,
+			Value: conf.Username,
 			Type:  ast.TypeString,
 		},
 	}
+
+	if conf.Repo != nil {
+		svars[prefix+"repo.owner"] = ast.Variable{
+			Value: conf.Repo.Owner,
+			Type:  ast.TypeString,
+		}
+		svars[prefix+"repo.name"] = ast.Variable{
+			Value: conf.Repo.Name,
+			Type:  ast.TypeString,
+		}
+	}
+
+	return svars
 }

@@ -19,10 +19,12 @@ func Test_Component(t *testing.T) {
 	err = c.Validate()
 	assert.Equal(t, errTypeNotSpecified, err)
 
-	c = &Component{Type: CompTypeAPI,
-		Build: &Build{Dockerfile: "foo"}}
+	c = &Component{
+		Type:  CompTypeAPI,
+		Build: &Build{Dockerfile: "foo"},
+	}
 	err = c.Validate()
-	assert.NotNil(t, err)
+	assert.Nil(t, err)
 
 	c.Language = "go"
 	err = c.Validate()

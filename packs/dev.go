@@ -19,6 +19,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	errDockerfileMissing = errors.New("dockerfile missing")
+)
+
 // DevPacks holds all dev packs that are available
 type DevPacks struct {
 	*basePackSet
@@ -78,7 +82,12 @@ func LoadDevPack(langID, dir string) (*DevPack, error) {
 	}
 	lp.Name = langID
 
-	err = lp.setContraints()
+	err = lp.setVersionContraints()
+	if err == nil {
+		if lp.getDockerfile() == "" {
+			return nil, errDockerfileMissing
+		}
+	}
 
 	return lp, err
 }
@@ -133,9 +142,9 @@ func (lp *DevPack) Dockerfile(svars scope.Variables) (*dockerfile.Dockerfile, er
 
 }
 
-// SetContraints sets the language version constraints from the provided
+// setVersionContraints sets the language version constraints from the provided
 // input versions at time of initialization
-func (lp *DevPack) setContraints() error {
+func (lp *DevPack) setVersionContraints() error {
 	vc := make([]version.Constraints, len(lp.Versions))
 
 	for i, ct := range lp.Versions {

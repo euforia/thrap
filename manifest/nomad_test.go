@@ -5,6 +5,12 @@ import (
 	"testing"
 )
 
+func fatal(t *testing.T, err error) {
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func Test_MakeNomadJob(t *testing.T) {
 	mf, _ := LoadManifest("../test-fixtures/thrap.yml")
 	mf.Validate()

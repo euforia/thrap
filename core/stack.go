@@ -3,9 +3,15 @@ package core
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 
+	"github.com/hashicorp/hil"
+	"github.com/hashicorp/hil/ast"
+
+	"github.com/euforia/pseudo"
+	"github.com/euforia/pseudo/scope"
 	"github.com/euforia/thrap/crt"
 	"github.com/euforia/thrap/orchestrator"
 
@@ -21,7 +27,7 @@ import (
 
 // Stack provides various stack based operations
 type Stack struct {
-	// builder
+	// builder is docker runtime
 	crt *crt.Docker
 	// config to use for this instance
 	conf *config.ThrapConfig
@@ -35,6 +41,22 @@ type Stack struct {
 	packs *packs.Packs
 	// stack store
 	sst *store.StackStore // local store
+
+	log *log.Logger
+}
+
+// Assembler returns a new assembler for the stack
+func (st *Stack) Assembler(stack *thrapb.Stack) (*asm.StackAsm, error) {
+	// fmt.Println(st.conf.VCS, st.conf.VCS[st.vcs.ID()])
+	scopeVars := st.conf.VCS[st.vcs.ID()].ScopeVars("vcs.")
+
+	//vconf := st.conf.VCS[st.vcs.ID()]
+	// r, err := st.vcs.Open()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// gitRepo := r.(*git.Repository)
+	return asm.NewStackAsm(stack, st.vcs, nil, scopeVars, st.packs)
 }
 
 // Register registers a new stack. It returns an error if the stack is
@@ -61,8 +83,8 @@ func (st *Stack) Register(stack *thrapb.Stack) (*thrapb.Stack, []*ActionReport, 
 }
 
 // Validate validates the stack manifest
-func (st *Stack) Validate(stack *thrapb.Stack, ctxDir string) error {
-	stack.Version = vcs.GetRepoVersion(ctxDir).String()
+func (st *Stack) Validate(stack *thrapb.Stack) error {
+	// stack.Version = vcs.GetRepoVersion(ctxDir).String()
 	errs := stack.Validate()
 	if len(errs) > 0 {
 		return utils.FlattenErrors(errs)
@@ -135,12 +157,12 @@ func (st *Stack) Init(stconf *asm.BasicStackConfig, opt ConfigureOptions) (*thra
 	}
 
 	scopeVars := st.conf.VCS[st.vcs.ID()].ScopeVars("vcs.")
-	stasm, err := asm.NewStackAsm(stack, vcsp, gitRepo, scopeVars, st.packs.Dev())
+	stasm, err := asm.NewStackAsm(stack, vcsp, gitRepo, scopeVars, st.packs)
 	if err != nil {
 		return stack, err
 	}
 
-	err = stasm.Assemble()
+	err = stasm.AssembleMaterialize()
 	if err == nil {
 		err = stasm.WriteManifest()
 	}
@@ -148,6 +170,20 @@ func (st *Stack) Init(stconf *asm.BasicStackConfig, opt ConfigureOptions) (*thra
 	return stack, err
 }
 
+func (st *Stack) scopeVars(stack *thrapb.Stack) scope.Variables {
+	svars := stack.ScopeVars()
+	for k, v := range stack.Components {
+
+		svars[v.ScopeVarName("comps.", "container.ip")] = ast.Variable{
+			Type:  ast.TypeString,
+			Value: k + "." + stack.ID,
+		}
+
+	}
+	return svars
+}
+
+// Build starts all require services, then starts all the builds
 func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack) error {
 	if errs := stack.Validate(); len(errs) > 0 {
 		return utils.FlattenErrors(errs)
@@ -162,15 +198,31 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack) error {
 		return err
 	}
 
+	scopeVars := st.scopeVars(stack)
+	st.log.Printf("DEBUG Scoped variables: %+v", scopeVars)
+
 	defer st.Destroy(ctx, stack)
 
+	// Start containers needed for build
 	for _, comp := range stack.Components {
 		if comp.IsBuildable() {
 			continue
 		}
 
+		// eval hcl/hil
+		if err = st.evalComponent(comp, scopeVars); err != nil {
+			return err
+		}
+
 		cfg := thrapb.NewContainer(stack.ID, comp.ID)
 		cfg.Container.Image = comp.Name + ":" + comp.Version
+
+		if comp.HasEnvVars() {
+			cfg.Container.Env = make([]string, 0, len(comp.Env.Vars))
+			for k, v := range comp.Env.Vars {
+				cfg.Container.Env = append(cfg.Container.Env, k+"="+v)
+			}
+		}
 
 		// Non-blocking
 		err := st.crt.Run(ctx, cfg, opts)
@@ -179,13 +231,20 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack) error {
 		}
 	}
 
+	// Start build containers after
 	for _, comp := range stack.Components {
 		if !comp.IsBuildable() {
 			continue
 		}
 
+		// TODO: add vars
+		// eval hcl/hil
+		if err = st.evalComponent(comp, scopeVars); err != nil {
+			return err
+		}
+
 		// Blocking
-		err := st.crt.Build(ctx, stack.ID, comp, opts)
+		err = st.crt.BuildComponent(ctx, stack.ID, comp, opts)
 		if err != nil {
 			return err
 		}
@@ -194,6 +253,52 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack) error {
 	return nil
 }
 
+func (st *Stack) evalComponent(comp *thrapb.Component, scopeVars scope.Variables) error {
+	if !comp.HasEnvVars() {
+		return nil
+	}
+
+	vm := pseudo.NewVM()
+
+	for k, v := range comp.Env.Vars {
+		result, err := vm.ParseEval(v, scopeVars)
+		if err != nil {
+			return err
+		}
+		if result.Type != hil.TypeString {
+			return fmt.Errorf("env value must be string key=%s value=%s", k, v)
+		}
+		comp.Env.Vars[k] = result.Value.(string)
+		st.log.Printf("DEBUG env.%s='%s'", k, comp.Env.Vars[k])
+	}
+
+	return nil
+}
+
+// func (st *Stack) checkDockerfileArgs(comp *thrapb.Component) error {
+// 	raw, err := dockerfile.Parse(comp.Build.Dockerfile)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	df := dockerfile.ParseRaw(raw)
+
+// 	args := make(map[string]string)
+// 	for _, ins := range df.Stages[0] {
+// 		if ins.Key() == dockerfile.KeyArg {
+// 			args[ins.String()] = ""
+// 		}
+// 	}
+
+// 	for k, _ := range comp.Env.Vars {
+// 		if _, ok := args[k]; !ok {
+// 			return fmt.Errorf("missing build arg: %s", k)
+// 		}
+// 	}
+
+// 	return nil
+// }
+
+// Destroy removes call components of the stack from the container runtime
 func (st *Stack) Destroy(ctx context.Context, stack *thrapb.Stack) []*ActionReport {
 	ar := make([]*ActionReport, 0, len(stack.Components))
 
@@ -205,6 +310,7 @@ func (st *Stack) Destroy(ctx context.Context, stack *thrapb.Stack) []*ActionRepo
 	return ar
 }
 
+// Deploy deploys all components of the stack.
 func (st *Stack) Deploy(stack *thrapb.Stack) error {
 
 	var (

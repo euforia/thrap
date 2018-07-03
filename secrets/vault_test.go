@@ -22,7 +22,7 @@ func Test_vault(t *testing.T) {
 	conf := &Config{Provider: "vault"}
 	sec, _ := New(conf)
 	err := sec.Init(map[string]interface{}{
-		"addr":   "http://localhost:8200",
+		// "addr":   "http://localhost:8200",
 		"prefix": "/thrap/db",
 		"token":  "myroot",
 	})

@@ -50,9 +50,21 @@ func Test_Packs_Load(t *testing.T) {
 	}
 
 	err = p.Load("https://github.com/euforia/thrap-packs.git")
-	assert.Nil(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for _, s := range []string{"dev", "datastore", "web"} {
 		assert.True(t, utils.FileExists(filepath.Join(packdir, s)))
 	}
+
+	dps := p.Dev()
+	_, err = dps.Load("go")
+	assert.Nil(t, err)
+	_, err = dps.Load("go")
+	assert.Nil(t, err)
+
+	list, _ := dps.List()
+	assert.Equal(t, 2, len(list))
+	assert.Equal(t, "dev", dps.Type())
 }

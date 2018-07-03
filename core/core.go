@@ -303,6 +303,7 @@ func (core *Core) Stack() *Stack {
 		vcs:   core.vcs,
 		packs: core.packs,
 		sst:   core.sst,
+		log:   core.log,
 	}
 }
 

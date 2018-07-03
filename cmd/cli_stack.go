@@ -7,8 +7,6 @@ import (
 
 	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/manifest"
-	"github.com/euforia/thrap/utils"
-	"github.com/euforia/thrap/vcs"
 	"gopkg.in/urfave/cli.v2"
 )
 
@@ -41,10 +39,10 @@ func commandStackValidate() *cli.Command {
 				return err
 			}
 
-			rpath, err := utils.GetLocalPath("")
-			if err != nil {
-				return err
-			}
+			// rpath, err := utils.GetLocalPath("")
+			// if err != nil {
+			// 	return err
+			// }
 
 			core, err := core.NewCore(&core.CoreConfig{PacksDir: defaultPacksDir})
 			if err != nil {
@@ -52,9 +50,7 @@ func commandStackValidate() *cli.Command {
 			}
 
 			stm := core.Stack()
-			err = stm.Validate(mf, rpath)
-			// mf.Version = vcs.GetRepoVersion(rpath).String()
-			// errs := mf.Validate()
+			err = stm.Validate(mf)
 			if err == nil {
 				// return utils.FlattenErrors(errs)
 				writeHCLManifest(mf, os.Stdout)
@@ -70,9 +66,14 @@ func commandStackVersion() *cli.Command {
 		Name:  "version",
 		Usage: "Show stack version",
 		Action: func(ctx *cli.Context) error {
-			lpath, err := utils.GetLocalPath("")
+			// lpath, err := utils.GetLocalPath("")
+			// if err == nil {
+			// 	fmt.Println(vcs.GetRepoVersion(lpath))
+			// }
+			// return err
+			stack, err := manifest.LoadManifest("")
 			if err == nil {
-				fmt.Println(vcs.GetRepoVersion(lpath))
+				fmt.Println(stack.Version)
 			}
 			return err
 		},

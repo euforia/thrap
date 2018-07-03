@@ -31,7 +31,10 @@ func (rver RepoVersion) String() string {
 func GetRepoVersion(path string) RepoVersion {
 	tagLabel := defaultVersionTag
 
-	repo, _ := git.PlainOpen(path)
+	repo, err := git.PlainOpen(path)
+	if err != nil {
+		return RepoVersion{Tag: tagLabel}
+	}
 
 	tags, _ := repo.Tags()
 

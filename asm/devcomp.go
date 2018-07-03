@@ -20,9 +20,12 @@ const defaultSecretsContent = `# HCL formatted file
 # feature.enabled = false
 `
 
-type devCompAssembler struct {
-	// devpack
+// DevCompAsm is dev component assembler i.e. buildable component with or without
+// language specification
+type DevCompAsm struct {
+	// language pack for component
 	pack *packs.DevPack
+
 	// devpack loaded scope vars
 	vars scope.Variables
 
@@ -37,8 +40,9 @@ type devCompAssembler struct {
 	files map[string][]byte
 }
 
-func newDevCompAssembler(c *thrapb.Component, langpack *packs.DevPack) *devCompAssembler {
-	asm := &devCompAssembler{
+// NewDevCompAsm returns a new initialized DevCompAsm
+func NewDevCompAsm(c *thrapb.Component, langpack *packs.DevPack) *DevCompAsm {
+	asm := &DevCompAsm{
 		comp:          c,
 		pack:          langpack,
 		files:         make(map[string][]byte),
@@ -50,7 +54,7 @@ func newDevCompAssembler(c *thrapb.Component, langpack *packs.DevPack) *devCompA
 	return asm
 }
 
-func (asm *devCompAssembler) init() {
+func (asm *DevCompAsm) init() {
 	if asm.pack == nil {
 		return
 	}
@@ -68,7 +72,12 @@ func (asm *devCompAssembler) init() {
 
 }
 
-func (asm *devCompAssembler) assemblePack(svars scope.Variables) (err error) {
+// Dockerfile returns the parsed dockerfile associated to the component
+func (asm *DevCompAsm) Dockerfile() *dockerfile.Dockerfile {
+	return asm.dockerfile
+}
+
+func (asm *DevCompAsm) assemblePack(svars scope.Variables) (err error) {
 	if asm.pack == nil {
 		return
 	}
@@ -83,7 +92,9 @@ func (asm *devCompAssembler) assemblePack(svars scope.Variables) (err error) {
 	return
 }
 
-func (asm *devCompAssembler) assemble(variables scope.Variables) (err error) {
+// Assemble assembles all components assets, normalizing values using the given
+// scope variables
+func (asm *DevCompAsm) Assemble(variables scope.Variables) (err error) {
 	scopeVars := make(scope.Variables, len(variables)+len(asm.vars))
 	for k, v := range variables {
 		scopeVars[k] = v
@@ -103,23 +114,49 @@ func (asm *devCompAssembler) assemble(variables scope.Variables) (err error) {
 
 	workdirs := make([]*dockerfile.WorkDir, len(stages))
 	for i := range stages {
-		workdirs[i], err = asm.ensureWorkdir(i)
+		workdirs[i], err = asm.ensureDockerfileWorkdir(i)
 		if err != nil {
 			return err
 		}
 	}
 
+	// Add all env vars as build args
+	asm.addArgAndEnvToDockerfile()
+
 	if asm.comp.HasSecrets() {
 		// Local file
 		asm.files[asm.comp.Secrets.Destination] = []byte(defaultSecretsContent)
 		asm.dockerignores = append(asm.dockerignores, asm.comp.Secrets.Destination)
-		err = asm.addSecretsVolume(lastIdx, workdirs[lastIdx])
+		err = asm.addSecretsVolumeToDockerfile(lastIdx, workdirs[lastIdx])
 	}
 
 	return err
 }
 
-func (asm *devCompAssembler) addSecretsVolume(i int, workdir *dockerfile.WorkDir) error {
+func (asm *DevCompAsm) addArgAndEnvToDockerfile() {
+	cenv := asm.comp.Env
+	ei := &dockerfile.Env{Vars: make(map[string]string, len(cenv.Vars))}
+	for k := range cenv.Vars {
+		ei.Vars[k] = "${" + k + "}"
+	}
+	asm.dockerfile.AddInstruction(0, ei)
+
+	// Add all env vars as build args to build stage
+
+	for k := range cenv.Vars {
+		ai := &dockerfile.Arg{Name: k}
+		asm.dockerfile.AddInstruction(0, ai)
+	}
+
+	// Add all env vars to the final image artifact
+	pei := &dockerfile.Env{Vars: make(map[string]string, len(cenv.Vars))}
+	for k := range cenv.Vars {
+		pei.Vars[k] = ""
+	}
+	asm.dockerfile.AddInstruction(1, pei)
+}
+
+func (asm *DevCompAsm) addSecretsVolumeToDockerfile(i int, workdir *dockerfile.WorkDir) error {
 	vol := &dockerfile.Volume{
 		Paths: []string{filepath.Join(workdir.Path, asm.comp.Secrets.Destination)},
 	}
@@ -127,7 +164,7 @@ func (asm *devCompAssembler) addSecretsVolume(i int, workdir *dockerfile.WorkDir
 	return asm.dockerfile.AddInstruction(i, vol)
 }
 
-func (asm *devCompAssembler) ensureWorkdir(idx int) (*dockerfile.WorkDir, error) {
+func (asm *DevCompAsm) ensureDockerfileWorkdir(idx int) (*dockerfile.WorkDir, error) {
 	stage := asm.dockerfile.Stages[idx]
 	wd, _ := stage.GetOp(dockerfile.KeyWorkDir)
 
@@ -142,7 +179,7 @@ func (asm *devCompAssembler) ensureWorkdir(idx int) (*dockerfile.WorkDir, error)
 	return wd.(*dockerfile.WorkDir), nil
 }
 
-// func (asm *devCompAssembler) addSecretsVolumes(workdirs []*dockerfile.WorkDir) (err error) {
+// func (asm *DevCompAsm) addSecretsVolumes(workdirs []*dockerfile.WorkDir) (err error) {
 // 	for i, workdir := range workdirs {
 //
 // 		err = asm.addSecretsVolume(i, workdir)
@@ -156,7 +193,7 @@ func (asm *devCompAssembler) ensureWorkdir(idx int) (*dockerfile.WorkDir, error)
 // addSecretVolToStage adds a volume instruction to the given stage.  It declares
 // the volume relative to the WORKDIR specified. If WORKDIR is not specified it
 // defaults to /
-// func (asm *devCompAssembler) addSecretVolToStage(stageIndex int) error {
+// func (asm *DevCompAsm) addSecretVolToStage(stageIndex int) error {
 // 	workdir, err := asm.ensureWorkdir(stageIndex)
 // 	if err != nil {
 // 		return err

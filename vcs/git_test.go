@@ -68,7 +68,7 @@ func Test_git_init(t *testing.T) {
 	vcs := NewGitVCS()
 	err := vcs.Init(nil)
 	assert.Nil(t, err)
-	assert.NotEmpty(t, vcs.globalUser)
+	// assert.NotEmpty(t, vcs.globalUser)
 	// t.Log(vcs.globalUser)
 }
 

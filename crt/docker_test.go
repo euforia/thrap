@@ -51,6 +51,28 @@ import (
 // 	fmt.Printf("\n%s\n", b)
 // }
 
+// func Test_Docker_Build2(t *testing.T) {
+// 	bldr, err := NewDocker()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+
+// 	st, err := manifest.LoadManifest("../test-fixtures/builder.yml")
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	st.Validate()
+
+// 	var bcomp *thrapb.Component
+// 	for _, comp := range st.Components {
+// 		if comp.IsBuildable() {
+// 			bcomp = comp
+// 			bcomp.Build.Context = "../test-fixtures"
+// 			break
+// 		}
+// 	}
+// }
+
 func Test_Docker_Build(t *testing.T) {
 	bldr, err := NewDocker()
 	if err != nil {
@@ -72,10 +94,8 @@ func Test_Docker_Build(t *testing.T) {
 		}
 	}
 	ctx := context.Background()
-	cfg := thrapb.NewContainer("default", bcomp.ID)
-	cfg.Container.Image = bcomp.ID + ":" + bcomp.Version
 
-	err = bldr.Build(ctx, "default", bcomp, RequestOptions{Output: os.Stdout})
+	err = bldr.BuildComponent(ctx, "default", bcomp, RequestOptions{Output: os.Stdout})
 	assert.Nil(t, err)
 
 }

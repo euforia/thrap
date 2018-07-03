@@ -113,6 +113,10 @@ func (gh *githubVCS) Create(repo *Repository, opt Option) (interface{}, error) {
 	return ghrepo, err
 }
 
+func (gh *githubVCS) Open(repo *Repository, opt Option) (interface{}, error) {
+	return gh.git.Open(repo, opt)
+}
+
 // Delete deletes the specified repo from github
 func (gh *githubVCS) Delete(repo *Repository, opt Option) error {
 	ctx := context.Background()

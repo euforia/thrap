@@ -36,3 +36,8 @@ const (
 	LangID      = "lang.id"
 	LangVersion = "lang.version"
 )
+
+// Build args and env vars
+const (
+	ArgEnvStackVersion = "STACK_VERSION"
+)

@@ -3,12 +3,14 @@ package manifest
 import (
 	"errors"
 	"io"
+	"path/filepath"
 	"strings"
 
 	"github.com/euforia/hclencoder"
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
+	"github.com/euforia/thrap/vcs"
 )
 
 // LoadManifest loads a thrap manifest.  A manifest begins with
@@ -35,6 +37,10 @@ func LoadManifest(mfile string) (*thrapb.Stack, error) {
 		st, err = ParseHCL(mpath)
 	} else {
 		st, err = ParseYAML(mpath)
+	}
+
+	if err == nil {
+		st.Version = vcs.GetRepoVersion(filepath.Dir(mpath)).String()
 	}
 
 	return st, err

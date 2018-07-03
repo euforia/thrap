@@ -10,6 +10,7 @@ LD_OPTS = -ldflags="-X main._version=$(VERSION) -X main._buildtime=$(BUILDTIME) 
 BUILD_CMD = CGO_ENABLED=0 go build $(LD_OPTS)
 
 SOURCE_FILES = $(shell ls ./cmd/*.go | grep -v _test.go)
+SOURCE_PACKAGES = $(shell go list ./... | grep -v /vendor/ | grep -v /crt)
 
 clean:
 	rm -rf dist
@@ -20,7 +21,8 @@ deps:
 	dep ensure -v
 
 test:
-	go test -cover $(shell go list ./... | grep -v /vendor/)
+	go test -cover $(SOURCE_PACKAGES)
+	
 
 $(NAME):
 	$(BUILD_CMD) -o $(NAME) $(SOURCE_FILES)

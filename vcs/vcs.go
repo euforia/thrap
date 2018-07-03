@@ -38,6 +38,8 @@ type VCS interface {
 	Init(conf map[string]interface{}) error
 	// Create version control repository
 	Create(*Repository, Option) (interface{}, error)
+	// Open an existing repo
+	Open(*Repository, Option) (interface{}, error)
 	// Deletes a repository
 	Delete(*Repository, Option) error
 	// Name of ignores file used by this vcs

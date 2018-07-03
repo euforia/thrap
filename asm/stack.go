@@ -24,8 +24,8 @@ import (
 type StackAsm struct {
 	// vars available to the assembler as a whole
 	vars scope.Variables
-	// available devpacks
-	packs *packs.DevPacks
+	// available packs
+	packs *packs.Packs
 
 	vcs     vcs.VCS
 	gitrepo *git.Repository
@@ -33,12 +33,14 @@ type StackAsm struct {
 	worktree *git.Worktree
 
 	stack *thrapb.Stack
+
+	casms map[string]*DevCompAsm
 }
 
 // NewStackAsm returns a new stack assembler
 func NewStackAsm(stack *thrapb.Stack,
 	vcsp vcs.VCS, gitrepo *git.Repository,
-	globalVars scope.Variables, packs *packs.DevPacks) (*StackAsm, error) {
+	globalVars scope.Variables, packs *packs.Packs) (*StackAsm, error) {
 
 	asm := &StackAsm{
 		vcs:     vcsp,
@@ -46,35 +48,63 @@ func NewStackAsm(stack *thrapb.Stack,
 		packs:   packs,
 		vars:    globalVars,
 		stack:   stack,
+		casms:   make(map[string]*DevCompAsm),
 	}
 
 	// Add stack scope vars
 	asm.vars = vars.MergeScopeVars(asm.vars, stack.ScopeVars())
 
-	wtree, err := gitrepo.Worktree()
-	if err == nil {
-		asm.worktree = wtree
+	if gitrepo != nil {
+		wtree, err := gitrepo.Worktree()
+		if err == nil {
+			asm.worktree = wtree
+		}
+		return asm, err
 	}
 
-	return asm, err
+	return asm, nil
 }
 
-func (asm *StackAsm) Assemble() (err error) {
+func (asm *StackAsm) AssembleMaterialize() error {
+	err := asm.Assemble()
+	if err == nil {
+		err = asm.Materialize()
+	}
+	return err
+}
+
+func (asm *StackAsm) ComponentAsm(id string) *DevCompAsm {
+	casm, _ := asm.casms[id]
+	return casm
+}
+
+func (asm *StackAsm) Assemble() error {
 	st := asm.stack
 
-	for _, cmpt := range st.Components {
+	for k, cmpt := range st.Components {
 		if cmpt.IsBuildable() {
 
-			if err = asm.assembleDevComp(cmpt); err != nil {
+			casm, err := asm.assembleDevComponent(cmpt)
+			if err != nil {
 				return err
 			}
-
+			asm.casms[k] = casm
 		} else {
 			//
 			// TODO: handle other components
 			//
 		}
 
+	}
+
+	return nil
+}
+
+func (asm *StackAsm) Materialize() (err error) {
+	for _, casm := range asm.casms {
+		if err = asm.materializeDevComp(casm); err != nil {
+			break
+		}
 	}
 
 	return
@@ -85,27 +115,23 @@ func (asm *StackAsm) Commit() error {
 	return asm.vcsCommit()
 }
 
-func (asm *StackAsm) assembleDevComp(cmpt *thrapb.Component) error {
-	langpack, err := asm.packs.Load(cmpt.Language.Lang())
+func (asm *StackAsm) assembleDevComponent(cmpt *thrapb.Component) (*DevCompAsm, error) {
+	devpacks := asm.packs.Dev()
+	langpack, err := devpacks.Load(cmpt.Language.Lang())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	casm := newDevCompAssembler(cmpt, langpack)
-	if err = casm.assemble(asm.vars); err != nil {
-		return err
+	casm := NewDevCompAsm(cmpt, langpack)
+	if err = casm.Assemble(asm.vars); err != nil {
+		return nil, err
 	}
 
-	//
-	// TODO: introspect dockerFile
-	//
-
-	return asm.materializeDevComp(casm)
-
+	return casm, err
 }
 
 // TODO: change logic
-func (asm *StackAsm) materializeDevComp(casm *devCompAssembler) error {
+func (asm *StackAsm) materializeDevComp(casm *DevCompAsm) error {
 
 	files := make(map[string][]byte, 2)
 	files[casm.comp.Build.Dockerfile] = []byte(casm.dockerfile.String())

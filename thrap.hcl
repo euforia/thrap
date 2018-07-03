@@ -2,6 +2,20 @@ manifest "thrap" {
   name = "thrap"
 
   components {
+    nomad {
+      name    = "thrap/nomad"
+      version = "0.8.4"
+      type    = "api"
+
+      ports {
+        http = 4646
+      }
+
+      # build {
+      #   dockerfile = "nomad.dockerfile"
+      # }
+    }
+
     vault {
       name    = "vault"
       version = "0.10.3"
@@ -9,6 +23,12 @@ manifest "thrap" {
 
       ports {
         default = 8200
+      }
+
+      env {
+        vars {
+          VAULT_DEV_ROOT_TOKEN_ID = "myroot"
+        }
       }
     }
 
@@ -32,9 +52,10 @@ manifest "thrap" {
         file = ".env"
 
         vars {
-          APP_VERSION = "${stack.version}"
-          VAULT_ADDR  = "${comps.vault.container.default.addr}"
-          NOMAD_ADDR  = ""
+          # Should be available by default  
+          STACK_VERSION = "${stack.version}"
+          VAULT_ADDR    = "http://${comps.vault.container.ip}:${comps.vault.container.default.port}"
+          NOMAD_ADDR    = "http://${comps.nomad.container.ip}:${comps.nomad.container.http.port}"
         }
       }
     }
@@ -53,6 +74,11 @@ manifest "thrap" {
     }
 
     vault {
+      name    = "vault"
+      version = "0.10.3"
+    }
+
+    nomad {
       name    = "vault"
       version = "0.10.3"
     }

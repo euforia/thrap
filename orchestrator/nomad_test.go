@@ -31,7 +31,9 @@ func Test_nomad_dryrun(t *testing.T) {
 	st.Validate()
 
 	_, ijob, err := orch.Deploy(st, RequestOptions{Dryrun: true})
-	assert.Nil(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ijob.(*api.Job).Canonicalize()
 	b, _ := json.MarshalIndent(ijob, "", "  ")

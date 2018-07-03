@@ -6,9 +6,9 @@ import (
 	vault "github.com/hashicorp/vault/api"
 )
 
-func defaultPolicies() []string {
-	return []string{"create", "read", "update", "delete"}
-}
+// func defaultPolicies() []string {
+// 	return []string{"create", "read", "update", "delete"}
+// }
 
 type vaultSecrets struct {
 	prefix string

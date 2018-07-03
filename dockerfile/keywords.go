@@ -71,6 +71,19 @@ func ParseInstruction(r *RawInstruction) (Instruction, error) {
 	}
 }
 
+type Arg struct {
+	Name string
+}
+
+// Key returns the instruction key
+func (e *Arg) Key() string {
+	return KeyArg
+}
+
+func (e *Arg) String() string {
+	return e.Name
+}
+
 type Env struct {
 	Vars map[string]string
 }
@@ -78,6 +91,14 @@ type Env struct {
 // Key returns the instruction key
 func (e *Env) Key() string {
 	return KeyEnv
+}
+
+func (e *Env) Clone() *Env {
+	c := &Env{Vars: make(map[string]string, len(e.Vars))}
+	for k, v := range e.Vars {
+		c.Vars[k] = v
+	}
+	return c
 }
 
 func (e *Env) String() string {
