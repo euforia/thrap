@@ -229,13 +229,29 @@ func (st *Stack) startServices(ctx context.Context, stack *thrapb.Stack, scopeVa
 
 func (st *Stack) startContainer(ctx context.Context, sid string, comp *thrapb.Component) error {
 	cfg := thrapb.NewContainer(sid, comp.ID)
-	cfg.Container.Image = comp.Name + ":" + comp.Version
+
+	if comp.IsBuildable() {
+		cfg.Container.Image = filepath.Join(sid, comp.Name)
+	} else {
+		cfg.Container.Image = comp.Name
+	}
+
+	// Add image version if present
+	if len(comp.Version) > 0 {
+		cfg.Container.Image += ":" + comp.Version
+	}
 
 	if comp.HasEnvVars() {
 		cfg.Container.Env = make([]string, 0, len(comp.Env.Vars))
 		for k, v := range comp.Env.Vars {
 			cfg.Container.Env = append(cfg.Container.Env, k+"="+v)
 		}
+	}
+
+	// Publish all ports for a head component.
+	// TODO: May need to map this to user defined host ports
+	if comp.Head {
+		cfg.Host.PublishAllPorts = true
 	}
 
 	// Non-blocking
@@ -249,6 +265,7 @@ func (st *Stack) startContainer(ctx context.Context, sid string, comp *thrapb.Co
 			fmt.Printf("%s: %s\n", cfg.Name, w)
 		}
 	}
+
 	return nil
 }
 
@@ -316,7 +333,6 @@ func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, scopeVars
 		// Start container from image that was just built, if this component
 		// is not the head
 		if !comp.Head {
-			fmt.Printf("%s\n", comp.ID)
 			err = st.startContainer(ctx, stack.ID, comp)
 			if err != nil {
 				break
@@ -410,8 +426,20 @@ func (st *Stack) Destroy(ctx context.Context, stack *thrapb.Stack) []*ActionRepo
 	ar := make([]*ActionReport, 0, len(stack.Components))
 
 	for _, c := range stack.Components {
-		r := &ActionReport{Action: NewAction("component", c.ID, "remove")}
+		r := &ActionReport{Action: NewAction("destroy", "comp", c.ID)}
 		r.Error = st.crt.Remove(ctx, c.ID+"."+stack.ID)
+		ar = append(ar, r)
+	}
+	return ar
+}
+
+// Stop shutsdown any running containers in the stack.
+func (st *Stack) Stop(ctx context.Context, stack *thrapb.Stack) []*ActionReport {
+	ar := make([]*ActionReport, 0, len(stack.Components))
+
+	for _, c := range stack.Components {
+		r := &ActionReport{Action: NewAction("stop", "comp", c.ID)}
+		r.Error = st.crt.Stop(ctx, c.ID+"."+stack.ID)
 		ar = append(ar, r)
 	}
 	return ar
@@ -419,6 +447,9 @@ func (st *Stack) Destroy(ctx context.Context, stack *thrapb.Stack) []*ActionRepo
 
 // Deploy deploys all components of the stack.
 func (st *Stack) Deploy(stack *thrapb.Stack) error {
+	if errs := stack.Validate(); len(errs) > 0 {
+		return utils.FlattenErrors(errs)
+	}
 
 	var (
 		ctx = context.Background()
@@ -429,28 +460,61 @@ func (st *Stack) Deploy(stack *thrapb.Stack) error {
 		return err
 	}
 
-	// Deploy non-buildable components
+	defer func() {
+		if err != nil {
+			st.Destroy(ctx, stack)
+		}
+	}()
+
+	svars := st.scopeVars(stack)
+
+	// Deploy services like db's etc
+	err = st.startServices(ctx, stack, svars)
+	if err != nil {
+		return err
+	}
+
+	// Deploy non-head containers
 	for _, comp := range stack.Components {
-		cfg := thrapb.NewContainer(stack.ID, comp.ID)
-		if comp.IsBuildable() {
-			// Set fully qualified name including stack id for components
-			// being built
-			cfg.Container.Image = filepath.Join(stack.ID, comp.Name) + ":" + comp.Version
-		} else {
-			// Set user provided name otherwise
-			cfg.Container.Image = comp.Name + ":" + comp.Version
+		if !comp.IsBuildable() {
+			continue
 		}
 
-		_, err = st.crt.Run(ctx, cfg)
+		if comp.Head {
+			continue
+		}
+
+		if err = st.evalComponent(comp, svars); err != nil {
+			return err
+		}
+
+		err = st.startContainer(ctx, stack.ID, comp)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(comp.ID)
+	}
+
+	// Start head containers
+	for _, comp := range stack.Components {
+		if !comp.IsBuildable() {
+			continue
+		}
+		if !comp.Head {
+			continue
+		}
+
+		if err = st.evalComponent(comp, svars); err != nil {
+			break
+		}
+
+		err = st.startContainer(ctx, stack.ID, comp)
 		if err != nil {
 			break
 		}
+
 	}
 
-	if err != nil {
-		defer st.Destroy(ctx, stack)
-	}
-
-	// 	return nil, nil, err
 	return err
 }

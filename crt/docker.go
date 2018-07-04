@@ -5,6 +5,7 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -40,6 +41,11 @@ func NewDocker() (*Docker, error) {
 		return &Docker{cli}, nil
 	}
 	return nil, err
+}
+
+func (orch *Docker) Stop(ctx context.Context, containerID string) error {
+	dur := 3 * time.Second
+	return orch.cli.ContainerStop(ctx, containerID, &dur)
 }
 
 // Run creates and runs a container with the given config

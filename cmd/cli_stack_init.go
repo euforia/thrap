@@ -56,7 +56,7 @@ func commandStackInit() *cli.Command {
 		},
 		Action: func(ctx *cli.Context) error {
 			coreConf := &core.Config{
-				PacksDir: defaultPacksDir,
+				PacksDir: consts.DefaultPacksDir,
 			}
 
 			cr, err := core.NewCore(coreConf)

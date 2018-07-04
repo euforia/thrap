@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/euforia/thrap/config"
+	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/utils"
@@ -25,26 +26,31 @@ func commandStackDeploy() *cli.Command {
 		},
 		Action: func(ctx *cli.Context) error {
 
-			st, err := manifest.LoadManifest("")
+			stack, err := manifest.LoadManifest("")
 			if err != nil {
 				return err
 			}
 
 			lpath, _ := utils.GetLocalPath("")
-			st.Version = vcs.GetRepoVersion(lpath).String()
-			fmt.Println(st.ID, st.Version)
+			stack.Version = vcs.GetRepoVersion(lpath).String()
+			fmt.Println(stack.ID, stack.Version)
 
 			pconf, err := config.ReadProjectConfig(lpath)
 			if err != nil {
 				return err
 			}
 
-			conf := &core.Config{ThrapConfig: pconf}
-			_, err = core.NewCore(conf)
-			// if err != nil {
-			// 	return err
-			// }
+			conf := &core.Config{
+				PacksDir:    consts.DefaultPacksDir,
+				ThrapConfig: pconf,
+			}
+			cr, err := core.NewCore(conf)
+			if err != nil {
+				return err
+			}
 
+			st := cr.Stack()
+			err = st.Deploy(stack)
 			// opt := orchestrator.RequestOptions{
 			// 	Dryrun: ctx.Bool("dryrun"),
 			// 	Output: os.Stdout,

@@ -3,7 +3,7 @@ manifest "thrap" {
 
   components {
     nomad {
-      name    = "thrap/nomad"
+      name    = "nomad"
       version = "0.8.4"
       type    = "api"
 

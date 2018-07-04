@@ -35,14 +35,9 @@ const (
 	defaultPacksRepoURL = "https://github.com/euforia/thrap-packs.git"
 )
 
-// ???
-// type CodeBuilder interface {
-// 	Build(stackID string, comp *thrapb.Component, opts orchestrator.RequestOptions) error
-// }
-
 // Config holds the core configuration
 type Config struct {
-	// This is the local config merged with the global for the
+	// This is the local project config merged with the global user config for the
 	// instance
 	*config.ThrapConfig
 	// Load creds
@@ -65,6 +60,7 @@ type Core struct {
 
 	packs *packs.Packs
 
+	// Local container runtime. Currently docker
 	crt *crt.Docker
 
 	sst *store.StackStore    // local store
@@ -120,6 +116,7 @@ func NewCore(conf *Config) (*Core, error) {
 	return c, err
 }
 
+// Config returns the currently loaded config
 func (core *Core) Config() *config.ThrapConfig {
 	return core.conf
 }
@@ -193,6 +190,7 @@ func (core *Core) initRegistry() error {
 	return nil
 }
 
+// Packs returns a pack instance containing the currently loaded packs
 func (core *Core) Packs() *packs.Packs {
 	return core.packs
 }
@@ -214,6 +212,7 @@ func (core *Core) initSecrets() (err error) {
 	if err == nil {
 		core.log.Println("DEBUG Secrets:", sc.ID)
 	}
+
 	return err
 }
 
@@ -298,6 +297,8 @@ func (core *Core) ConfirmIdentity(ident *thrapb.Identity) (*thrapb.Identity, err
 	return resp, err
 }
 
+// Stack returns a Stack instance that can be used to perform operations
+// against a stack
 func (core *Core) Stack() *Stack {
 	return &Stack{
 		regs:  core.regs,

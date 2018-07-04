@@ -22,6 +22,8 @@ const (
 	DefaultWorkDir = "/"
 	// DefaultBuildContext is the container build context
 	DefaultBuildContext = "."
+	// DefaultPacksDir is the default directory where packs are stored
+	DefaultPacksDir = "~/.thrap/packs"
 )
 
 const (

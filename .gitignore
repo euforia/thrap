@@ -2,6 +2,7 @@
 thrap
 .Trash
 .DS_Store
+vendor/
 *.log
 *.test
 .env
