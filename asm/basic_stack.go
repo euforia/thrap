@@ -75,8 +75,7 @@ func NewBasicStack(c *BasicStackConfig, pks *packs.Packs) (*thrapb.Stack, error)
 func defaultCompEnvVars(pre string) map[string]string {
 	upre := strings.ToUpper(pre)
 	return map[string]string{
-		upre + "_CONTAINER_IP": "${comps." + pre + ".container.ip}",
-		// upre + "_HOST_IP":      "${comps." + pre + ".host.ip}",
+		upre + "_CONTAINER_IP": "${" + consts.CompVarPrefixKey + "." + pre + ".container.ip}",
 	}
 }
 

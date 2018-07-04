@@ -42,6 +42,12 @@ const (
 )
 
 const (
+	// CompVarPrefixKey is the prefix for all component variables
+	CompVarPrefixKey = "comp"
+	DepVarPrefixKey  = "dep"
+)
+
+const (
 	// DefaultWebCompID is the default web Component id
 	DefaultWebCompID = "www"
 	// DefaultAPICompID is the default api Component id

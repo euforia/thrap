@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/euforia/pseudo/scope"
+	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/vars"
 	"github.com/hashicorp/hil/ast"
 )
@@ -47,13 +48,13 @@ func (stack *Stack) ScopeVars() scope.Variables {
 	}
 
 	for _, c := range stack.Components {
-		sv := c.ScopeVars("comps.")
+		sv := c.ScopeVars(consts.CompVarPrefixKey + ".")
 		for k, v := range sv {
 			svars[k] = v
 		}
 	}
 	for _, c := range stack.Dependencies {
-		sv := c.ScopeVars("deps.")
+		sv := c.ScopeVars(consts.DepVarPrefixKey + ".")
 		for k, v := range sv {
 			svars[k] = v
 		}

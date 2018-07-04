@@ -3,7 +3,10 @@ manifest "thrap" {
 
   components {
     nomad {
-      name    = "nomad"
+      // Image name
+      name = "nomad"
+
+      // Image version
       version = "0.8.4"
       type    = "api"
 
@@ -33,7 +36,10 @@ manifest "thrap" {
     }
 
     registry {
-      name     = "registry"
+      // Image name that will be used. 
+      // The final full image name will be <stack.id>/<name>:<stack.version>
+      name = "registry"
+
       type     = "api"
       language = "go"
 
@@ -42,7 +48,7 @@ manifest "thrap" {
       }
 
       secrets {
-        destination = "secrets.hcl"
+        destination = ".thrap/creds.hcl"
         format      = "hcl"
       }
 
@@ -54,8 +60,8 @@ manifest "thrap" {
         vars {
           # Should be available by default  
           STACK_VERSION = "${stack.version}"
-          VAULT_ADDR    = "http://${comps.vault.container.addr.default}"
-          NOMAD_ADDR    = "http://${comps.nomad.container.addr.http}"
+          VAULT_ADDR    = "http://${comp.vault.container.addr.default}"
+          NOMAD_ADDR    = "http://${comp.nomad.container.addr.http}"
         }
       }
     }

@@ -6,6 +6,10 @@ manifest "test" {
       name    = "consul"
       version = "1.1.0"
       type    = "api"
+
+      ports {
+        http = 8500
+      }
     }
 
     vault {
@@ -15,7 +19,7 @@ manifest "test" {
 
       env {
         vars {
-          CONSUL_ADDR = "http://${comps.consul.addr}"
+          CONSUL_ADDR = "http://${comp.consul.container.addr.http}"
         }
       } // end env
     } // end vault
@@ -40,8 +44,8 @@ manifest "test" {
       env {
         vars {
           STACK_VERSION = "${stack.version}"
-          VAULT_ADDR    = "http://${comps.vault.addr}"
-          CONSUL_ADDR   = "http://${comps.consul.addr}"
+          VAULT_ADDR    = "http://${comp.vault.container.addr.default}"
+          CONSUL_ADDR   = "http://${comp.consul.container.addr.http}"
 
           # AWS_ECR_REGION = "${deps.ecr.region}"
         }

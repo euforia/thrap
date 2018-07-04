@@ -14,6 +14,7 @@ import (
 
 	"github.com/euforia/pseudo"
 	"github.com/euforia/pseudo/scope"
+	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/crt"
 	"github.com/euforia/thrap/orchestrator"
 
@@ -99,9 +100,9 @@ func (st *Stack) Validate(stack *thrapb.Stack) error {
 func (st *Stack) populatePorts(stack *thrapb.Stack) error {
 	var err error
 	for _, comp := range stack.Components {
-		if len(comp.Ports) > 0 {
-			continue
-		}
+		// if len(comp.Ports) > 0 {
+		// 	continue
+		// }
 
 		er := st.crt.ImagePull(context.Background(), comp.Name+":"+comp.Version)
 		if er != nil {
@@ -114,16 +115,23 @@ func (st *Stack) populatePorts(stack *thrapb.Stack) error {
 			continue
 		}
 
-		comp.Ports = make(map[string]int32, len(ic.ExposedPorts))
+		if comp.Ports == nil {
+			comp.Ports = make(map[string]int32, len(ic.ExposedPorts))
+		}
+
 		if len(ic.ExposedPorts) == 1 {
 			for k := range ic.ExposedPorts {
-				comp.Ports["default"] = int32(k.Int())
+				if !comp.HasPort(int32(k.Int())) {
+					comp.Ports["default"] = int32(k.Int())
+				}
 				break
 			}
 		} else {
 			for k := range ic.ExposedPorts {
-				// HCL does not allow numbers as keys
-				comp.Ports["port"+k.Port()] = int32(k.Int())
+				if !comp.HasPort(int32(k.Int())) {
+					// HCL does not allow numbers as keys
+					comp.Ports["port"+k.Port()] = int32(k.Int())
+				}
 			}
 		}
 	}
@@ -182,10 +190,10 @@ func (st *Stack) scopeVars(stack *thrapb.Stack) scope.Variables {
 		}
 
 		// Set container ip var
-		svars[v.ScopeVarName("comps.", "container.ip")] = ipvar
+		svars[v.ScopeVarName(consts.CompVarPrefixKey+".", "container.ip")] = ipvar
 		// Set container.addr var per port label
 		for pl, p := range v.Ports {
-			svars[v.ScopeVarName("comps.", "container.addr."+pl)] = ast.Variable{
+			svars[v.ScopeVarName(consts.CompVarPrefixKey+".", "container.addr."+pl)] = ast.Variable{
 				Type:  ast.TypeString,
 				Value: fmt.Sprintf("%s:%d", ipvar.Value, p),
 			}

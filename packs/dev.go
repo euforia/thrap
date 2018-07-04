@@ -21,6 +21,7 @@ import (
 
 var (
 	errDockerfileMissing = errors.New("dockerfile missing")
+	errPackIDRequired    = errors.New("pack id required")
 )
 
 // DevPacks holds all dev packs that are available
@@ -39,9 +40,14 @@ func NewDevPacks(dir string) *DevPacks {
 
 // Load loads a pack by the id
 func (packs *DevPacks) Load(packID string) (*DevPack, error) {
+	if packID == "" {
+		return nil, errPackIDRequired
+	}
+
 	if val, ok := packs.packs[packID]; ok {
 		return val, nil
 	}
+
 	pack, err := LoadDevPack(packID, packs.dir)
 	if err == nil {
 		packs.packs[packID] = pack

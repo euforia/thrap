@@ -240,32 +240,3 @@ func (orch *Docker) ImageConfig(name, tag string) (*container.Config, error) {
 	}
 	return inf.Config, nil
 }
-
-// func scopeVars(stack *thrapb.Stack) scope.Variables {
-// 	svars := stack.ScopeVars()
-
-// 	for _, comp := range stack.Components {
-// 		svars["comps."+comp.ID+".container.ip"] = ast.Variable{
-// 			Value: comp.ID + "." + stack.ID,
-// 			Type:  ast.TypeString,
-// 		}
-// 		svars["comps."+comp.ID+".host.ip"] = ast.Variable{
-// 			Value: "<ip or hostname>",
-// 			Type:  ast.TypeString,
-// 		}
-
-// 		for l, v := range comp.Ports {
-// 			svars["comps."+comp.ID+".container.port."+l] = ast.Variable{
-// 				Type:  ast.TypeInt,
-// 				Value: v,
-// 			}
-// 			svars["comps."+comp.ID+".container.addr."+l] = ast.Variable{
-// 				Type:  ast.TypeString,
-// 				Value: fmt.Sprintf("%s.%s:%d", comp.ID, stack.ID, v),
-// 			}
-// 		}
-
-// 	}
-
-// 	return svars
-// }

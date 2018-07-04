@@ -69,6 +69,16 @@ func (comp *Component) ScopeVars(prefix string) scope.Variables {
 	return svars
 }
 
+func (comp *Component) HasPort(port int32) bool {
+	for _, p := range comp.Ports {
+		if p == port {
+			return true
+		}
+	}
+
+	return false
+}
+
 // IsBuildable returns true if a build file has been specified signifying the
 // component is buildable
 func (comp *Component) IsBuildable() bool {

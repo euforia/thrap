@@ -15,6 +15,7 @@ import (
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vars"
 	"github.com/euforia/thrap/vcs"
+	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
@@ -84,11 +85,15 @@ func (asm *StackAsm) Assemble() error {
 	for k, cmpt := range st.Components {
 		if cmpt.IsBuildable() {
 
-			casm, err := asm.assembleDevComponent(cmpt)
-			if err != nil {
-				return err
+			// Only assemble with ones that have supplied a language
+			if cmpt.Language.Lang() != "" {
+				casm, err := asm.assembleDevComponent(cmpt)
+				if err != nil {
+					return err
+				}
+				asm.casms[k] = casm
 			}
-			asm.casms[k] = casm
+
 		} else {
 			//
 			// TODO: handle other components
@@ -119,7 +124,7 @@ func (asm *StackAsm) assembleDevComponent(cmpt *thrapb.Component) (*DevCompAsm, 
 	devpacks := asm.packs.Dev()
 	langpack, err := devpacks.Load(cmpt.Language.Lang())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Failed to load language pack")
 	}
 
 	casm := NewDevCompAsm(cmpt, langpack)

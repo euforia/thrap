@@ -34,12 +34,16 @@ func Test_ConfigureGlobal(t *testing.T) {
 }
 
 func Test_core(t *testing.T) {
+	tmpdir, _ := ioutil.TempDir("/tmp", "core-")
+
 	opt := DefaultConfigureOptions()
 	opt.NoPrompt = true
+	opt.DataDir = tmpdir
 	err := ConfigureGlobal(opt)
 	fatal(t, err)
 
-	conf := &Config{PacksDir: "../etc/packs"}
+	// tmpdir = filepath.Join(tmpdir, "packs")
+	conf := &Config{PacksDir: filepath.Join(tmpdir, "packs")}
 	c, err := NewCore(conf)
 	fatal(t, err)
 
@@ -71,9 +75,12 @@ func Test_core(t *testing.T) {
 
 func Test_core_stack(t *testing.T) {
 
+	tmpdir, _ := ioutil.TempDir("/tmp", "core.stack-")
+	tmpdir = filepath.Join(tmpdir, "packs")
+
 	lconf, _ := config.ReadProjectConfig("../")
 	conf := &Config{
-		PacksDir:    "~/.thrap/packs",
+		PacksDir:    tmpdir,
 		ThrapConfig: lconf,
 	}
 
