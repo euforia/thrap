@@ -2,20 +2,19 @@ package config
 
 import (
 	"io/ioutil"
-	"path/filepath"
 
 	"github.com/euforia/hclencoder"
 	"github.com/euforia/pseudo/scope"
-	"github.com/euforia/thrap/consts"
 	"github.com/hashicorp/hcl"
-	homedir "github.com/mitchellh/go-homedir"
 )
 
+// OrchestratorConfig holds oconfigurations for a orchestration
 type OrchestratorConfig struct {
 	ID   string `hcl:"id" hcle:"omit"`
 	Addr string `hcl:"addr" hcle:"omitempty"`
 }
 
+// Clone returns a copy of the config
 func (conf *OrchestratorConfig) Clone() *OrchestratorConfig {
 	if conf == nil {
 		return nil
@@ -42,11 +41,13 @@ func (conf *OrchestratorConfig) Merge(other *OrchestratorConfig) {
 	}
 }
 
+// SecretsConfig holds secrets provider configurations
 type SecretsConfig struct {
 	ID   string `hcl:"id"   hcle:"omit"`
 	Addr string `hcl:"addr" hcle:"omitempty"`
 }
 
+// Clone returns a copy of the config
 func (conf *SecretsConfig) Clone() *SecretsConfig {
 	if conf == nil {
 		return nil
@@ -70,6 +71,7 @@ func (conf *SecretsConfig) Merge(other *SecretsConfig) {
 	}
 }
 
+// ThrapConfig holds configs for all providers
 type ThrapConfig struct {
 	VCS          map[string]*VCSConfig          `hcl:"vcs"`
 	Orchestrator map[string]*OrchestratorConfig `hcl:"orchestrator"`
@@ -77,6 +79,7 @@ type ThrapConfig struct {
 	Secrets      map[string]*SecretsConfig      `hcl:"secrets"`
 }
 
+// Clone returns a copy of the config
 func (conf *ThrapConfig) Clone() *ThrapConfig {
 	if conf == nil {
 		return nil
@@ -154,24 +157,31 @@ func (conf *ThrapConfig) Merge(other *ThrapConfig) {
 
 }
 
+// GetDefaultVCS returns the first available vcs
 func (conf *ThrapConfig) GetDefaultVCS() *VCSConfig {
 	for _, v := range conf.VCS {
 		return v
 	}
 	return nil
 }
+
+// GetDefaultOrchestrator returns the first available orchestrator
 func (conf *ThrapConfig) GetDefaultOrchestrator() *OrchestratorConfig {
 	for _, v := range conf.Orchestrator {
 		return v
 	}
 	return nil
 }
+
+// GetDefaultRegistry returns the first registry from the map
 func (conf *ThrapConfig) GetDefaultRegistry() *RegistryConfig {
 	for _, v := range conf.Registry {
 		return v
 	}
 	return nil
 }
+
+// GetDefaultSecrets returns the first secrets provider
 func (conf *ThrapConfig) GetDefaultSecrets() *SecretsConfig {
 	for _, v := range conf.Secrets {
 		return v
@@ -201,6 +211,7 @@ func (conf *ThrapConfig) ScopeVars() scope.Variables {
 	return svars
 }
 
+// DefaultThrapConfig returns a minimal config
 func DefaultThrapConfig() *ThrapConfig {
 	return &ThrapConfig{
 		VCS: map[string]*VCSConfig{
@@ -222,6 +233,7 @@ func DefaultThrapConfig() *ThrapConfig {
 	}
 }
 
+// WriteThrapConfig write the given config to the specified file path
 func WriteThrapConfig(conf *ThrapConfig, filename string) error {
 	b, err := hclencoder.Encode(conf)
 	if err == nil {
@@ -258,23 +270,23 @@ func ReadThrapConfig(filename string) (*ThrapConfig, error) {
 	return &conf, nil
 }
 
-func ReadGlobalConfig() (*ThrapConfig, error) {
-	filename, err := homedir.Expand("~/" + consts.WorkDir + "/" + consts.ConfigFile)
-	if err == nil {
-		return ReadThrapConfig(filename)
-	}
-	return nil, err
-}
+// func ReadGlobalConfig() (*ThrapConfig, error) {
+// 	filename, err := homedir.Expand("~/" + consts.WorkDir + "/" + consts.ConfigFile)
+// 	if err == nil {
+// 		return ReadThrapConfig(filename)
+// 	}
+// 	return nil, err
+// }
 
-func ReadProjectConfig(projPath string) (*ThrapConfig, error) {
-	filename := filepath.Join(projPath, consts.WorkDir, consts.ConfigFile)
-	return ReadThrapConfig(filename)
-}
+// func ReadProjectConfig(projPath string) (*ThrapConfig, error) {
+// 	filename := filepath.Join(projPath, consts.WorkDir, consts.ConfigFile)
+// 	return ReadThrapConfig(filename)
+// }
 
-func ReadGlobalCreds() (*CredsConfig, error) {
-	filename, err := homedir.Expand("~/" + consts.WorkDir + "/" + consts.CredsFile)
-	if err == nil {
-		return ReadCredsConfig(filename)
-	}
-	return nil, err
-}
+// func ReadGlobalCreds() (*CredsConfig, error) {
+// 	filename, err := homedir.Expand("~/" + consts.WorkDir + "/" + consts.CredsFile)
+// 	if err == nil {
+// 		return ReadCredsConfig(filename)
+// 	}
+// 	return nil, err
+// }

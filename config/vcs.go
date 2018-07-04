@@ -5,11 +5,13 @@ import (
 	"github.com/hashicorp/hil/ast"
 )
 
+// VCSRepoConfig holds vcs repo configurations
 type VCSRepoConfig struct {
 	Name  string `hcl:"name"`
 	Owner string `hcl:"owner"`
 }
 
+// Clone returns a copy of the config
 func (conf *VCSRepoConfig) Clone() *VCSRepoConfig {
 	if conf == nil {
 		return nil
@@ -37,6 +39,7 @@ func (conf *VCSRepoConfig) Merge(other *VCSRepoConfig) {
 
 }
 
+// VCSConfig holds vcs configurations
 type VCSConfig struct {
 	ID       string         `hcl:"id" hcle:"omit"`
 	Addr     string         `hcl:"addr" hcle:"omitempty"`
@@ -44,6 +47,7 @@ type VCSConfig struct {
 	Repo     *VCSRepoConfig `hcl:"repo" hcle:"omitempty"`
 }
 
+// Clone returns a copy of the config
 func (conf *VCSConfig) Clone() *VCSConfig {
 	if conf == nil {
 		return nil

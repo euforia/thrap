@@ -5,10 +5,12 @@ import (
 	"github.com/hashicorp/hil/ast"
 )
 
+// RegistryRepoConfig is the configuration for a container registry repo
 type RegistryRepoConfig struct {
 	Name string `hcl:"name"`
 }
 
+// Clone returns a copy of the config
 func (conf *RegistryRepoConfig) Clone() *RegistryRepoConfig {
 	if conf == nil {
 		return nil
@@ -28,6 +30,7 @@ func (conf *RegistryRepoConfig) Merge(other *RegistryRepoConfig) {
 	}
 }
 
+// RegistryConfig holds configurations for a registry
 type RegistryConfig struct {
 	ID     string                 `hcl:"id"     hcle:"omit"`
 	Addr   string                 `hcl:"addr"   hcle:"omitempty"`
@@ -35,6 +38,7 @@ type RegistryConfig struct {
 	Config map[string]interface{} `hcl:"config" hcle:"omitempty"`
 }
 
+// Clone returns a copy of the config
 func (conf *RegistryConfig) Clone() *RegistryConfig {
 	if conf == nil {
 		return nil
