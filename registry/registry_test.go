@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/euforia/thrap/config"
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,7 +32,8 @@ func fatal(t *testing.T, err error) {
 }
 
 func Test_ECR(t *testing.T) {
-	credsfile, _ := homedir.Expand("~/.thrap/creds.hcl")
+	// credsfile, _ := homedir.Expand("~/.thrap/creds.hcl")
+	credsfile := "../.thrap/creds.hcl"
 	cc, err := config.ReadCredsConfig(credsfile)
 	fatal(t, err)
 

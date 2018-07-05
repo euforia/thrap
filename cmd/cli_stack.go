@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"text/tabwriter"
 
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/core"
@@ -19,6 +21,7 @@ func commandStack() *cli.Command {
 			commandStackInit(),
 			commandStackBuild(),
 			commandStackDeploy(),
+			commandStackStatus(),
 			// commandStackRegister(),
 			// commandStackValidate(),
 			commandStackStop(),
@@ -83,7 +86,7 @@ func commandStackBuild() *cli.Command {
 				return err
 			}
 
-			core, err := core.NewCore(&core.Config{PacksDir: consts.DefaultPacksDir})
+			core, err := core.NewCore(&core.Config{DataDir: consts.DefaultDataDir})
 			if err != nil {
 				return err
 			}
@@ -109,7 +112,7 @@ func commandStackStop() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			core, err := core.NewCore(&core.Config{PacksDir: consts.DefaultPacksDir})
+			core, err := core.NewCore(&core.Config{DataDir: consts.DefaultDataDir})
 			if err != nil {
 				return err
 			}
@@ -144,7 +147,7 @@ func commandStackDestroy() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			core, err := core.NewCore(&core.Config{PacksDir: consts.DefaultPacksDir})
+			core, err := core.NewCore(&core.Config{DataDir: consts.DefaultDataDir})
 			if err != nil {
 				return err
 			}
@@ -157,6 +160,52 @@ func commandStackDestroy() *cli.Command {
 					fmt.Println(r.Error)
 				}
 			}
+
+			return nil
+		},
+	}
+}
+
+func commandStackStatus() *cli.Command {
+	return &cli.Command{
+		Name:  "status",
+		Usage: "Show status",
+		Action: func(ctx *cli.Context) error {
+
+			stack, err := manifest.LoadManifest("")
+			if err != nil {
+				return err
+			}
+			if errs := stack.Validate(); len(errs) > 0 {
+				return utils.FlattenErrors(errs)
+			}
+
+			// fmt.Println("Version:", stack.Version)
+
+			core, err := core.NewCore(&core.Config{DataDir: consts.DefaultDataDir})
+			if err != nil {
+				return err
+			}
+
+			stm := core.Stack()
+			resp := stm.Status(context.Background(), stack)
+
+			tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)
+			fmt.Fprintf(tw, "Component\tImage\tStatus\n")
+			fmt.Fprintf(tw, "---------\t-----\t------\n")
+			for _, s := range resp {
+
+				d := s.Details
+				st := d.State
+
+				if s.Error != nil {
+					fmt.Fprintf(tw, "%s\t%s\t%s (%s)\n", s.ID, d.Config.Image, st.Status, s.Error)
+				} else {
+					fmt.Fprintf(tw, "%s\t%s\t%s\n", s.ID, d.Config.Image, st.Status)
+				}
+
+			}
+			tw.Flush()
 
 			return nil
 		},

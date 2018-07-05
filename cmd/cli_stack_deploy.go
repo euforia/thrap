@@ -41,7 +41,7 @@ func commandStackDeploy() *cli.Command {
 			}
 
 			conf := &core.Config{
-				PacksDir:    consts.DefaultPacksDir,
+				DataDir:     consts.DefaultDataDir,
 				ThrapConfig: pconf,
 			}
 			cr, err := core.NewCore(conf)

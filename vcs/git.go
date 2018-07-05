@@ -55,6 +55,7 @@ type GitVCS struct {
 	globalEmail string
 }
 
+// NewGitVCS returns a new Git vcs
 func NewGitVCS() *GitVCS {
 	return &GitVCS{}
 }
@@ -149,6 +150,7 @@ func (g *GitVCS) Create(repo *Repository, opt Option) (interface{}, error) {
 	return gitRepo, err
 }
 
+// Open opens a local repo
 func (g *GitVCS) Open(repo *Repository, opt Option) (interface{}, error) {
 	if len(opt.Path) == 0 {
 		return nil, errPathNotSpecified

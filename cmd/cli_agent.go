@@ -5,6 +5,7 @@ import (
 	"net"
 
 	"github.com/euforia/thrap"
+	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/thrapb"
 	"google.golang.org/grpc"
@@ -19,14 +20,24 @@ func commandAgent() *cli.Command {
 			&cli.StringFlag{
 				Name:  "bind-addr",
 				Usage: "bind address",
+				Value: "0.0.0.0:10000",
 			},
 			&cli.StringFlag{
-				Name:  "adv-addr",
-				Usage: "advertise address",
+				Name:  "data-dir",
+				Usage: "Data directory",
+				Value: consts.DefaultDataDir,
 			},
+			// &cli.StringFlag{
+			// 	Name:  "adv-addr",
+			// 	Usage: "advertise address",
+			// },
 		},
 		Action: func(ctx *cli.Context) error {
-			core, err := core.NewCore(nil)
+			conf := &core.Config{
+				DataDir: ctx.String("data-dir"),
+			}
+
+			core, err := core.NewCore(conf)
 			if err != nil {
 				return err
 			}

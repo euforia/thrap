@@ -47,6 +47,10 @@ manifest "thrap" {
         dockerfile = "api.dockerfile"
       }
 
+      ports {
+        http = 10000
+      }
+
       secrets {
         destination = ".thrap/creds.hcl"
         format      = "hcl"

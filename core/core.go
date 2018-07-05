@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"path/filepath"
 
 	"github.com/euforia/thrap/crt"
 
@@ -22,12 +23,12 @@ import (
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vcs"
-	homedir "github.com/mitchellh/go-homedir"
 )
 
 var (
 	errProviderNotConfigured = errors.New("provider not configured")
 	errPacksDirMissing       = errors.New("packs directory missing")
+	errDataDirMissing        = errors.New("data directory missing")
 )
 
 const (
@@ -44,8 +45,8 @@ type Config struct {
 	Creds *config.CredsConfig
 	// Overall logger
 	Logger *log.Logger
-	// Directory path where packs are read and written
-	PacksDir string
+	// Data directory. This must exist
+	DataDir string
 }
 
 // Core is the thrap core
@@ -71,6 +72,19 @@ type Core struct {
 
 // NewCore loads the core engine with the global configs
 func NewCore(conf *Config) (*Core, error) {
+	if conf.DataDir == "" {
+		return nil, errDataDirMissing
+	}
+
+	var err error
+	conf.DataDir, err = utils.GetAbsPath(conf.DataDir)
+	if err != nil {
+		return nil, err
+	}
+
+	if !utils.FileExists(conf.DataDir) {
+		return nil, errDataDirMissing
+	}
 
 	dkr, err := crt.NewDocker()
 	if err != nil {
@@ -81,7 +95,9 @@ func NewCore(conf *Config) (*Core, error) {
 		crt: dkr,
 	}
 
-	gconf, err := config.ReadGlobalConfig()
+	cfile := filepath.Join(conf.DataDir, consts.ConfigFile)
+	gconf, err := config.ReadThrapConfig(cfile)
+	// gconf, err := config.ReadGlobalConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +108,9 @@ func NewCore(conf *Config) (*Core, error) {
 	}
 	c.conf = gconf
 
-	creds, err := config.ReadGlobalCreds()
+	credsFile := filepath.Join(conf.DataDir, consts.CredsFile)
+	creds, err := config.ReadCredsConfig(credsFile)
+	// creds, err := config.ReadGlobalCreds()
 	if err != nil {
 		return nil, err
 	}
@@ -103,14 +121,14 @@ func NewCore(conf *Config) (*Core, error) {
 		c.log = log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds)
 	}
 
-	err = c.initPacks(conf.PacksDir)
+	err = c.initPacks(filepath.Join(conf.DataDir, consts.PacksDir))
 	if err != nil {
 		return nil, err
 	}
 
 	err = c.initProviders()
 	if err == nil {
-		err = c.initStores()
+		err = c.initStores(conf.DataDir)
 	}
 
 	return c, err
@@ -226,9 +244,9 @@ func (core *Core) initOrchestrator() (err error) {
 	return
 }
 
-func (core *Core) initStores() error {
-	dir := "~/" + consts.WorkDir + "/db"
-	dbdir, _ := homedir.Expand(dir)
+func (core *Core) initStores(datadir string) error {
+
+	dbdir := filepath.Join(datadir, "db")
 
 	if !utils.FileExists(dbdir) {
 		core.log.Println("Initializing new db:", dbdir)

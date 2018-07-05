@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"fmt"
 
+	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/vars"
 
 	"github.com/pkg/errors"
@@ -39,7 +40,7 @@ func newCLI() *cli.App {
 		},
 		Commands: []*cli.Command{
 			commandConfigure(),
-			//commandAgent(),
+			commandAgent(),
 			//commandRegister(),
 			commandStack(),
 			commandVersion(),
@@ -80,7 +81,7 @@ func commandConfigure() *cli.Command {
 			&cli.StringFlag{
 				Name:  "data-dir",
 				Usage: "data `directory`",
-				Value: "~/",
+				Value: "~/" + consts.WorkDir,
 			},
 			&cli.BoolFlag{
 				Name:  "no-prompt",

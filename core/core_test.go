@@ -25,27 +25,33 @@ func Test_ConfigureGlobal(t *testing.T) {
 	opt.NoPrompt = true
 	opt.DataDir, _ = ioutil.TempDir("/tmp", "cg-")
 	err := ConfigureGlobal(opt)
-	fatal(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	cf := filepath.Join(opt.DataDir, consts.WorkDir, consts.CredsFile)
+	cf := filepath.Join(opt.DataDir, consts.CredsFile)
 	assert.True(t, utils.FileExists(cf))
-	cf = filepath.Join(opt.DataDir, consts.WorkDir, consts.ConfigFile)
+	cf = filepath.Join(opt.DataDir, consts.ConfigFile)
 	assert.True(t, utils.FileExists(cf))
 }
 
-func Test_core(t *testing.T) {
+func Test_NewCore(t *testing.T) {
 	tmpdir, _ := ioutil.TempDir("/tmp", "core-")
 
 	opt := DefaultConfigureOptions()
 	opt.NoPrompt = true
 	opt.DataDir = tmpdir
 	err := ConfigureGlobal(opt)
-	fatal(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// tmpdir = filepath.Join(tmpdir, "packs")
-	conf := &Config{PacksDir: filepath.Join(tmpdir, "packs")}
+	conf := &Config{DataDir: tmpdir}
 	c, err := NewCore(conf)
-	fatal(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	assert.NotNil(t, c.regs)
 	assert.NotNil(t, c.sec)
@@ -53,9 +59,35 @@ func Test_core(t *testing.T) {
 	assert.NotNil(t, c.orch)
 	assert.NotNil(t, c.packs)
 	assert.Equal(t, "nomad", c.orch.ID())
+}
+
+func Test_Core_Build(t *testing.T) {
+	if !utils.FileExists("/var/run/docker.sock") {
+		t.Skip("Skipping: docker file descriptor not found")
+	}
+
+	tmpdir, _ := ioutil.TempDir("/tmp", "core-")
+
+	opt := DefaultConfigureOptions()
+	opt.NoPrompt = true
+	opt.DataDir = tmpdir
+	err := ConfigureGlobal(opt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// tmpdir = filepath.Join(tmpdir, "packs")
+	conf := &Config{DataDir: tmpdir}
+	c, err := NewCore(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	stack, err := manifest.LoadManifest("../test-fixtures/thrap.hcl")
-	fatal(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	errs := stack.Validate()
 	if len(errs) > 0 {
 		fatal(t, utils.FlattenErrors(errs))
@@ -73,14 +105,19 @@ func Test_core(t *testing.T) {
 
 }
 
-func Test_core_stack(t *testing.T) {
+func Test_Core_Stack(t *testing.T) {
 
 	tmpdir, _ := ioutil.TempDir("/tmp", "core.stack-")
-	tmpdir = filepath.Join(tmpdir, "packs")
+	opt := DefaultConfigureOptions()
+	opt.NoPrompt = true
+	opt.DataDir = tmpdir
+	err := ConfigureGlobal(opt)
+	fatal(t, err)
 
-	lconf, _ := config.ReadProjectConfig("../")
+	lconf, err := config.ReadProjectConfig("../")
+	fatal(t, err)
 	conf := &Config{
-		PacksDir:    tmpdir,
+		DataDir:     tmpdir,
 		ThrapConfig: lconf,
 	}
 

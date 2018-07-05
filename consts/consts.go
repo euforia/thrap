@@ -12,6 +12,8 @@ const (
 	KeyFile = "ecdsa256"
 	// EnvVarVersion is the env. var. name for the version injected by thrap
 	EnvVarVersion = "STACK_VERSION"
+	// PacksDir is the directory name where packs are stored
+	PacksDir = "packs"
 )
 
 const (
@@ -22,8 +24,8 @@ const (
 	DefaultWorkDir = "/"
 	// DefaultBuildContext is the container build context
 	DefaultBuildContext = "."
-	// DefaultPacksDir is the default directory where packs are stored
-	DefaultPacksDir = "~/.thrap/packs"
+	//
+	DefaultDataDir = "~/.thrap"
 )
 
 const (
@@ -44,7 +46,8 @@ const (
 const (
 	// CompVarPrefixKey is the prefix for all component variables
 	CompVarPrefixKey = "comp"
-	DepVarPrefixKey  = "dep"
+	// DepVarPrefixKey is the prefix for all dep variables
+	DepVarPrefixKey = "dep"
 )
 
 const (

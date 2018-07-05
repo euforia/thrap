@@ -50,14 +50,14 @@ func ConfigureGlobal(opts ConfigureOptions) error {
 		return err
 	}
 
-	hwdir := filepath.Join(opts.DataDir, consts.WorkDir)
-	if !utils.FileExists(hwdir) {
-		os.MkdirAll(hwdir, 0755)
+	// hwdir := filepath.Join(opts.DataDir, consts.WorkDir)
+	if !utils.FileExists(opts.DataDir) {
+		os.MkdirAll(opts.DataDir, 0755)
 	}
 
 	var (
 		conf     *config.ThrapConfig
-		varsfile = filepath.Join(hwdir, consts.ConfigFile)
+		varsfile = filepath.Join(opts.DataDir, consts.ConfigFile)
 	)
 
 	if !utils.FileExists(varsfile) {
@@ -86,7 +86,7 @@ func ConfigureGlobal(opts ConfigureOptions) error {
 	// Creds
 	var (
 		cconf     *config.CredsConfig
-		credsFile = filepath.Join(hwdir, consts.CredsFile)
+		credsFile = filepath.Join(opts.DataDir, consts.CredsFile)
 	)
 	if !utils.FileExists(credsFile) {
 		cconf = config.DefaultCredsConfig()
@@ -104,7 +104,7 @@ func ConfigureGlobal(opts ConfigureOptions) error {
 	fmt.Println("Creds:", credsFile)
 
 	// Key file
-	keypath := filepath.Join(hwdir, consts.KeyFile)
+	keypath := filepath.Join(opts.DataDir, consts.KeyFile)
 	fmt.Println("Keypair:", keypath)
 	if !utils.FileExists(keypath) {
 		_, err = generateKeyPair(keypath)
@@ -158,7 +158,7 @@ func configureVCSCreds(conf *config.CredsConfig, vcsID string, noprompt bool) {
 }
 
 // ConfigureLocal configures the local project configuration
-func ConfigureLocal(opts ConfigureOptions) (*config.ThrapConfig, error) {
+func ConfigureLocal(conf *config.ThrapConfig, opts ConfigureOptions) (*config.ThrapConfig, error) {
 	apath, err := filepath.Abs(opts.DataDir)
 	if err != nil {
 		return nil, err
@@ -173,13 +173,13 @@ func ConfigureLocal(opts ConfigureOptions) (*config.ThrapConfig, error) {
 	}
 
 	// Read global config
-	filename, _ := homedir.Expand("~/" + consts.WorkDir + "/" + consts.ConfigFile)
-	conf, err := config.ReadThrapConfig(filename)
-	if err != nil {
-		return nil, err
-	}
+	// filename, _ := homedir.Expand("~/" + consts.WorkDir + "/" + consts.ConfigFile)
+	// conf, err := config.ReadThrapConfig(filename)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	// Add project settings
+	// Add project settings to supplied global
 	conf.VCS[opts.VCS.ID].Repo = &config.VCSRepoConfig{
 		Name:  opts.VCS.Repo.Name,
 		Owner: opts.VCS.Repo.Owner,

@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	homedir "github.com/mitchellh/go-homedir"
 )
 
 func FileExists(fpath string) bool {
@@ -38,4 +40,17 @@ func ParseIgnoresFile(filename string) ([]string, error) {
 	}
 
 	return nil, err
+}
+
+func GetAbsPath(p string) (out string, err error) {
+	if p == "" {
+		out, err = os.Getwd()
+	} else if strings.HasPrefix(p, "~") {
+		out, err = homedir.Expand(p)
+	} else if !filepath.IsAbs(p) {
+		out, err = filepath.Abs(p)
+	} else {
+		out = p
+	}
+	return
 }

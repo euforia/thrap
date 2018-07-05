@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/hashicorp/hil"
 	"github.com/hashicorp/hil/ast"
 
@@ -27,6 +28,12 @@ import (
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vcs"
 )
+
+type CompStatus struct {
+	ID      string
+	Details types.ContainerJSON
+	Error   error
+}
 
 // Stack provides various stack based operations
 type Stack struct {
@@ -143,11 +150,11 @@ func (st *Stack) populatePorts(stack *thrapb.Stack) error {
 // used in the local cli case as the config is merged with the global.
 func (st *Stack) Init(stconf *asm.BasicStackConfig, opt ConfigureOptions) (*thrapb.Stack, error) {
 
-	lconf, err := ConfigureLocal(opt)
+	_, err := ConfigureLocal(st.conf, opt)
 	if err != nil {
 		return nil, err
 	}
-	st.conf.Merge(lconf)
+	// st.conf.Merge(lconf)
 
 	repo := opt.VCS.Repo
 	vcsp, gitRepo, err := vcs.SetupLocalGitRepo(repo.Name, repo.Owner, opt.DataDir, opt.VCS.Addr)
@@ -275,6 +282,34 @@ func (st *Stack) startContainer(ctx context.Context, sid string, comp *thrapb.Co
 	}
 
 	return nil
+}
+
+func (st *Stack) Status(ctx context.Context, stack *thrapb.Stack) []*CompStatus {
+	out := make([]*CompStatus, 0, len(stack.Components))
+	for _, comp := range stack.Components {
+		ss := &CompStatus{ID: comp.ID + "." + stack.ID}
+		ss.Details, ss.Error = st.crt.Inspect(ctx, ss.ID)
+
+		if ss.Error == nil {
+			if ss.Details.State.Status == "exited" {
+				// 	ss.Error = errors.New(ss.Details.State.Error)
+				s := ss.Details.State
+				// fmt.Println(s.Error, s.ExitCode,ss.Details.)
+				ss.Error = fmt.Errorf("code=%d", s.ExitCode)
+			}
+
+		} else {
+			ss.Details = types.ContainerJSON{
+				ContainerJSONBase: &types.ContainerJSONBase{
+					State: &types.ContainerState{Status: "failed"},
+				},
+				Config: &container.Config{},
+			}
+		}
+
+		out = append(out, ss)
+	}
+	return out
 }
 
 // Build starts all require services, then starts all the builds
@@ -522,6 +557,7 @@ func (st *Stack) Deploy(stack *thrapb.Stack) error {
 			break
 		}
 
+		fmt.Println(comp.ID)
 	}
 
 	return err

@@ -2,9 +2,11 @@ package config
 
 import (
 	"io/ioutil"
+	"path/filepath"
 
 	"github.com/euforia/hclencoder"
 	"github.com/euforia/pseudo/scope"
+	"github.com/euforia/thrap/consts"
 	"github.com/hashicorp/hcl"
 )
 
@@ -278,10 +280,10 @@ func ReadThrapConfig(filename string) (*ThrapConfig, error) {
 // 	return nil, err
 // }
 
-// func ReadProjectConfig(projPath string) (*ThrapConfig, error) {
-// 	filename := filepath.Join(projPath, consts.WorkDir, consts.ConfigFile)
-// 	return ReadThrapConfig(filename)
-// }
+func ReadProjectConfig(projPath string) (*ThrapConfig, error) {
+	filename := filepath.Join(projPath, consts.WorkDir, consts.ConfigFile)
+	return ReadThrapConfig(filename)
+}
 
 // func ReadGlobalCreds() (*CredsConfig, error) {
 // 	filename, err := homedir.Expand("~/" + consts.WorkDir + "/" + consts.CredsFile)

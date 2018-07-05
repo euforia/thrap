@@ -111,6 +111,10 @@ func (stack *Stack) Validate() map[string]error {
 		} else {
 			comp.ID = k
 		}
+
+		if comp.Version == "" {
+			comp.Version = stack.Version
+		}
 	}
 
 	for k, dep := range stack.Dependencies {

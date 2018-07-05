@@ -1,6 +1,46 @@
 # thrap
 
 
+## Usage 
+
+### Configure
+```shell
+$ thrap configure
+```
+
+### Initialize a new project
+```shell
+$ mkdir my-project
+$ cd my-project
+$ thrap stack init
+```
+
+### Build your project (locally)
+
+Build your stack by running the following your project directory:
+
+```shell
+$ thrap stack build
+```
+
+### Deploy you project (locally)
+
+Once built, deploy your project:
+
+```shell
+$ thrap stack deploy
+```
+
+### Check project status
+
+Check the status of your stack:
+
+```shell
+$ thrap stack status
+```
+
+
+
 ## Development
 
 #### Install dependencies

@@ -75,6 +75,10 @@ func (orch *Docker) Run(ctx context.Context, cfg *thrapb.Container) ([]string, e
 	return resp.Warnings, err
 }
 
+func (orch *Docker) Inspect(ctx context.Context, containerID string) (types.ContainerJSON, error) {
+	return orch.cli.ContainerInspect(ctx, containerID)
+}
+
 // CreateNetwork sets up a user-defined bridge network only if one does not
 // exist by the given id
 func (orch *Docker) CreateNetwork(ctx context.Context, netID string) error {

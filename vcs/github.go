@@ -44,8 +44,8 @@ func (gh *githubVCS) Init(conf map[string]interface{}) error {
 	if err == nil {
 		var token string
 		if iface, ok := conf["token"]; ok {
-			token = iface.(string)
-			if token == "" {
+			token, ok = iface.(string)
+			if !ok {
 				return errors.New("'token' must be a string")
 			}
 		}
@@ -65,6 +65,7 @@ func (gh *githubVCS) GlobalEmail() string {
 	return gh.git.globalEmail
 }
 
+// Get returns info on a github repository
 func (gh *githubVCS) Get(repo *Repository, opt Option) (interface{}, error) {
 	ctx := context.Background()
 	ghRepo, _, err := gh.client.Repositories.Get(ctx, repo.Owner, repo.Name)
