@@ -287,8 +287,9 @@ func (st *Stack) startContainer(ctx context.Context, sid string, comp *thrapb.Co
 func (st *Stack) Status(ctx context.Context, stack *thrapb.Stack) []*CompStatus {
 	out := make([]*CompStatus, 0, len(stack.Components))
 	for _, comp := range stack.Components {
-		ss := &CompStatus{ID: comp.ID + "." + stack.ID}
-		ss.Details, ss.Error = st.crt.Inspect(ctx, ss.ID)
+		ss := &CompStatus{ID: comp.ID}
+		id := comp.ID + "." + stack.ID
+		ss.Details, ss.Error = st.crt.Inspect(ctx, id)
 
 		if ss.Error == nil {
 			if ss.Details.State.Status == "exited" {

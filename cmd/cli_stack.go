@@ -191,17 +191,22 @@ func commandStackStatus() *cli.Command {
 			resp := stm.Status(context.Background(), stack)
 
 			tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)
-			fmt.Fprintf(tw, "Component\tImage\tStatus\n")
-			fmt.Fprintf(tw, "---------\t-----\t------\n")
+			fmt.Fprintf(tw, "Component\tImage\tStatus\tDetails\n")
+			fmt.Fprintf(tw, "---------\t-----\t------\t-------\n")
 			for _, s := range resp {
 
 				d := s.Details
 				st := d.State
 
 				if s.Error != nil {
-					fmt.Fprintf(tw, "%s\t%s\t%s (%s)\n", s.ID, d.Config.Image, st.Status, s.Error)
+					fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", s.ID, d.Config.Image, st.Status, s.Error)
 				} else {
-					fmt.Fprintf(tw, "%s\t%s\t%s\n", s.ID, d.Config.Image, st.Status)
+					// if stack.Components[s.ID].Head {
+					fmt.Fprintf(tw, "%s\t%s\t%s\t%v\n", s.ID, d.Config.Image, st.Status, d.NetworkSettings.Ports)
+					// } else {
+					// fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", s.ID, d.Config.Image, st.Status, "")
+					// }
+
 				}
 
 			}

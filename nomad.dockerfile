@@ -1,6 +1,8 @@
 
 FROM frolvlad/alpine-glibc
 
+EXPOSE 4646
+
 VOLUME /opt/nomad
 RUN apk update && apk add curl && cd /tmp/ && \
     curl -O https://releases.hashicorp.com/nomad/0.8.4/nomad_0.8.4_linux_amd64.zip && \
