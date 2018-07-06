@@ -1,29 +1,50 @@
 # thrap
 
+## Installation
+
+Download the appropriate binary based on your platform and copy it into your path:
+
+```shell
+$ mv thrap /usr/local/bin/
+```
 
 ## Usage 
 
 ### Configure
+
+Before thrap can be used, some basic configurations are required.  The commnand 
+below will perform the initial configuration asking questions as needed.
+
 ```shell
 $ thrap configure
 ```
 
+You are now ready to use thrap.
+
 ### Initialize a new project
+
+Start by initializing a new project:
+
 ```shell
 $ mkdir my-project
 $ cd my-project
 $ thrap stack init
 ```
 
-### Build your project (locally)
+This will create the initial set of base files and configurations.
 
-Build your stack by running the following your project directory:
+### Build your project (locally)
+Once the project is initialized, you can make code changes as needed.  When ready, the project stack can
+be built using the following command:
 
 ```shell
 $ thrap stack build
 ```
 
-### Deploy you project (locally)
+This starts all necessary services, builds all containers, exiting after all head containers have 
+completed building.
+
+### Deploy your project (locally)
 
 Once built, deploy your project:
 
@@ -38,7 +59,6 @@ Check the status of your stack:
 ```shell
 $ thrap stack status
 ```
-
 
 
 ## Development
