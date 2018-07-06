@@ -22,6 +22,7 @@ func commandStack() *cli.Command {
 			commandStackBuild(),
 			commandStackDeploy(),
 			commandStackStatus(),
+			commandStackLogs(),
 			// commandStackRegister(),
 			// commandStackValidate(),
 			commandStackStop(),
@@ -201,18 +202,39 @@ func commandStackStatus() *cli.Command {
 				if s.Error != nil {
 					fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", s.ID, d.Config.Image, st.Status, s.Error)
 				} else {
-					// if stack.Components[s.ID].Head {
 					fmt.Fprintf(tw, "%s\t%s\t%s\t%v\n", s.ID, d.Config.Image, st.Status, d.NetworkSettings.Ports)
-					// } else {
-					// fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", s.ID, d.Config.Image, st.Status, "")
-					// }
-
 				}
 
 			}
 			tw.Flush()
 
 			return nil
+		},
+	}
+}
+
+func commandStackLogs() *cli.Command {
+	return &cli.Command{
+		Name:  "logs",
+		Usage: "Show stack runtime logs",
+		Action: func(ctx *cli.Context) error {
+
+			stack, err := manifest.LoadManifest("")
+			if err != nil {
+				return err
+			}
+			if errs := stack.Validate(); len(errs) > 0 {
+				return utils.FlattenErrors(errs)
+			}
+
+			core, err := core.NewCore(&core.Config{DataDir: consts.DefaultDataDir})
+			if err != nil {
+				return err
+			}
+
+			stm := core.Stack()
+
+			return stm.Logs(context.Background(), stack)
 		},
 	}
 }

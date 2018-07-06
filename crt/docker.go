@@ -12,6 +12,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/euforia/thrap/dockerfile"
 	"github.com/euforia/thrap/thrapb"
 	"golang.org/x/net/context"
@@ -143,6 +144,22 @@ func (orch *Docker) Remove(ctx context.Context, cid string) error {
 	return orch.cli.ContainerRemove(ctx, cid, opts)
 }
 
+func (orch *Docker) Logs(ctx context.Context, containerID string) error {
+	opts := types.ContainerLogsOptions{
+		ShowStderr: true,
+		ShowStdout: true,
+	}
+
+	clogs, err := orch.cli.ContainerLogs(ctx, containerID, opts)
+	if err != nil {
+		return err
+	}
+	defer clogs.Close()
+
+	_, err = stdcopy.StdCopy(os.Stdout, os.Stderr, clogs)
+	return err
+}
+
 func (orch *Docker) Build(ctx context.Context, req *BuildRequest) error {
 	ign, err := dockerfile.ReadIgnoresFile(req.ContextDir)
 	if err != nil {
@@ -175,6 +192,43 @@ func (orch *Docker) Build(ctx context.Context, req *BuildRequest) error {
 	err = jsonmessage.DisplayJSONMessagesStream(resp.Body, req.Output, uintptr(rand.Uint32()), true, nil)
 	return err
 }
+
+// type dockerLogWriter struct {
+// 	w   io.Writer
+// 	buf *bytes.Buffer
+// }
+
+// func (w *dockerLogWriter) Close() error {
+// 	_, err := w.w.Write(w.buf.Bytes())
+
+// 	w.buf.Reset()
+// 	w.buf = nil
+
+// 	return err
+// }
+
+// func (w *dockerLogWriter) Write(b []byte) (int, error) {
+// 	i := bytes.IndexRune(b, '\n')
+// 	if i < 0 {
+// 		fmt.Printf("NO NEWLINE '%s'\n", b)
+// 		return w.buf.Write(b)
+// 	}
+
+// 	toWrite := append(w.buf.Bytes(), b[:i+1]...)
+// 	_, err := w.w.Write(toWrite[8:])
+// 	if err != nil {
+// 		return 0, err
+// 	}
+
+// 	w.buf.Reset()
+
+// 	_, err = w.buf.Write(b[i+1:])
+// 	if err != nil {
+// 		return 0, err
+// 	}
+
+// 	return len(b), err
+// }
 
 // Build builds a single component of a stack using 'docker build'
 // func (orch *Docker) BuildComponent(ctx context.Context, stackID string, comp *thrapb.Component, opts RequestOptions) error {

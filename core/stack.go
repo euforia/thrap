@@ -284,6 +284,18 @@ func (st *Stack) startContainer(ctx context.Context, sid string, comp *thrapb.Co
 	return nil
 }
 
+func (st *Stack) Logs(ctx context.Context, stack *thrapb.Stack) error {
+	var err error
+	for _, comp := range stack.Components {
+		er := st.crt.Logs(ctx, comp.ID+"."+stack.ID)
+		if er != nil {
+			err = er
+		}
+	}
+
+	return err
+}
+
 func (st *Stack) Status(ctx context.Context, stack *thrapb.Stack) []*CompStatus {
 	out := make([]*CompStatus, 0, len(stack.Components))
 	for _, comp := range stack.Components {
