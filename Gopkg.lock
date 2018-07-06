@@ -142,6 +142,7 @@
     "pkg/longpath",
     "pkg/mount",
     "pkg/pools",
+    "pkg/stdcopy",
     "pkg/system",
     "pkg/term",
     "pkg/term/windows"
@@ -742,6 +743,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a72bcb0f7a8310bf137e5bda14937f6fd873a9c4d2a2f0b3f47a7f8d61d684b1"
+  inputs-digest = "fd1f1429f1906e221c35ec63f9f4dd644816691eaae1f4f925e42c8994ae723d"
   solver-name = "gps-cdcl"
   solver-version = 1
