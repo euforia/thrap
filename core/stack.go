@@ -284,6 +284,10 @@ func (st *Stack) startContainer(ctx context.Context, sid string, comp *thrapb.Co
 	return nil
 }
 
+func (st *Stack) Log(ctx context.Context, id string) error {
+	return st.crt.Logs(ctx, id)
+}
+
 func (st *Stack) Logs(ctx context.Context, stack *thrapb.Stack) error {
 	var err error
 	for _, comp := range stack.Components {

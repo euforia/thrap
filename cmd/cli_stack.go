@@ -215,8 +215,9 @@ func commandStackStatus() *cli.Command {
 
 func commandStackLogs() *cli.Command {
 	return &cli.Command{
-		Name:  "logs",
-		Usage: "Show stack runtime logs",
+		Name:      "logs",
+		Usage:     "Show stack runtime logs",
+		ArgsUsage: "[component]",
 		Action: func(ctx *cli.Context) error {
 
 			stack, err := manifest.LoadManifest("")
@@ -234,7 +235,12 @@ func commandStackLogs() *cli.Command {
 
 			stm := core.Stack()
 
-			return stm.Logs(context.Background(), stack)
+			cid := ctx.Args().Get(0)
+			c := context.Background()
+			if cid == "" {
+				return stm.Logs(c, stack)
+			}
+			return stm.Log(c, cid+"."+stack.ID)
 		},
 	}
 }
