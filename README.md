@@ -1,4 +1,6 @@
 # thrap
+Thrap is a tool accelerate the software development process by automating common tasks and 
+simpifying various integration points
 
 ## Installation
 

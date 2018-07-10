@@ -7,15 +7,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	errArgExists = errors.New("arg exists")
-)
-
+// Instruction implements a dockerfile instruction interface
 type Instruction interface {
 	Key() string
 	String() string
 }
 
+// Stage is a group of instructions containing a single FROM statement
 type Stage []Instruction
 
 // ID returns the as field from a FROM instruction
@@ -39,6 +37,8 @@ func (stage Stage) HasOp(op string) bool {
 	return false
 }
 
+// GetOp returns the first occurence of an instruction associated to the op
+// and its index in the stage
 func (stage Stage) GetOp(op string) (Instruction, int) {
 	for i := range stage {
 		if stage[i].Key() == op {
@@ -52,6 +52,8 @@ type Dockerfile struct {
 	Stages []Stage
 }
 
+// AddInstruction adds an instuction to the given stage it handles the addition
+// of instruction based on the type instruction applying the associated logic
 func (df *Dockerfile) AddInstruction(stage int, inst Instruction) error {
 	st := df.Stages[stage]
 
@@ -68,32 +70,42 @@ func (df *Dockerfile) AddInstruction(stage int, inst Instruction) error {
 	case KeyEntrypoint:
 		nst = append(st, inst)
 
-	default:
-		if key == KeyArg {
-			ai := inst.(*Arg)
-			for _, s := range st {
-				if s.Key() != KeyArg {
-					continue
-				}
+	case KeyArg:
+		ai := inst.(*Arg)
+		for _, s := range st {
+			if s.Key() != KeyArg {
+				continue
+			}
 
-				if s.(*Arg).Name == ai.Name {
-					// return errors.Wrap(errArgExists, ai.Name)
-					return nil
-				}
+			if s.(*Arg).Name == ai.Name {
+				// return errors.Wrap(errArgExists, ai.Name)
+				return nil
 			}
 		}
+		nst = df.insertInstruction(st, inst)
 
-		_, j := st.GetOp(KeyFrom)
+	default:
+		nst = df.insertInstruction(st, inst)
 
-		nst = make(Stage, len(st)+1)
-		copy(nst, st[:j+1])
-		copy(nst[j+2:], st[j+1:])
-		nst[j+1] = inst
 	}
 
 	df.Stages[stage] = nst
 
 	return nil
+}
+
+// insertInstruction inserts the instruction after the from statement.  It copies
+// the exsting instructions into a new slice, inserts the new instruction and
+// returns the new slice
+func (df *Dockerfile) insertInstruction(st Stage, inst Instruction) Stage {
+	_, j := st.GetOp(KeyFrom)
+
+	nst := make(Stage, len(st)+1)
+	copy(nst, st[:j+1])
+	copy(nst[j+2:], st[j+1:])
+	nst[j+1] = inst
+
+	return nst
 }
 
 func (df *Dockerfile) String() string {
