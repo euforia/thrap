@@ -11,11 +11,31 @@ manifest "thrap" {
       type    = "api"
 
       ports {
-        http = 4646
+        http     = 4646
+        port4647 = 4647
+        port4648 = 4648
+      }
+
+      env {
+        vars {
+          CONSUL_ADDR      = "http://${comp.consul.container.addr.http}"
+          VAULT_ADDR       = "http://${comp.vault.container.addr.default}"
+          BOOTSTRAP_EXPECT = "1"
+        }
       }
 
       build {
         dockerfile = "nomad.dockerfile"
+      }
+    }
+
+    consul {
+      name    = "consul"
+      version = "1.2.0"
+      type    = "api"
+
+      ports {
+        http = 8500
       }
     }
 
@@ -88,9 +108,14 @@ manifest "thrap" {
       version = "0.10.3"
     }
 
+    consul {
+      name    = "consul"
+      version = "1.2.0"
+    }
+
     nomad {
-      name    = "vault"
-      version = "0.10.3"
+      name    = "nomad"
+      version = "0.8.4"
     }
 
     docker {

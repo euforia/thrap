@@ -7,6 +7,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	errArgExists = errors.New("arg exists")
+)
+
 type Instruction interface {
 	Key() string
 	String() string
@@ -65,6 +69,20 @@ func (df *Dockerfile) AddInstruction(stage int, inst Instruction) error {
 		nst = append(st, inst)
 
 	default:
+		if key == KeyArg {
+			ai := inst.(*Arg)
+			for _, s := range st {
+				if s.Key() != KeyArg {
+					continue
+				}
+
+				if s.(*Arg).Name == ai.Name {
+					// return errors.Wrap(errArgExists, ai.Name)
+					return nil
+				}
+			}
+		}
+
 		_, j := st.GetOp(KeyFrom)
 
 		nst = make(Stage, len(st)+1)

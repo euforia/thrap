@@ -56,17 +56,16 @@ type Stack struct {
 }
 
 // Assembler returns a new assembler for the stack
-func (st *Stack) Assembler(stack *thrapb.Stack) (*asm.StackAsm, error) {
+func (st *Stack) Assembler(cwd string, stack *thrapb.Stack) (*asm.StackAsm, error) {
 	// fmt.Println(st.conf.VCS, st.conf.VCS[st.vcs.ID()])
 	scopeVars := st.conf.VCS[st.vcs.ID()].ScopeVars("vcs.")
-
 	//vconf := st.conf.VCS[st.vcs.ID()]
 	// r, err := st.vcs.Open()
 	// if err != nil {
 	// 	return nil, err
 	// }
 	// gitRepo := r.(*git.Repository)
-	return asm.NewStackAsm(stack, st.vcs, nil, scopeVars, st.packs)
+	return asm.NewStackAsm(stack, cwd, st.vcs, nil, scopeVars, st.packs)
 }
 
 // Register registers a new stack. It returns an error if the stack is
@@ -174,7 +173,7 @@ func (st *Stack) Init(stconf *asm.BasicStackConfig, opt ConfigureOptions) (*thra
 	}
 
 	scopeVars := st.conf.VCS[st.vcs.ID()].ScopeVars("vcs.")
-	stasm, err := asm.NewStackAsm(stack, vcsp, gitRepo, scopeVars, st.packs)
+	stasm, err := asm.NewStackAsm(stack, opt.DataDir, vcsp, gitRepo, scopeVars, st.packs)
 	if err != nil {
 		return stack, err
 	}
@@ -229,6 +228,15 @@ func (st *Stack) startServices(ctx context.Context, stack *thrapb.Stack, scopeVa
 		// eval hcl/hil
 		if err = st.evalComponent(comp, scopeVars); err != nil {
 			break
+		}
+
+		// Pull image if we do not locally have it
+		imageID := comp.Name + ":" + comp.Version
+		if !st.crt.HaveImage(ctx, imageID) {
+			err = st.crt.ImagePull(ctx, imageID)
+			if err != nil {
+				break
+			}
 		}
 
 		if err = st.startContainer(ctx, stack.ID, comp); err != nil {

@@ -46,7 +46,6 @@ func Test_NewCore(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// tmpdir = filepath.Join(tmpdir, "packs")
 	conf := &Config{DataDir: tmpdir}
 	c, err := NewCore(conf)
 	if err != nil {
@@ -105,8 +104,7 @@ func Test_Core_Build(t *testing.T) {
 
 }
 
-func Test_Core_Stack(t *testing.T) {
-
+func Test_Core_Assembler(t *testing.T) {
 	tmpdir, _ := ioutil.TempDir("/tmp", "core.stack-")
 	opt := DefaultConfigureOptions()
 	opt.NoPrompt = true
@@ -122,18 +120,18 @@ func Test_Core_Stack(t *testing.T) {
 	}
 
 	c, err := NewCore(conf)
-	fatal(t, err)
-
-	stack, err := manifest.LoadManifest("../thrap.hcl")
-	fatal(t, err)
-	errs := stack.Validate()
-	if len(errs) > 0 {
-		fatal(t, utils.FlattenErrors(errs))
+	if err != nil {
+		t.Fatal(err)
 	}
 
+	stack, _ := manifest.LoadManifest("../thrap.hcl")
+	stack.Validate()
+
 	st := c.Stack()
-	sasm, err := st.Assembler(stack)
-	fatal(t, err)
+	sasm, err := st.Assembler("../", stack)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	err = sasm.Assemble()
 	if err != nil {
@@ -141,7 +139,6 @@ func Test_Core_Stack(t *testing.T) {
 	}
 
 	casm := sasm.ComponentAsm("registry")
-	fmt.Println(casm.Dockerfile())
-
-	fmt.Printf("%+v\n", stack)
+	assert.NotNil(t, casm)
+	fmt.Println(sasm.ComponentAsm("nomad").Dockerfile())
 }

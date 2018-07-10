@@ -57,6 +57,8 @@ func ParseInstruction(r *RawInstruction) (Instruction, error) {
 
 	case KeyFrom:
 		return ParseFrom(r.Data)
+	case KeyArg:
+		return ParseArg(r.Data)
 	case KeyWorkDir:
 		return ParseWorkDir(r.Data)
 	case KeyExpose:
@@ -73,6 +75,15 @@ func ParseInstruction(r *RawInstruction) (Instruction, error) {
 
 type Arg struct {
 	Name string
+}
+
+func ParseArg(b []byte) (*Arg, error) {
+	p := strings.Split(string(b), " ")
+	if len(p) != 1 {
+		return nil, errors.New("must have one arg name")
+	}
+
+	return &Arg{Name: string(b)}, nil
 }
 
 // Key returns the instruction key

@@ -1,6 +1,10 @@
 package crt
 
 // func Test_scopeVars(t *testing.T) {
+// 	if !utils.FileExists("/var/run/docker.sock") {
+// 		t.Skip("Skipping: docker file descriptor not found")
+// 	}
+
 // 	stack, err := manifest.LoadManifest("../test-fixtures/thrap.hcl")
 // 	if err != nil {
 // 		t.Fatal(err)
@@ -10,8 +14,10 @@ package crt
 // 		t.Fatal(errs)
 // 	}
 
-// 	dr := registry.DockerRuntime{}
-// 	dr.Init(registry.Config{})
+// 	dr, err := NewDocker()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
 // 	for _, comp := range stack.Components {
 // 		var (
 // 			ic  *container.Config
@@ -25,12 +31,9 @@ package crt
 // 		}
 
 // 		if err == nil {
-// 			// 		fmt.Println(ic.ExposedPorts)
-// 			var i int
 // 			comp.Ports = make(map[string]int32, len(ic.ExposedPorts))
 // 			for k := range ic.ExposedPorts {
 // 				comp.Ports[k.Port()] = int32(k.Int())
-// 				i++
 // 			}
 // 		}
 
@@ -85,44 +88,7 @@ package crt
 // 	}
 // 	ctx := context.Background()
 
-// 	err = bldr.BuildComponent(ctx, "default", bcomp, RequestOptions{Output: os.Stdout})
+// 	err = bldr.Build(ctx, "default", bcomp, RequestOptions{Output: os.Stdout})
 // 	assert.Nil(t, err)
-
-// }
-
-// func Test_DockerOrchestrator_Deploy(t *testing.T) {
-// 	st := &thrapb.Stack{ID: "test",
-// 		Components: map[string]*thrapb.Component{
-// 			"vault": &thrapb.Component{
-// 				ID:   "vault",
-// 				Name: "vault", Version: "0.10.3",
-// 			},
-// 			"consul": &thrapb.Component{
-// 				ID:   "consul",
-// 				Name: "consul", Version: "1.1.0",
-// 			},
-// 			"api": &thrapb.Component{
-// 				ID:      "api",
-// 				Name:    "api",
-// 				Version: "latest",
-// 				Head:    true,
-// 				Build: &thrapb.Build{
-// 					Dockerfile: "test.dockerfile",
-// 					Context:    "../test-fixtures",
-// 				},
-// 			},
-// 		},
-// 	}
-
-// 	bldr, _ := NewDockerRuntime()
-
-// 	defer bldr.tearDown(context.Background(), st)
-
-// 	_, _, err := bldr.Deploy(st, RequestOptions{Output: os.Stdout})
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-
-// 	// <-time.After(2 * time.Second)
 
 // }

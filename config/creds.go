@@ -12,7 +12,7 @@ type CredsConfig struct {
 	Registry     map[string]map[string]string `hcl:"registry"`
 	VCS          map[string]map[string]string `hcl:"vcs"`
 	Secrets      map[string]map[string]string `hcl:"secrets"`
-	Orchestrator map[string]map[string]string `hcl:"id"`
+	Orchestrator map[string]map[string]string `hcl:"orchestrator"`
 }
 
 // GetRegistryCreds returns creds for the registry by the id

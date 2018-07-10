@@ -49,6 +49,11 @@ func (orch *Docker) Stop(ctx context.Context, containerID string) error {
 	return orch.cli.ContainerStop(ctx, containerID, &dur)
 }
 
+func (orch *Docker) HaveImage(ctx context.Context, imageID string) bool {
+	_, _, err := orch.cli.ImageInspectWithRaw(ctx, imageID)
+	return err == nil
+}
+
 // Run creates and runs a container with the given config
 func (orch *Docker) Run(ctx context.Context, cfg *thrapb.Container) ([]string, error) {
 

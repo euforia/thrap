@@ -28,18 +28,22 @@ type StackAsm struct {
 	// available packs
 	packs *packs.Packs
 
-	vcs     vcs.VCS
-	gitrepo *git.Repository
-
+	vcs      vcs.VCS
+	gitrepo  *git.Repository
 	worktree *git.Worktree
+
+	// working directory
+	cwd string
 
 	stack *thrapb.Stack
 
-	casms map[string]*DevCompAsm
+	// casms map[string]*DevCompAsm
+	casms map[string]ComponentAssembler
 }
 
 // NewStackAsm returns a new stack assembler
 func NewStackAsm(stack *thrapb.Stack,
+	cwd string,
 	vcsp vcs.VCS, gitrepo *git.Repository,
 	globalVars scope.Variables, packs *packs.Packs) (*StackAsm, error) {
 
@@ -49,7 +53,9 @@ func NewStackAsm(stack *thrapb.Stack,
 		packs:   packs,
 		vars:    globalVars,
 		stack:   stack,
-		casms:   make(map[string]*DevCompAsm),
+		cwd:     cwd,
+		// casms:   make(map[string]*DevCompAsm),
+		casms: make(map[string]ComponentAssembler),
 	}
 
 	// Add stack scope vars
@@ -74,7 +80,8 @@ func (asm *StackAsm) AssembleMaterialize() error {
 	return err
 }
 
-func (asm *StackAsm) ComponentAsm(id string) *DevCompAsm {
+// func (asm *StackAsm) ComponentAsm(id string) *DevCompAsm {
+func (asm *StackAsm) ComponentAsm(id string) ComponentAssembler {
 	casm, _ := asm.casms[id]
 	return casm
 }
@@ -85,14 +92,33 @@ func (asm *StackAsm) Assemble() error {
 	for k, cmpt := range st.Components {
 		if cmpt.IsBuildable() {
 
+			var (
+				casm ComponentAssembler
+				err  error
+			)
+
 			// Only assemble with ones that have supplied a language
 			if cmpt.Language.Lang() != "" {
-				casm, err := asm.assembleDevComponent(cmpt)
-				if err != nil {
-					return err
-				}
-				asm.casms[k] = casm
+				casm, err = asm.assembleDevComponent(cmpt)
+				// if err != nil {
+				// 	return err
+				// }
+				// asm.casms[k] = casm
+			} else {
+				casm, err = asm.assembleBuildComponent(cmpt)
+
+				// if err != nil {
+				// 	return err
+				// }
+				// // TODO:
+				// fmt.Println("TODO", casm)
 			}
+
+			if err != nil {
+				return err
+			}
+
+			asm.casms[k] = casm
 
 		} else {
 			//
@@ -107,8 +133,10 @@ func (asm *StackAsm) Assemble() error {
 
 func (asm *StackAsm) Materialize() (err error) {
 	for _, casm := range asm.casms {
-		if err = asm.materializeDevComp(casm); err != nil {
-			break
+		if dcasm, ok := casm.(*DevCompAsm); ok {
+			if err = asm.materializeDevComp(dcasm); err != nil {
+				break
+			}
 		}
 	}
 
@@ -118,6 +146,12 @@ func (asm *StackAsm) Materialize() (err error) {
 // Commit writes out the manifest locally and commits all changes with the VCS
 func (asm *StackAsm) Commit() error {
 	return asm.vcsCommit()
+}
+
+func (asm *StackAsm) assembleBuildComponent(cmpt *thrapb.Component) (*BuildCompAsm, error) {
+	casm := NewBuildCompAsm(asm.cwd, cmpt)
+	err := casm.Assemble(asm.vars)
+	return casm, err
 }
 
 func (asm *StackAsm) assembleDevComponent(cmpt *thrapb.Component) (*DevCompAsm, error) {
