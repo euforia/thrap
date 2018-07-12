@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -292,14 +293,14 @@ func (st *Stack) startContainer(ctx context.Context, sid string, comp *thrapb.Co
 	return nil
 }
 
-func (st *Stack) Log(ctx context.Context, id string) error {
-	return st.crt.Logs(ctx, id)
+func (st *Stack) Log(ctx context.Context, id string, stdout, stderr io.Writer) error {
+	return st.crt.Logs(ctx, id, stdout, stderr)
 }
 
-func (st *Stack) Logs(ctx context.Context, stack *thrapb.Stack) error {
+func (st *Stack) Logs(ctx context.Context, stack *thrapb.Stack, stdout, stderr io.Writer) error {
 	var err error
 	for _, comp := range stack.Components {
-		er := st.crt.Logs(ctx, comp.ID+"."+stack.ID)
+		er := st.crt.Logs(ctx, comp.ID+"."+stack.ID, stdout, stderr)
 		if er != nil {
 			err = er
 		}
@@ -490,6 +491,10 @@ func (st *Stack) doBuild(ctx context.Context, sid string, comp *thrapb.Component
 			BuildID:     comp.ID, // todo add vcs repo version
 			Dockerfile:  comp.Build.Dockerfile,
 			NetworkMode: sid,
+			// Add labels to query later
+			Labels: map[string]string{
+				sid + "." + comp.ID + ".build": comp.Version,
+			},
 			// Remove:      true,
 		},
 	}

@@ -224,6 +224,7 @@ func commandStackLogs() *cli.Command {
 			if err != nil {
 				return err
 			}
+
 			if errs := stack.Validate(); len(errs) > 0 {
 				return utils.FlattenErrors(errs)
 			}
@@ -238,9 +239,10 @@ func commandStackLogs() *cli.Command {
 			cid := ctx.Args().Get(0)
 			c := context.Background()
 			if cid == "" {
-				return stm.Logs(c, stack)
+				return stm.Logs(c, stack, os.Stdout, os.Stderr)
 			}
-			return stm.Log(c, cid+"."+stack.ID)
+
+			return stm.Log(c, cid+"."+stack.ID, os.Stdout, os.Stderr)
 		},
 	}
 }

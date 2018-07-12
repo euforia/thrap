@@ -96,7 +96,8 @@ func (packs *Packs) Load(httpURL string) error {
 	return err
 }
 
-// Update performs a git pull on the packs repo to get the latest updates
+// Update performs a git pull on the packs repo to get the latest updates.  This
+// should be called after a successful call to load
 func (packs *Packs) Update() error {
 	repo, err := git.PlainOpen(packs.dir)
 	if err != nil {

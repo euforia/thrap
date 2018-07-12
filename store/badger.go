@@ -24,11 +24,15 @@ const (
 
 // Object is a datastructure that is hashable and protobuf friendly
 type Object interface {
+	// Computes the hash of the object given the hash function
 	Hash(h hash.Hash) []byte
+	// Marshals the object to byte slice
 	Marshal() ([]byte, error)
+	// Unmarshals byte slice to object
 	Unmarshal(b []byte) error
 }
 
+// NewBadgerDB opens a new badger db handle from the given directory
 func NewBadgerDB(datadir string) (*badger.DB, error) {
 	opts := badger.DefaultOptions
 	opts.Dir = datadir
@@ -37,6 +41,7 @@ func NewBadgerDB(datadir string) (*badger.DB, error) {
 	return badger.Open(opts)
 }
 
+// BadgerObjectStore is a badger backed object store
 type BadgerObjectStore struct {
 	db         *badger.DB
 	prefix     string
@@ -59,6 +64,7 @@ func NewBadgerObjectStore(db *badger.DB, hf func() hash.Hash, prefix string) *Ba
 	return b
 }
 
+// CreateRef creates a new reference under the namespace.  It returns the header digest, header
 func (store *BadgerObjectStore) CreateRef(namespace, ref string) ([]byte, *thrapb.ChainHeader, error) {
 	h := store.hf()
 	ch := &thrapb.ChainHeader{
@@ -85,7 +91,8 @@ func (store *BadgerObjectStore) CreateRef(namespace, ref string) ([]byte, *thrap
 	return digest, ch, er
 }
 
-func (store *BadgerObjectStore) IterRefChain(namespace, ref string, f func(header *thrapb.ChainHeader) error) error {
+// WalkRefChain walks a given ref until it hits the zero digest
+func (store *BadgerObjectStore) WalkRefChain(namespace, ref string, f func(header *thrapb.ChainHeader) error) error {
 	refkey := store.getRefOpaque(namespace, ref)
 	er := store.db.View(func(txn *badger.Txn) error {
 

@@ -77,7 +77,7 @@ func Test_BadgerStore(t *testing.T) {
 
 	c := uint64(1)
 	var cu int
-	err = st.IterRefChain(ns, "ref", func(header *thrapb.ChainHeader) error {
+	err = st.WalkRefChain(ns, "ref", func(header *thrapb.ChainHeader) error {
 		assert.Equal(t, c, header.Height)
 		c--
 		cu++

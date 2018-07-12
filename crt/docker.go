@@ -9,6 +9,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/jsonmessage"
@@ -81,6 +82,7 @@ func (orch *Docker) Run(ctx context.Context, cfg *thrapb.Container) ([]string, e
 	return resp.Warnings, err
 }
 
+// Inspect returns information about the container by id
 func (orch *Docker) Inspect(ctx context.Context, containerID string) (types.ContainerJSON, error) {
 	return orch.cli.ContainerInspect(ctx, containerID)
 }
@@ -143,13 +145,21 @@ func (orch *Docker) CreateNetwork(ctx context.Context, netID string) error {
 // 	}
 // }
 
+// ListImagesWithLabel returns a list of images that match the given label
+func (orch *Docker) ListImagesWithLabel(ctx context.Context, label string) ([]types.ImageSummary, error) {
+	opts := types.ImageListOptions{Filters: filters.Args{}}
+	opts.Filters.Add("label", label)
+	return orch.cli.ImageList(ctx, opts)
+}
+
 // Remove forcibly stops and removes a container
 func (orch *Docker) Remove(ctx context.Context, cid string) error {
 	opts := types.ContainerRemoveOptions{Force: true}
 	return orch.cli.ContainerRemove(ctx, cid, opts)
 }
 
-func (orch *Docker) Logs(ctx context.Context, containerID string) error {
+// Logs returns logs for a single container
+func (orch *Docker) Logs(ctx context.Context, containerID string, stdout, stderr io.Writer) error {
 	opts := types.ContainerLogsOptions{
 		ShowStderr: true,
 		ShowStdout: true,
@@ -161,7 +171,7 @@ func (orch *Docker) Logs(ctx context.Context, containerID string) error {
 	}
 	defer clogs.Close()
 
-	_, err = stdcopy.StdCopy(os.Stdout, os.Stderr, clogs)
+	_, err = stdcopy.StdCopy(stdout, stderr, clogs)
 	return err
 }
 
