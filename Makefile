@@ -17,6 +17,7 @@ clean:
 	rm -f $(NAME)
 
 deps:
+	go get github.com/c4milo/github-release
 	go get github.com/golang/dep/cmd/dep
 	dep ensure -v
 
@@ -31,3 +32,9 @@ dist:
 	mkdir dist
 	GOOS=linux $(BUILD_CMD) $(DIST_OPTS) -o dist/$(NAME)-linux $(SOURCE_FILES)
 	GOOS=darwin $(BUILD_CMD) $(DIST_OPTS) -o dist/$(NAME)-darwin $(SOURCE_FILES)
+
+.PHONY: release 
+release: dist 
+	cd dist && tar -czf $(NAME)-darwin.tgz $(NAME)-darwin
+	cd dist && tar -czf $(NAME)-linux.tgz $(NAME)-linux
+	#github-release euforia/thrap v0.1.0 master v0.1.0 'dist/*.tgz'
