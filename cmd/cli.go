@@ -5,6 +5,9 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"fmt"
+	"path/filepath"
+
+	"github.com/euforia/thrap/packs"
 
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/vars"
@@ -43,6 +46,7 @@ func newCLI() *cli.App {
 			commandAgent(),
 			//commandRegister(),
 			commandStack(),
+			commandPack(),
 			commandVersion(),
 		},
 	}
@@ -50,6 +54,28 @@ func newCLI() *cli.App {
 	app.HideVersion = true
 
 	return app
+}
+
+func commandPack() *cli.Command {
+	return &cli.Command{
+		Name:  "pack",
+		Usage: "Pack operations",
+		Subcommands: []*cli.Command{
+			&cli.Command{
+				Name:  "update",
+				Usage: "Update packs",
+				Action: func(ctx *cli.Context) error {
+					packdir := filepath.Join(consts.DefaultDataDir, consts.PacksDir)
+					pks, err := packs.New(packdir)
+					if err != nil {
+						return err
+					}
+
+					return pks.Update()
+				},
+			},
+		},
+	}
 }
 
 func commandVersion() *cli.Command {

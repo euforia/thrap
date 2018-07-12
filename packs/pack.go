@@ -96,6 +96,22 @@ func (packs *Packs) Load(httpURL string) error {
 	return err
 }
 
+// Update performs a git pull on the packs repo to get the latest updates
+func (packs *Packs) Update() error {
+	repo, err := git.PlainOpen(packs.dir)
+	if err != nil {
+		return err
+	}
+
+	wt, err := repo.Worktree()
+	if err != nil {
+		return err
+	}
+
+	opt := &git.PullOptions{Progress: os.Stdout}
+	return wt.Pull(opt)
+}
+
 // Web returns a web packs manager
 func (packs *Packs) Web() *BasePacks {
 	return NewBasePacks(filepath.Join(packs.dir, webPackID))
