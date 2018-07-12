@@ -6,9 +6,8 @@ simpifying various integration points
 
 ### Installation
 
-Download the appropriate binary based on your platform from [here](https://github.com/euforia/thrap/releases).
-
-Copy it into your path:
+Download the appropriate binary based on your platform from [here](https://github.com/euforia/thrap/releases)
+and copy it into your path:
 
 ```shell
 $ mv thrap /usr/local/bin/
@@ -16,8 +15,7 @@ $ mv thrap /usr/local/bin/
 
 ### Configuration
 
-Before thrap can be used, some basic configurations are required.  The commnand 
-below will perform the initial configuration asking questions as needed.
+The commnand below will perform the initial configuration asking questions as needed.
 
 ```shell
 $ thrap configure
