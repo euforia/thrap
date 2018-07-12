@@ -33,8 +33,13 @@ dist:
 	GOOS=linux $(BUILD_CMD) $(DIST_OPTS) -o dist/$(NAME)-linux $(SOURCE_FILES)
 	GOOS=darwin $(BUILD_CMD) $(DIST_OPTS) -o dist/$(NAME)-darwin $(SOURCE_FILES)
 
-.PHONY: release 
-release: dist 
+dist/$(NAME)-darwin.tgz:
 	cd dist && tar -czf $(NAME)-darwin.tgz $(NAME)-darwin
+
+dist/$(NAME)-linux.tgz:
 	cd dist && tar -czf $(NAME)-linux.tgz $(NAME)-linux
-	#github-release euforia/thrap v0.1.0 master v0.1.0 'dist/*.tgz'
+
+.PHONY: release 
+release: dist dist/$(NAME)-darwin.tgz dist/$(NAME)-linux.tgz
+	
+	
