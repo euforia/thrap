@@ -30,7 +30,7 @@ manifest "test" {
       language = "go"
 
       build {
-        dockerfile = "test.dockerfile"
+        dockerfile = "test.1.dockerfile"
         context    = "../test-fixtures"
       }
 

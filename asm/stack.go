@@ -100,18 +100,8 @@ func (asm *StackAsm) Assemble() error {
 			// Only assemble with ones that have supplied a language
 			if cmpt.Language.Lang() != "" {
 				casm, err = asm.assembleDevComponent(cmpt)
-				// if err != nil {
-				// 	return err
-				// }
-				// asm.casms[k] = casm
 			} else {
 				casm, err = asm.assembleBuildComponent(cmpt)
-
-				// if err != nil {
-				// 	return err
-				// }
-				// // TODO:
-				// fmt.Println("TODO", casm)
 			}
 
 			if err != nil {

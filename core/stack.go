@@ -393,6 +393,7 @@ func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, scopeVars
 			break
 		}
 
+		// err = st.buildStages(ctx, stack.ID, comp)
 		err = st.doBuild(ctx, stack.ID, comp)
 		if err != nil {
 			break
@@ -411,8 +412,76 @@ func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, scopeVars
 	return err
 }
 
+// buildStages builds each stage in the docker file and appropriately tags it.
+// func (st *Stack) buildStages(ctx context.Context, stackID string, comp *thrapb.Component) error {
+// 	tbase := filepath.Join(stackID, comp.ID)
+
+// 	dpath := filepath.Join(comp.Build.Context, comp.Build.Dockerfile)
+// 	raw, err := dockerfile.Parse(dpath)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	df := dockerfile.ParseRaw(raw)
+
+// 	// TODO
+// 	for i := range df.Stages {
+// 		var (
+// 			target     = fmt.Sprintf("%d", i)
+// 			tags       []string
+// 			finalStage = i == len(df.Stages)-1
+// 		)
+
+// 		if finalStage {
+// 			tags = []string{tbase}
+// 			if len(comp.Version) > 0 {
+// 				tags = append(tags, tbase+":"+comp.Version)
+// 			}
+// 		} else {
+// 			tags = []string{tbase + ":" + comp.Version + fmt.Sprintf("-build-%d", i)}
+// 		}
+
+// 		err = st.buildTarget(ctx, comp, target, tags, stackID)
+// 		if err != nil {
+// 			break
+// 		}
+// 	}
+
+// 	return err
+// }
+
+// // buildTarget builds a given target from the dockerfile
+// func (st *Stack) buildTarget(ctx context.Context, comp *thrapb.Component, target string, tags []string, netMode string) error {
+// 	// tbase := filepath.Join(sid, comp.ID)
+// 	req := &crt.BuildRequest{
+// 		Output:     os.Stdout,
+// 		ContextDir: comp.Build.Context,
+// 		BuildOpts: &types.ImageBuildOptions{
+// 			Tags:        tags,
+// 			BuildID:     comp.ID, // todo add vcs repo version
+// 			Dockerfile:  comp.Build.Dockerfile,
+// 			NetworkMode: netMode,
+// 		},
+// 	}
+
+// 	if comp.HasEnvVars() {
+// 		req.BuildOpts.BuildArgs = make(map[string]*string, len(comp.Env.Vars))
+// 		fmt.Printf("\nBuild arguments:\n\n")
+// 		for k := range comp.Env.Vars {
+// 			v := comp.Env.Vars[k]
+// 			fmt.Println(k)
+// 			req.BuildOpts.BuildArgs[k] = &v
+// 		}
+// 		fmt.Println()
+// 	}
+
+// 	// Blocking
+// 	fmt.Printf("Building %s.%s:\n\n", comp.ID, target)
+// 	return st.crt.Build(ctx, req)
+// }
+
 func (st *Stack) doBuild(ctx context.Context, sid string, comp *thrapb.Component) error {
 	tbase := filepath.Join(sid, comp.ID)
+
 	req := &crt.BuildRequest{
 		Output:     os.Stdout,
 		ContextDir: comp.Build.Context,
@@ -424,6 +493,7 @@ func (st *Stack) doBuild(ctx context.Context, sid string, comp *thrapb.Component
 			// Remove:      true,
 		},
 	}
+
 	if len(comp.Version) > 0 {
 		req.BuildOpts.Tags = append(req.BuildOpts.Tags, tbase+":"+comp.Version)
 	}
@@ -465,29 +535,6 @@ func (st *Stack) evalComponent(comp *thrapb.Component, scopeVars scope.Variables
 
 	return nil
 }
-
-// func (st *Stack) checkDockerfileArgs(comp *thrapb.Component) error {
-// 	raw, err := dockerfile.Parse(comp.Build.Dockerfile)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	df := dockerfile.ParseRaw(raw)
-
-// 	args := make(map[string]string)
-// 	for _, ins := range df.Stages[0] {
-// 		if ins.Key() == dockerfile.KeyArg {
-// 			args[ins.String()] = ""
-// 		}
-// 	}
-
-// 	for k, _ := range comp.Env.Vars {
-// 		if _, ok := args[k]; !ok {
-// 			return fmt.Errorf("missing build arg: %s", k)
-// 		}
-// 	}
-
-// 	return nil
-// }
 
 // Destroy removes call components of the stack from the container runtime
 func (st *Stack) Destroy(ctx context.Context, stack *thrapb.Stack) []*ActionReport {
