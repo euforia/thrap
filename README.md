@@ -2,17 +2,19 @@
 Thrap is a tool accelerate the software development process by automating common tasks and 
 simpifying various integration points
 
-## Installation
+## Getting Started 
 
-Download the appropriate binary based on your platform and copy it into your path:
+### Installation
+
+Download the appropriate binary based on your platform from [here](https://github.com/euforia/thrap/releases).
+
+Copy it into your path:
 
 ```shell
 $ mv thrap /usr/local/bin/
 ```
 
-## Usage 
-
-### Configure
+### Configuration
 
 Before thrap can be used, some basic configurations are required.  The commnand 
 below will perform the initial configuration asking questions as needed.
