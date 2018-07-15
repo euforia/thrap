@@ -69,6 +69,7 @@ func (packs *Packs) Dir() string {
 	return packs.dir
 }
 
+// Load downloads packs from the given git remoteURL
 func (packs *Packs) Load(remoteURL string) error {
 	if utils.FileExists(packs.dir) {
 		return errPackDirExists
@@ -81,12 +82,10 @@ func (packs *Packs) Load(remoteURL string) error {
 
 	switch u.Scheme {
 	case "http", "https", "ssh":
-		// 	if filepath.Ext(u.Path) == ".git" {
 		_, err = git.PlainClone(packs.dir, false, &git.CloneOptions{
 			URL:      remoteURL,
 			Progress: os.Stdout,
 		})
-	// 	}
 
 	default:
 		return errPackSourceNotSupported

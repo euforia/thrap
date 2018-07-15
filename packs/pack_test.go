@@ -50,9 +50,6 @@ func Test_Packs_Load(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = p.Load("8080")
-	assert.NotNil(t, err)
-
 	err = p.Load("ffo.com:8080")
 	assert.Equal(t, errPackSourceNotSupported, err)
 
