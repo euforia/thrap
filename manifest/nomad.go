@@ -19,6 +19,7 @@ const (
 	defaultPortLabel  = "default"
 )
 
+// MakeNomadJob returns a nomad job from the stack
 func MakeNomadJob(stack *thrapb.Stack) (*api.Job, error) {
 	id := stack.ID
 	job := api.NewServiceJob(id, stack.Name, defaultRegion, defaultPriority)
@@ -26,6 +27,7 @@ func MakeNomadJob(stack *thrapb.Stack) (*api.Job, error) {
 		job = job.AddDatacenter(dc)
 	}
 
+	// By default everything goes in 1 group
 	gid := "0"
 	grp := api.NewTaskGroup(id+"."+gid, defaultGroupCount)
 	// grp.SetMeta(key, val)
@@ -96,22 +98,22 @@ func makeNomadTaskDocker(sid, gid string, comp *thrapb.Component) *api.Task {
 
 	task.SetConfig("labels", []map[string]interface{}{
 		map[string]interface{}{
-			"stack":     sid,
-			"group":     gid,
-			"component": comp.ID,
+			"nomad.taskgroup": gid,
+			"stack":           sid,
+			"component":       comp.ID,
 		},
 	})
 
-	task.SetConfig("logging", []map[string]interface{}{
-		map[string]interface{}{
-			"type": "syslog",
-			"config": []map[string]interface{}{
-				map[string]interface{}{
-					"tag": cid,
-				},
-			},
-		},
-	})
+	// task.SetConfig("logging", []map[string]interface{}{
+	// 	map[string]interface{}{
+	// 		"type": "syslog",
+	// 		"config": []map[string]interface{}{
+	// 			map[string]interface{}{
+	// 				"tag": cid,
+	// 			},
+	// 		},
+	// 	},
+	// })
 
 	task.Services = make([]*api.Service, 0, len(comp.Ports))
 	portmap := make(map[string]interface{}, len(comp.Ports))

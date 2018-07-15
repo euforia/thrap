@@ -69,24 +69,24 @@ func (packs *Packs) Dir() string {
 	return packs.dir
 }
 
-func (packs *Packs) Load(httpURL string) error {
+func (packs *Packs) Load(remoteURL string) error {
 	if utils.FileExists(packs.dir) {
 		return errPackDirExists
 	}
 
-	u, err := url.Parse(httpURL)
+	u, err := url.Parse(remoteURL)
 	if err != nil {
 		return err
 	}
 
 	switch u.Scheme {
-	case "http", "https":
-		if filepath.Ext(u.Path) == ".git" {
-			_, err = git.PlainClone(packs.dir, false, &git.CloneOptions{
-				URL:      httpURL,
-				Progress: os.Stdout,
-			})
-		}
+	case "http", "https", "ssh":
+		// 	if filepath.Ext(u.Path) == ".git" {
+		_, err = git.PlainClone(packs.dir, false, &git.CloneOptions{
+			URL:      remoteURL,
+			Progress: os.Stdout,
+		})
+	// 	}
 
 	default:
 		return errPackSourceNotSupported
