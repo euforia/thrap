@@ -86,3 +86,47 @@ func Test_BadgerStore(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 2, cu)
 }
+
+var testIterRefs = map[string][]byte{
+	"anmz": nil,
+	"bzx":  nil,
+	"chl":  nil,
+	"don":  nil,
+	"dbe":  nil,
+	"kff":  nil,
+	"bng":  nil,
+	"ikh":  nil,
+	"iop":  nil,
+	"l2k":  nil,
+	"lbf":  nil,
+	"bdem": nil,
+}
+
+func Test_BadgerStore_IterRefs(t *testing.T) {
+	tmpdir, _ := ioutil.TempDir("/tmp", "thrap-")
+	defer os.RemoveAll(tmpdir)
+	db, err := NewBadgerDB(tmpdir)
+	fatal(t, err)
+	defer db.Close()
+
+	ns := "test-namespace"
+
+	st := NewBadgerObjectStore(db, sha256.New, "/test")
+	for ref := range testIterRefs {
+		digest, _, err := st.CreateRef(ns, ref)
+		if err != nil {
+			t.Fatal(err)
+		}
+		testIterRefs[ref] = digest
+	}
+
+	var c int
+	err = st.IterRefs(ns, func(ref string, digest []byte) error {
+		c++
+		assert.Equal(t, testIterRefs[ref], digest)
+		return nil
+	})
+
+	assert.Nil(t, err)
+	assert.Equal(t, len(testIterRefs), c)
+}

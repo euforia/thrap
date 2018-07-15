@@ -29,3 +29,8 @@ type ActionReport struct {
 	Data   interface{}
 	Error  error
 }
+
+// HasError returns true if the ActionReport contains an error
+func (ar *ActionReport) HasError() bool {
+	return ar.Error != nil
+}

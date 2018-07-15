@@ -23,7 +23,7 @@ func commandStack() *cli.Command {
 			commandStackDeploy(),
 			commandStackStatus(),
 			commandStackLogs(),
-			// commandStackRegister(),
+			commandStackRegister(),
 			// commandStackValidate(),
 			commandStackStop(),
 			commandStackDestroy(),

@@ -1,12 +1,10 @@
 package vcs
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
-	"github.com/euforia/thrap/utils"
-	"github.com/hashicorp/hcl"
+	"github.com/euforia/thrap/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,30 +18,24 @@ func Test_Github(t *testing.T) {
 }
 
 func Test_Github_calls(t *testing.T) {
-	if !utils.FileExists("../secrets.hcl") {
-		t.Skip("Skipping github calls: no creds")
+	conf, err := config.ReadCredsConfig("../.thrap/creds.hcl")
+	if err != nil {
+		t.Skipf("Skipping github calls: %v", err)
 	}
 
 	tdir := "/tmp/github-test"
 	defer os.RemoveAll(tdir)
 
-	b, err := ioutil.ReadFile("../secrets.hcl")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var c map[string]interface{}
-	err = hcl.Unmarshal(b, &c)
-	if err != nil {
-		t.Fatal(err)
+	c := conf.GetVCSCreds("github")
+	if c == nil {
+		t.Skip("Skipping github calls: no config")
 	}
 	if _, ok := c["token"]; !ok {
 		t.Skip("Skipping github calls: no token")
 	}
-	// token := strings.TrimSuffix(string(b), "\n")
 
 	g := newGithubVCS(nil)
-	g.Init(c)
+	g.Init(map[string]interface{}{"token": c["token"]})
 
 	var opt Option
 	repo := &Repository{Name: "api-test"}

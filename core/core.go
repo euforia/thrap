@@ -3,7 +3,6 @@ package core
 import (
 	"crypto/sha256"
 	"log"
-	"math/rand"
 	"os"
 	"path/filepath"
 
@@ -13,14 +12,12 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/euforia/base58"
 	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/orchestrator"
 	"github.com/euforia/thrap/registry"
 	"github.com/euforia/thrap/secrets"
 	"github.com/euforia/thrap/store"
-	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vcs"
 )
@@ -139,6 +136,34 @@ func (core *Core) Config() *config.ThrapConfig {
 	return core.conf
 }
 
+// Packs returns a pack instance containing the currently loaded packs
+func (core *Core) Packs() *packs.Packs {
+	return core.packs
+}
+
+// Stack returns a Stack instance that can be used to perform operations
+// against a stack
+func (core *Core) Stack() *Stack {
+	return &Stack{
+		regs:  core.regs,
+		crt:   core.crt,
+		conf:  core.conf.Clone(),
+		vcs:   core.vcs,
+		packs: core.packs,
+		sst:   core.sst,
+		log:   core.log,
+	}
+}
+
+// Identity returns an Identity instance to perform operations against
+// identities
+func (core *Core) Identity() *Identity {
+	return &Identity{
+		store: core.ist,
+		log:   core.log,
+	}
+}
+
 func (core *Core) initPacks(dir string) error {
 	pks, err := packs.New(dir)
 	if err != nil {
@@ -208,11 +233,6 @@ func (core *Core) initRegistry() error {
 	return nil
 }
 
-// Packs returns a pack instance containing the currently loaded packs
-func (core *Core) Packs() *packs.Packs {
-	return core.packs
-}
-
 func (core *Core) initSecrets() (err error) {
 	sc := core.conf.GetDefaultSecrets()
 
@@ -268,97 +288,6 @@ func (core *Core) initStores(datadir string) error {
 	core.ist = store.NewIdentityStore(iobj)
 	return nil
 }
-
-// RegisterIdentity registers a new identity. It returns an error if the identity exists
-// or fails to register
-func (core *Core) RegisterIdentity(ident *thrapb.Identity) (*thrapb.Identity, []*ActionReport, error) {
-	err := ident.Validate()
-	if err != nil {
-		return nil, nil, err
-	}
-	ident.Nonce = rand.Uint64()
-
-	er := &ActionReport{}
-	er.Data, _, er.Error = core.ist.Create(ident)
-	er.Action = NewAction("create", "identity", ident.ID)
-	if err == nil {
-		core.log.Printf("User registration request user=%s", ident.ID)
-	}
-
-	return ident, []*ActionReport{er}, er.Error
-}
-
-// ConfirmIdentity confirms a identity registration request and completes it.
-// In this case the public key field is the signature from the client
-func (core *Core) ConfirmIdentity(ident *thrapb.Identity) (*thrapb.Identity, error) {
-
-	sident, _, err := core.ist.Get(ident.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	shash := sident.SigHash(sha256.New())
-
-	b58e := base58.Encode(shash)
-	core.log.Printf("Verifying user registration code=%s", b58e)
-
-	if !utils.VerifySignature(ident.PublicKey, shash, ident.Signature) {
-		return nil, errors.New("signature verification failed")
-	}
-
-	sident.Signature = ident.Signature
-
-	resp, _, err := core.ist.Update(sident)
-	if err == nil {
-		core.log.Printf("User registered user=%s", ident.ID)
-	}
-	return resp, err
-}
-
-// Stack returns a Stack instance that can be used to perform operations
-// against a stack
-func (core *Core) Stack() *Stack {
-	return &Stack{
-		regs:  core.regs,
-		crt:   core.crt,
-		conf:  core.conf.Clone(),
-		vcs:   core.vcs,
-		packs: core.packs,
-		sst:   core.sst,
-		log:   core.log,
-	}
-}
-
-// // RegisterStack registers a new stack. It returns an error if the stack is
-// // already registered or fails to register
-// func (core *Core) RegisterStack(stack *thrapb.Stack) (*thrapb.Stack, []*ActionReport, error) {
-// 	errs := stack.Validate()
-// 	if len(errs) > 0 {
-// 		return nil, nil, utils.FlattenErrors(errs)
-// 	}
-
-// 	stack, _, err := core.sst.Create(stack)
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-
-// 	reports := core.ensureStackResources(stack)
-
-// 	// Temp
-// 	for _, r := range reports {
-// 		fmt.Printf("%v '%v'\n", r.Action, r.Error)
-// 	}
-
-// 	return stack, reports, err
-// }
-
-// func (core *Core) ensureStackResources(stack *thrapb.Stack) []*ActionReport {
-// 	report := core.createVcsRepo(stack)
-// 	reports := core.ensureComponentResources(stack)
-
-// 	// Concat results from both of the above
-// 	return append([]*ActionReport{report}, reports...)
-// }
 
 // // returns the report and an error if any component failed
 // func (core *Core) ensureComponentResources(stack *thrapb.Stack) []*ActionReport {

@@ -30,6 +30,7 @@ import (
 	"github.com/euforia/thrap/vcs"
 )
 
+// CompStatus holds the overall component status
 type CompStatus struct {
 	ID      string
 	Details types.ContainerJSON
@@ -293,10 +294,12 @@ func (st *Stack) startContainer(ctx context.Context, sid string, comp *thrapb.Co
 	return nil
 }
 
+// Log writes the log for a running component to the writers
 func (st *Stack) Log(ctx context.Context, id string, stdout, stderr io.Writer) error {
 	return st.crt.Logs(ctx, id, stdout, stderr)
 }
 
+// Logs writes all running component logs for the stack
 func (st *Stack) Logs(ctx context.Context, stack *thrapb.Stack, stdout, stderr io.Writer) error {
 	var err error
 	for _, comp := range stack.Components {
@@ -309,6 +312,8 @@ func (st *Stack) Logs(ctx context.Context, stack *thrapb.Stack, stdout, stderr i
 	return err
 }
 
+// Status returns a CompStatus slice containing the status of each component
+// in the stack
 func (st *Stack) Status(ctx context.Context, stack *thrapb.Stack) []*CompStatus {
 	out := make([]*CompStatus, 0, len(stack.Components))
 	for _, comp := range stack.Components {

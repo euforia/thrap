@@ -37,6 +37,7 @@ var (
 	errDatastoreHead    = errors.New("datastore cannot be a head")
 )
 
+// NewComponent returns a new Compoenent of the given type, name and version
 func NewComponent(name, version string, typ CompType) *Component {
 	return &Component{
 		Name:    name,
@@ -45,10 +46,13 @@ func NewComponent(name, version string, typ CompType) *Component {
 	}
 }
 
+// ScopeVarName returns the scoped variable name for this component for the
+// given key
 func (comp *Component) ScopeVarName(prefix, key string) string {
 	return prefix + comp.ID + "." + key
 }
 
+// ScopeVars returns the scoped variables using the prefix for the key
 func (comp *Component) ScopeVars(prefix string) scope.Variables {
 	// prefix + comp.ID + ".version"
 	svars := scope.Variables{
@@ -69,6 +73,7 @@ func (comp *Component) ScopeVars(prefix string) scope.Variables {
 	return svars
 }
 
+// HasPort returns true if the component has the given port specified
 func (comp *Component) HasPort(port int32) bool {
 	for _, p := range comp.Ports {
 		if p == port {
@@ -111,10 +116,14 @@ func (comp *Component) Validate() error {
 	return comp.validateCommon()
 }
 
+// HasEnvVars returns true if the component has environment variables
+// defined
 func (comp *Component) HasEnvVars() bool {
 	return comp.Env != nil && len(comp.Env.Vars) > 0
 }
 
+// HasLanguage returns true it the component has a programming language
+// defined
 func (comp *Component) HasLanguage() bool {
 	return comp.Language.Lang() != ""
 }
@@ -144,6 +153,8 @@ func (comp *Component) validateCommon() error {
 	return err
 }
 
+// Hash computes the hash of the component to an existing hash writer. It
+// does not reset the hasher or perform the final Sum(nil)
 func (comp *Component) Hash(h hash.Hash) {
 	h.Write([]byte(comp.ID))
 	h.Write([]byte(comp.Name))

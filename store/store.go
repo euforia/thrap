@@ -2,7 +2,6 @@ package store
 
 import (
 	"errors"
-	"time"
 
 	"github.com/euforia/thrap/thrapb"
 )
@@ -25,76 +24,17 @@ var (
 
 // ObjectStorage implements a namespaced object storage interface
 type ObjectStorage interface {
+	// CreateRef creates a new ref under the namespace.  Previous should be the
+	// zero hash
 	CreateRef(namespace, ref string) ([]byte, *thrapb.ChainHeader, error)
+	// Set the given ref under the namespace to the Header
 	SetRef(namespace, ref string, robj *thrapb.ChainHeader) ([]byte, error)
+	// Returns the chain header for the ref
 	GetRef(namespace, ref string) (*thrapb.ChainHeader, []byte, error)
+	// Iterate over each reference in the namespace
+	IterRefs(namepace string, callback func(string, []byte) error) error
+	// Sets an object returning the hash which the object is stored under
 	Set(namespace string, obj Object) ([]byte, error)
+	// Populates obj under a namespace by the digest
 	Get(namepace string, digest []byte, obj Object) error
-}
-
-type IdentityStore struct {
-	st ObjectStorage
-	//hf func() hash.Hash
-}
-
-func NewIdentityStore(objs ObjectStorage) *IdentityStore {
-	return &IdentityStore{st: objs}
-}
-
-func (store *IdentityStore) Get(id string) (*thrapb.Identity, *thrapb.ChainHeader, error) {
-	ref, _, err := store.st.GetRef(id, "latest")
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var ident thrapb.Identity
-	err = store.st.Get(id, ref.DataDigest, &ident)
-
-	return &ident, ref, err
-}
-
-func (store *IdentityStore) Create(ident *thrapb.Identity) (*thrapb.Identity, *thrapb.ChainHeader, error) {
-	if ident.ID == "" {
-		return nil, nil, errIDMissing
-	}
-
-	prev, _, err := store.st.CreateRef(ident.ID, "latest")
-	if err != nil {
-		return nil, nil, err
-	}
-
-	header, err := store.setIdent(ident, "latest", prev)
-
-	return ident, header, err
-}
-
-func (store *IdentityStore) Update(ident *thrapb.Identity) (*thrapb.Identity, *thrapb.ChainHeader, error) {
-	_, prev, err := store.st.GetRef(ident.ID, "latest")
-	if err != nil {
-		return nil, nil, err
-	}
-
-	header, err := store.setIdent(ident, "latest", prev)
-	return ident, header, err
-}
-
-//
-// func (store *IdentityStore) Delete(id string) error {
-//
-// }
-
-func (store *IdentityStore) setIdent(ident *thrapb.Identity, ref string, prev []byte) (*thrapb.ChainHeader, error) {
-	data, err := store.st.Set(ident.ID, ident)
-	if err != nil {
-		return nil, err
-	}
-
-	refobj := &thrapb.ChainHeader{
-		Previous:   prev,
-		DataDigest: data,
-		Timestamp:  time.Now().UnixNano(),
-	}
-
-	_, err = store.st.SetRef(ident.ID, ref, refobj)
-	return refobj, err
 }

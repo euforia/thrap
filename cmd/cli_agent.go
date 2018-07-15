@@ -3,8 +3,10 @@ package main
 import (
 	"log"
 	"net"
+	"os"
 
 	"github.com/euforia/thrap"
+	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/thrapb"
@@ -35,6 +37,12 @@ func commandAgent() *cli.Command {
 		Action: func(ctx *cli.Context) error {
 			conf := &core.Config{
 				DataDir: ctx.String("data-dir"),
+				Logger:  log.New(os.Stderr, "", log.LstdFlags|log.Lmicroseconds),
+			}
+
+			pconf, err := config.ReadProjectConfig(".")
+			if err == nil {
+				conf.ThrapConfig = pconf
 			}
 
 			core, err := core.NewCore(conf)
@@ -43,7 +51,7 @@ func commandAgent() *cli.Command {
 			}
 
 			srv := grpc.NewServer()
-			svc := thrap.NewService(core, nil)
+			svc := thrap.NewService(core, conf.Logger)
 			thrapb.RegisterThrapServer(srv, svc)
 
 			baddr := ctx.String("bind-addr")
@@ -51,7 +59,7 @@ func commandAgent() *cli.Command {
 			if err != nil {
 				return err
 			}
-			log.Println("Starting server:", lis.Addr().String())
+			conf.Logger.Println("Starting server:", lis.Addr().String())
 
 			err = srv.Serve(lis)
 			return err

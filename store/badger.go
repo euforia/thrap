@@ -64,6 +64,32 @@ func NewBadgerObjectStore(db *badger.DB, hf func() hash.Hash, prefix string) *Ba
 	return b
 }
 
+// IterRefs iterates over each reference for a namespace
+func (store *BadgerObjectStore) IterRefs(namespace string, f func(string, []byte) error) error {
+	prefix := filepath.Join(store.prefix, namespace, refKeyPrefix) + "/"
+	return store.db.View(func(txn *badger.Txn) error {
+		iter := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer iter.Close()
+
+		pre := []byte(prefix)
+		for iter.Seek(pre); iter.ValidForPrefix(pre); iter.Next() {
+			item := iter.Item()
+			val, err := item.Value()
+			if err != nil {
+				return err
+			}
+
+			ref := string(bytes.TrimPrefix(item.Key(), pre))
+			err = f(ref, val)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
 // CreateRef creates a new reference under the namespace.  It returns the header digest, header
 func (store *BadgerObjectStore) CreateRef(namespace, ref string) ([]byte, *thrapb.ChainHeader, error) {
 	h := store.hf()
@@ -125,6 +151,7 @@ func (store *BadgerObjectStore) isZeroDigest(in []byte) bool {
 	return bytes.Compare(store.zeroDigest, in) == 0
 }
 
+// SetRef implements the ObjectStore interface
 func (store *BadgerObjectStore) SetRef(namespace, ref string, ch *thrapb.ChainHeader) ([]byte, error) {
 
 	refkey := store.getRefOpaque(namespace, ref)
@@ -157,6 +184,7 @@ func (store *BadgerObjectStore) SetRef(namespace, ref string, ch *thrapb.ChainHe
 	return digest, err
 }
 
+// GetRef implements the ObjectStore interface
 func (store *BadgerObjectStore) GetRef(namespace, ref string) (*thrapb.ChainHeader, []byte, error) {
 	var (
 		//refkey = store.getRefOpaque(namespace, ref)
@@ -188,6 +216,7 @@ func (store *BadgerObjectStore) getRef(txn *badger.Txn, namespace, ref string) (
 	return header, digest, err
 }
 
+// DeleteRef implements the ObjectStore interface
 func (store *BadgerObjectStore) DeleteRef(namespace, ref string) error {
 	key := store.getRefOpaque(namespace, ref)
 	return store.db.Update(func(txn *badger.Txn) error {
@@ -195,6 +224,7 @@ func (store *BadgerObjectStore) DeleteRef(namespace, ref string) error {
 	})
 }
 
+// Get implements the ObjectStore interface
 func (store *BadgerObjectStore) Get(namespace string, digest []byte, out Object) error {
 	key := store.getObjOpaque(namespace, digest)
 
@@ -215,6 +245,7 @@ func (store *BadgerObjectStore) Get(namespace string, digest []byte, out Object)
 	return err
 }
 
+// Set implements the ObjectStore interface
 func (store *BadgerObjectStore) Set(namespace string, obj Object) ([]byte, error) {
 	h := store.hf()
 	digest := obj.Hash(h)
@@ -248,13 +279,11 @@ func (store *BadgerObjectStore) Delete(namespace string, digest []byte) error {
 func (store *BadgerObjectStore) getRefOpaque(namespace, ref string) []byte {
 	str := filepath.Join(store.prefix, namespace, refKeyPrefix, ref)
 	return []byte(str)
-	// return append(store.prefix, append([]byte(refKeyPrefix), key...)...)
 }
 
 func (store *BadgerObjectStore) getObjOpaque(namespace string, digest []byte) []byte {
 	str := filepath.Join(store.prefix, namespace, objKeyPrefix)
 	return append(append([]byte(str), byte('/')), digest...)
-	// return append(store.prefix, append([]byte(objKeyPrefix), digest...)...)
 }
 
 func (store *BadgerObjectStore) getRefObj(txn *badger.Txn, namespace string, digest []byte) (*thrapb.ChainHeader, error) {

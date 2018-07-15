@@ -45,7 +45,8 @@ func (s *GRPCService) RegisterStack(ctx context.Context, st *thrapb.Stack) (*thr
 func (s *GRPCService) RegisterIdentity(ctx context.Context, ident *thrapb.Identity) (*thrapb.Identity, error) {
 	s.handleIncomingContext(ctx, "identity."+ident.ID+".register")
 
-	nident, _, err := s.core.RegisterIdentity(ident)
+	idt := s.core.Identity()
+	nident, _, err := idt.Register(ident)
 	return nident, err
 }
 
@@ -53,6 +54,7 @@ func (s *GRPCService) RegisterIdentity(ctx context.Context, ident *thrapb.Identi
 func (s *GRPCService) ConfirmIdentity(ctx context.Context, ident *thrapb.Identity) (*thrapb.Identity, error) {
 	s.handleIncomingContext(ctx, "identity."+ident.ID+".confirm")
 
-	nident, err := s.core.ConfirmIdentity(ident)
+	idt := s.core.Identity()
+	nident, err := idt.Confirm(ident)
 	return nident, err
 }

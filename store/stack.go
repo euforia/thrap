@@ -7,10 +7,12 @@ import (
 	"github.com/euforia/thrap/thrapb"
 )
 
+// StackStore is the stack storage interface
 type StackStore struct {
 	store ObjectStorage
 }
 
+// NewStackStore returns a StackStore instance
 func NewStackStore(objs ObjectStorage) (*StackStore, error) {
 	tp := &StackStore{
 		store: objs,

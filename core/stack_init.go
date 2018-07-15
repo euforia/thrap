@@ -49,6 +49,7 @@ func (st *Stack) createVcsRepo(stack *thrapb.Stack) *ActionReport {
 		Name:        stack.ID,
 		Description: stack.Description,
 	}
+
 	vc := st.conf.VCS[st.vcs.ID()]
 	if vc.Repo.Owner != "" {
 		repo.Owner = vc.Repo.Owner
