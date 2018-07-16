@@ -8,7 +8,6 @@ import (
 	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
-	"google.golang.org/grpc"
 	"gopkg.in/urfave/cli.v2"
 )
 
@@ -26,16 +25,11 @@ func commandStackRegister() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			taddr := ctx.String("thrap-addr")
-			if taddr == "" {
-				return errRemoteRequired
-			}
-			cc, err := grpc.Dial(taddr, grpc.WithInsecure())
+			tclient, err := newThrapClient(ctx)
 			if err != nil {
 				return err
 			}
 
-			tclient := thrapb.NewThrapClient(cc)
 			resp, err := tclient.RegisterStack(context.Background(), stack)
 			if err != nil {
 				return err

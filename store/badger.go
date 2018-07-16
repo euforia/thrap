@@ -14,23 +14,12 @@ import (
 var (
 	errPrevHashMismatch = errors.New("previous hash mismatch")
 	errObjectExists     = errors.New("object exists")
-	errRefExists        = errors.New("ref exists")
 )
 
 const (
 	objKeyPrefix = "objects/"
 	refKeyPrefix = "refs/"
 )
-
-// Object is a datastructure that is hashable and protobuf friendly
-type Object interface {
-	// Computes the hash of the object given the hash function
-	Hash(h hash.Hash) []byte
-	// Marshals the object to byte slice
-	Marshal() ([]byte, error)
-	// Unmarshals byte slice to object
-	Unmarshal(b []byte) error
-}
 
 // NewBadgerDB opens a new badger db handle from the given directory
 func NewBadgerDB(datadir string) (*badger.DB, error) {
@@ -105,7 +94,7 @@ func (store *BadgerObjectStore) CreateRef(namespace, ref string) ([]byte, *thrap
 
 	er := store.db.Update(func(txn *badger.Txn) error {
 		if _, err := txn.Get(refkey); err == nil {
-			return errRefExists
+			return ErrRefExists
 		}
 		err := txn.Set(store.getObjOpaque(namespace, digest), b)
 		if err == nil {

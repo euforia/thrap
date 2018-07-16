@@ -18,43 +18,42 @@ func NewIdentityStore(objs ObjectStorage) *IdentityStore {
 }
 
 // Get returns an identity by the id
-func (store *IdentityStore) Get(id string) (*thrapb.Identity, *thrapb.ChainHeader, error) {
+func (store *IdentityStore) Get(id string) (*thrapb.Identity, error) {
 	ref, _, err := store.st.GetRef(id, "latest")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	var ident thrapb.Identity
 	err = store.st.Get(id, ref.DataDigest, &ident)
 
-	return &ident, ref, err
+	return &ident, err
 }
 
 // Create cretes a new identity
-func (store *IdentityStore) Create(ident *thrapb.Identity) (*thrapb.Identity, *thrapb.ChainHeader, error) {
+func (store *IdentityStore) Create(ident *thrapb.Identity) (*thrapb.Identity, error) {
 	if ident.ID == "" {
-		return nil, nil, errIDMissing
+		return nil, errIDMissing
 	}
 
 	prev, _, err := store.st.CreateRef(ident.ID, "latest")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	header, err := store.setIdent(ident, "latest", prev)
-
-	return ident, header, err
+	_, err = store.setIdent(ident, "latest", prev)
+	return ident, err
 }
 
 // Update updates an identity with the ident provided
-func (store *IdentityStore) Update(ident *thrapb.Identity) (*thrapb.Identity, *thrapb.ChainHeader, error) {
+func (store *IdentityStore) Update(ident *thrapb.Identity) (*thrapb.Identity, error) {
 	_, prev, err := store.st.GetRef(ident.ID, "latest")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	header, err := store.setIdent(ident, "latest", prev)
-	return ident, header, err
+	_, err = store.setIdent(ident, "latest", prev)
+	return ident, err
 }
 
 // Delete deletes an identity by the id

@@ -8,6 +8,8 @@ const (
 	ConfigFile = "config.hcl"
 	// CredsFile is the default credentials filename
 	CredsFile = "creds.hcl"
+	// IdentityFile is the identity filename
+	IdentityFile = "identity.hcl"
 	// KeyFile is the keypair file
 	KeyFile = "ecdsa256"
 	// EnvVarVersion is the env. var. name for the version injected by thrap

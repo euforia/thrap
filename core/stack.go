@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/hashicorp/hil"
 	"github.com/hashicorp/hil/ast"
+	"github.com/pkg/errors"
 
 	"github.com/euforia/pseudo"
 	"github.com/euforia/pseudo/scope"
@@ -28,6 +29,11 @@ import (
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vcs"
+)
+
+var (
+	// ErrStackAlreadyRegistered is used when a stack is already registered
+	ErrStackAlreadyRegistered = errors.New("stack already registered")
 )
 
 // CompStatus holds the overall component status
@@ -52,14 +58,13 @@ type Stack struct {
 	// packs
 	packs *packs.Packs
 	// stack store
-	sst *store.StackStore // local store
+	sst StackStorage
 
 	log *log.Logger
 }
 
 // Assembler returns a new assembler for the stack
 func (st *Stack) Assembler(cwd string, stack *thrapb.Stack) (*asm.StackAsm, error) {
-	// fmt.Println(st.conf.VCS, st.conf.VCS[st.vcs.ID()])
 	scopeVars := st.conf.VCS[st.vcs.ID()].ScopeVars("vcs.")
 	//vconf := st.conf.VCS[st.vcs.ID()]
 	// r, err := st.vcs.Open()
@@ -78,8 +83,11 @@ func (st *Stack) Register(stack *thrapb.Stack) (*thrapb.Stack, []*ActionReport, 
 		return nil, nil, utils.FlattenErrors(errs)
 	}
 
-	stack, _, err := st.sst.Create(stack)
+	stack, err := st.sst.Create(stack)
 	if err != nil {
+		if err == store.ErrRefExists {
+			return nil, nil, ErrStackAlreadyRegistered
+		}
 		return nil, nil, err
 	}
 

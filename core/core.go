@@ -1,10 +1,13 @@
 package core
 
 import (
+	"crypto/ecdsa"
 	"crypto/sha256"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/euforia/thrap/thrapb"
 
 	"github.com/euforia/thrap/crt"
 
@@ -46,34 +49,76 @@ type Config struct {
 	DataDir string
 }
 
+func (conf *Config) Validate() error {
+	if conf.DataDir == "" {
+		return errDataDirMissing
+	}
+
+	if conf.Logger == nil {
+		conf.Logger = log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds)
+	}
+
+	return nil
+}
+
+// DefaultConfig returns a basic core config
+func DefaultConfig() *Config {
+	return &Config{DataDir: consts.DefaultDataDir}
+}
+
+// StackStorage is a stack storage interface
+type StackStorage interface {
+	Get(string) (*thrapb.Stack, error)
+	Create(*thrapb.Stack) (*thrapb.Stack, error)
+}
+
+// IdentityStorage is a identity storage interface
+type IdentityStorage interface {
+	Get(string) (*thrapb.Identity, error)
+	Create(*thrapb.Identity) (*thrapb.Identity, error)
+	Update(*thrapb.Identity) (*thrapb.Identity, error)
+}
+
 // Core is the thrap core
 type Core struct {
 	conf  *config.ThrapConfig
 	creds *config.CredsConfig
 
-	vcs  vcs.VCS                      // remote vcs
-	regs map[string]registry.Registry // registries
-	sec  secrets.Secrets              // secrets
-	orch orchestrator.Orchestrator    // orchestrator
+	// Remote VCS github etc.
+	vcs vcs.VCS
 
+	// Loaded registries
+	regs map[string]registry.Registry
+
+	// Secrets engine
+	sec secrets.Secrets
+
+	// Deployment orchestrator
+	orch orchestrator.Orchestrator
+
+	// Loaded extension packs
 	packs *packs.Packs
 
-	// Local container runtime. Currently docker
+	// Container runtime. Currently docker
 	crt *crt.Docker
 
-	sst *store.StackStore    // local store
-	ist *store.IdentityStore // local store
+	sst StackStorage
+	ist IdentityStorage
 
+	// Load keypair. Currently 1 per core
+	kp *ecdsa.PrivateKey
+
+	// Logger
 	log *log.Logger
 }
 
 // NewCore loads the core engine with the global configs
 func NewCore(conf *Config) (*Core, error) {
-	if conf.DataDir == "" {
-		return nil, errDataDirMissing
+	err := conf.Validate()
+	if err != nil {
+		return nil, err
 	}
 
-	var err error
 	conf.DataDir, err = utils.GetAbsPath(conf.DataDir)
 	if err != nil {
 		return nil, err
@@ -90,32 +135,30 @@ func NewCore(conf *Config) (*Core, error) {
 
 	c := &Core{
 		crt: dkr,
+		log: conf.Logger,
 	}
 
 	cfile := filepath.Join(conf.DataDir, consts.ConfigFile)
 	gconf, err := config.ReadThrapConfig(cfile)
-	// gconf, err := config.ReadGlobalConfig()
 	if err != nil {
 		return nil, err
 	}
-	// Merge supplied with global for this core instance
-	if conf != nil {
-		gconf.Merge(conf.ThrapConfig)
-		c.log = conf.Logger
-	}
+
+	// Merge user supplied with global for this core instance
+	gconf.Merge(conf.ThrapConfig)
 	c.conf = gconf
 
 	credsFile := filepath.Join(conf.DataDir, consts.CredsFile)
 	creds, err := config.ReadCredsConfig(credsFile)
-	// creds, err := config.ReadGlobalCreds()
 	if err != nil {
 		return nil, err
 	}
 	creds.Merge(creds)
 	c.creds = creds
 
-	if c.log == nil {
-		c.log = log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds)
+	err = c.initKeyPair(conf.DataDir)
+	if err != nil {
+		return nil, err
 	}
 
 	err = c.initPacks(filepath.Join(conf.DataDir, consts.PacksDir))
@@ -162,6 +205,17 @@ func (core *Core) Identity() *Identity {
 		store: core.ist,
 		log:   core.log,
 	}
+}
+
+// KeyPair returns the public-private key currently held by the core
+func (core *Core) KeyPair() *ecdsa.PrivateKey {
+	return core.kp
+}
+
+func (core *Core) initKeyPair(dir string) (err error) {
+	name := filepath.Join(dir, "ecdsa256")
+	core.kp, err = utils.LoadECDSAKeyPair(name)
+	return
 }
 
 func (core *Core) initPacks(dir string) error {
@@ -265,7 +319,6 @@ func (core *Core) initOrchestrator() (err error) {
 }
 
 func (core *Core) initStores(datadir string) error {
-
 	dbdir := filepath.Join(datadir, "db")
 
 	if !utils.FileExists(dbdir) {

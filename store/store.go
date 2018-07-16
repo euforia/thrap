@@ -2,12 +2,14 @@ package store
 
 import (
 	"errors"
+	"hash"
 
 	"github.com/euforia/thrap/thrapb"
 )
 
 var (
 	errIDMissing = errors.New("ID missing")
+	ErrRefExists = errors.New("ref exists")
 )
 
 //
@@ -21,6 +23,16 @@ var (
 // 		HashFunc: sha256.New,
 // 	}
 // }
+
+// Object is a datastructure that is hashable and protobuf friendly
+type Object interface {
+	// Computes the hash of the object given the hash function
+	Hash(h hash.Hash) []byte
+	// Marshals the object to byte slice
+	Marshal() ([]byte, error)
+	// Unmarshals byte slice to object
+	Unmarshal(b []byte) error
+}
 
 // ObjectStorage implements a namespaced object storage interface
 type ObjectStorage interface {

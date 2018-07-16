@@ -27,30 +27,30 @@ func NewStackStore(objs ObjectStorage) (*StackStore, error) {
 }
 
 // Get returns a stack by the id and the chain header.
-func (thrap *StackStore) Get(id string) (*thrapb.Stack, *thrapb.ChainHeader, error) {
+func (thrap *StackStore) Get(id string) (*thrapb.Stack, error) {
 	ref, _, err := thrap.store.GetRef(id, "latest")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	var stack thrapb.Stack
 	err = thrap.store.Get(id, ref.DataDigest, &stack)
 
-	return &stack, ref, err
+	return &stack, err
 }
 
 // Create tries to write the new stack to the db.  If the stack exists if will
 // return an error and abort registration
-func (thrap *StackStore) Create(stack *thrapb.Stack) (*thrapb.Stack, *thrapb.ChainHeader, error) {
+func (thrap *StackStore) Create(stack *thrapb.Stack) (*thrapb.Stack, error) {
 	// Create empty ref
 	ldigest, _, err := thrap.store.CreateRef(stack.ID, "latest")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	sdigest, err := thrap.store.Set(stack.ID, stack)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	ref := &thrapb.ChainHeader{
@@ -60,5 +60,5 @@ func (thrap *StackStore) Create(stack *thrapb.Stack) (*thrapb.Stack, *thrapb.Cha
 	}
 
 	_, err = thrap.store.SetRef(stack.ID, "latest", ref)
-	return stack, ref, err
+	return stack, err
 }

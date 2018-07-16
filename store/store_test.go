@@ -26,15 +26,13 @@ func Test_thrap(t *testing.T) {
 	stack, _ := manifest.ParseYAML("../test-fixtures/thrap.yml")
 	stack.Validate()
 
-	_, _, err = st.Create(stack)
+	_, err = st.Create(stack)
 	assert.Nil(t, err)
-	// t.Logf("%+v", nmf)
 
-	_, _, err = st.Get(stack.ID)
+	_, err = st.Get(stack.ID)
 	assert.Nil(t, err)
-	_, _, err = st.Create(stack)
+	_, err = st.Create(stack)
 	assert.NotNil(t, err)
-	//assert.Equal(t, nmf.Header.Previous, make([]byte, 32))
 }
 
 // func Test_buildDockerfile(t *testing.T) {

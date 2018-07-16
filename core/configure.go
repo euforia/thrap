@@ -1,11 +1,7 @@
 package core
 
 import (
-	"crypto/ecdsa"
 	"crypto/elliptic"
-	"crypto/rand"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -107,7 +103,7 @@ func ConfigureGlobal(opts ConfigureOptions) error {
 	keypath := filepath.Join(opts.DataDir, consts.KeyFile)
 	fmt.Println("Keypair:", keypath)
 	if !utils.FileExists(keypath) {
-		_, err = generateKeyPair(keypath)
+		_, err = utils.GenerateECDSAKeyPair(keypath, elliptic.P256())
 	}
 
 	return err
@@ -193,74 +189,74 @@ func ConfigureLocal(conf *config.ThrapConfig, opts ConfigureOptions) (*config.Th
 	return conf, err
 }
 
-func generateKeyPair(filename string) (*ecdsa.PrivateKey, error) {
-	c := elliptic.P256()
-	kp, err := ecdsa.GenerateKey(c, rand.Reader)
-	if err != nil {
-		return nil, err
-	}
+// func generateKeyPair(filename string) (*ecdsa.PrivateKey, error) {
+// 	c := elliptic.P256()
+// 	kp, err := ecdsa.GenerateKey(c, rand.Reader)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	priv, pub, err := encodeECDSA(kp, filename)
-	if err == nil {
-		err = writePem(priv, pub, filename)
-	}
-	return kp, err
-}
+// 	priv, pub, err := encodeECDSA(kp, filename)
+// 	if err == nil {
+// 		err = writePem(priv, pub, filename)
+// 	}
+// 	return kp, err
+// }
 
-func encodeECDSA(privateKey *ecdsa.PrivateKey, filename string) ([]byte, []byte, error) {
+// func encodeECDSA(privateKey *ecdsa.PrivateKey, filename string) ([]byte, []byte, error) {
 
-	x509Encoded, err := x509.MarshalECPrivateKey(privateKey)
-	if err != nil {
-		return nil, nil, err
-	}
-	// pemEncoded := pem.Encode(privH, &pem.Block{Type: "PRIVATE KEY", Bytes: x509Encoded})
-	pemEncoded := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: x509Encoded})
+// 	x509Encoded, err := x509.MarshalECPrivateKey(privateKey)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	// pemEncoded := pem.Encode(privH, &pem.Block{Type: "PRIVATE KEY", Bytes: x509Encoded})
+// 	pemEncoded := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: x509Encoded})
 
-	x509EncodedPub, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
-	if err != nil {
-		return nil, nil, err
-	}
+// 	x509EncodedPub, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
 
-	pemEncodedPub := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: x509EncodedPub})
+// 	pemEncodedPub := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: x509EncodedPub})
 
-	return pemEncoded, pemEncodedPub, nil
-}
+// 	return pemEncoded, pemEncodedPub, nil
+// }
 
-func writePem(priv, pub []byte, filename string) error {
-	err := ioutil.WriteFile(filename, priv, 0600)
-	if err != nil {
-		return err
-	}
-	return ioutil.WriteFile(filename+".pub", pub, 0600)
-}
+// func writePem(priv, pub []byte, filename string) error {
+// 	err := ioutil.WriteFile(filename, priv, 0600)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return ioutil.WriteFile(filename+".pub", pub, 0600)
+// }
 
-func decodeECDSA(filename string) (*ecdsa.PrivateKey, error) {
-	priv, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
+// func decodeECDSA(filename string) (*ecdsa.PrivateKey, error) {
+// 	priv, err := ioutil.ReadFile(filename)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	block, _ := pem.Decode(priv)
-	x509Encoded := block.Bytes
-	privateKey, err := x509.ParseECPrivateKey(x509Encoded)
-	if err != nil {
-		return nil, err
-	}
+// 	block, _ := pem.Decode(priv)
+// 	x509Encoded := block.Bytes
+// 	privateKey, err := x509.ParseECPrivateKey(x509Encoded)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	pub, err := ioutil.ReadFile(filename + ".pub")
-	if err != nil {
-		return nil, err
-	}
-	blockPub, _ := pem.Decode(pub)
-	// blockPub, _ := pem.Decode(pemEncodedPub)
-	x509EncodedPub := blockPub.Bytes
-	genericPublicKey, err := x509.ParsePKIXPublicKey(x509EncodedPub)
-	if err != nil {
-		return nil, err
-	}
+// 	pub, err := ioutil.ReadFile(filename + ".pub")
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	blockPub, _ := pem.Decode(pub)
+// 	// blockPub, _ := pem.Decode(pemEncodedPub)
+// 	x509EncodedPub := blockPub.Bytes
+// 	genericPublicKey, err := x509.ParsePKIXPublicKey(x509EncodedPub)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	publicKey := genericPublicKey.(*ecdsa.PublicKey)
-	privateKey.PublicKey = *publicKey
+// 	publicKey := genericPublicKey.(*ecdsa.PublicKey)
+// 	privateKey.PublicKey = *publicKey
 
-	return privateKey, nil
-}
+// 	return privateKey, nil
+// }

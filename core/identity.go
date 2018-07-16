@@ -12,9 +12,16 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	// ErrIdentityAlreadySigned is used when an identity is already signed
+	ErrIdentityAlreadySigned = errors.New("identity already signed")
+	// ErrIdentityAlreadyRegistered is used when identity has already been registered
+	ErrIdentityAlreadyRegistered = errors.New("identity already registered")
+)
+
 // Identity is the caninical interface to interact with identities
 type Identity struct {
-	store *store.IdentityStore // local store
+	store IdentityStorage
 	log   *log.Logger
 }
 
@@ -22,9 +29,13 @@ type Identity struct {
 // In this case the public key field is the signature from the client
 func (idt *Identity) Confirm(ident *thrapb.Identity) (*thrapb.Identity, error) {
 
-	sident, _, err := idt.store.Get(ident.ID)
+	sident, err := idt.store.Get(ident.ID)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(sident.Signature) > 0 {
+		return nil, ErrIdentityAlreadySigned
 	}
 
 	shash := sident.SigHash(sha256.New())
@@ -38,11 +49,11 @@ func (idt *Identity) Confirm(ident *thrapb.Identity) (*thrapb.Identity, error) {
 
 	sident.Signature = ident.Signature
 
-	resp, _, err := idt.store.Update(sident)
+	_, err = idt.store.Update(sident)
 	if err == nil {
-		idt.log.Printf("User registered user=%s", ident.ID)
+		idt.log.Printf("User registered user=%s", sident.ID)
 	}
-	return resp, err
+	return sident, err
 }
 
 // Register registers a new identity. It returns an error if the identity exists
@@ -55,7 +66,10 @@ func (idt *Identity) Register(ident *thrapb.Identity) (*thrapb.Identity, []*Acti
 	ident.Nonce = rand.Uint64()
 
 	er := &ActionReport{}
-	er.Data, _, er.Error = idt.store.Create(ident)
+	er.Data, er.Error = idt.store.Create(ident)
+	if er.Error == store.ErrRefExists {
+		er.Error = ErrIdentityAlreadyRegistered
+	}
 	er.Action = NewAction("create", "identity", ident.ID)
 	if err == nil {
 		idt.log.Printf("User registration request user=%s", ident.ID)
@@ -66,6 +80,6 @@ func (idt *Identity) Register(ident *thrapb.Identity) (*thrapb.Identity, []*Acti
 
 // Get returns an Identity by the id
 func (idt *Identity) Get(id string) (*thrapb.Identity, error) {
-	ident, _, err := idt.store.Get(id)
+	ident, err := idt.store.Get(id)
 	return ident, err
 }

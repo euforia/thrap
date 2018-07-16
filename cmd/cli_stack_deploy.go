@@ -51,30 +51,7 @@ func commandStackDeploy() *cli.Command {
 
 			st := cr.Stack()
 			err = st.Deploy(stack)
-			// opt := orchestrator.RequestOptions{
-			// 	Dryrun: ctx.Bool("dryrun"),
-			// 	Output: os.Stdout,
-			// }
-
-			//err = core.DeployStack(st, opt)
 			return err
-
-			// conf := &orchestrator.Config{
-			// 	Provider: "nomad",
-			// }
-			// orch, err := orchestrator.New(conf)
-			// if err != nil {
-			// 	return err
-			// }
-
-			// opt := orchestrator.RequestOptions{Dryrun: ctx.Bool("dryrun")}
-			// _, job, err := orch.Deploy(st, opt)
-			// if err == nil {
-			// 	b, _ := json.MarshalIndent(job, "", "  ")
-			// 	os.Stdout.Write(b)
-			// 	os.Stdout.Write([]byte("\n"))
-			// }
-			// return err
 		},
 	}
 }
