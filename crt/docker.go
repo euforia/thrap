@@ -20,15 +20,23 @@ import (
 )
 
 // RequestOptions are the common request options for crt's
-type RequestOptions struct {
-	Output io.Writer
-}
+// type RequestOptions struct {
+// 	Output io.Writer
+// }
 
 type BuildRequest struct {
 	ContextDir string
 	TarOpts    *archive.TarOptions
 	BuildOpts  *types.ImageBuildOptions
 	Output     io.Writer
+}
+
+// PushRequest is a container image push request
+type PushRequest struct {
+	Image   string
+	Tag     string
+	Output  io.Writer
+	Options types.ImagePushOptions
 }
 
 // Docker implements a docker backed orchestrator
@@ -45,11 +53,13 @@ func NewDocker() (*Docker, error) {
 	return nil, err
 }
 
+// Stop stops a running container
 func (orch *Docker) Stop(ctx context.Context, containerID string) error {
 	dur := 3 * time.Second
 	return orch.cli.ContainerStop(ctx, containerID, &dur)
 }
 
+// HaveImage returns true if we locally have the image
 func (orch *Docker) HaveImage(ctx context.Context, imageID string) bool {
 	_, _, err := orch.cli.ImageInspectWithRaw(ctx, imageID)
 	return err == nil
@@ -63,22 +73,7 @@ func (orch *Docker) Run(ctx context.Context, cfg *thrapb.Container) ([]string, e
 		return nil, err
 	}
 
-	//logline := cfg.Name + ": created\n"
-	// Append warnings
-	// if len(resp.Warnings) > 0 {
-	// 	var logline string
-	// 	for _, w := range resp.Warnings {
-	// 		logline += "  " + cfg.Name + ": " + w + "\n"
-	// 	}
-	// 	opts.Output.Write([]byte(logline))
-	// }
-	// Write log line
-
 	err = orch.cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{})
-	// if err == nil {
-	// 	fmt.Fprintf(opts.Output, "%s: started\n", cfg.Name)
-	// }
-
 	return resp.Warnings, err
 }
 
@@ -99,51 +94,6 @@ func (orch *Docker) CreateNetwork(ctx context.Context, netID string) error {
 
 	return err
 }
-
-// Deploy deploys each component in the stack. The components must exist for deploy to succeed
-// func (orch *Docker) Deploy(stack *thrapb.Stack, opts RequestOptions) (interface{}, interface{}, error) {
-// 	var (
-// 		ctx = context.Background()
-// 		err = orch.CreateNetwork(ctx, stack.ID)
-// 	)
-
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-
-// 	// Deploy non-buildable components
-// 	for _, comp := range stack.Components {
-// 		err = orch.DeployComponent(ctx, stack.ID, comp, opts)
-// 		if err != nil {
-// 			break
-// 		}
-
-// 	}
-
-// 	return nil, nil, err
-// }
-
-// func (orch *Docker) DeployComponent(ctx context.Context, cfg *thrapb.Container, opts RequestOptions) error {
-
-// 	return orch.containerCreateStart(ctx, cfg, opts)
-// }
-
-// tearDown removes all non-build containers as cleanup.
-// TODO: refactor
-// func (orch *Docker) tearDown(ctx context.Context, st *thrapb.Stack) {
-
-// 	opts := types.ContainerRemoveOptions{Force: true}
-
-// 	for _, c := range st.Components {
-// 		if c.IsBuildable() {
-// 			continue
-// 		}
-
-// 		if err := orch.cli.ContainerRemove(ctx, c.ID+"."+st.ID, opts); err != nil {
-// 			fmt.Println(err)
-// 		}
-// 	}
-// }
 
 // ListImagesWithLabel returns a list of images that match the given label
 func (orch *Docker) ListImagesWithLabel(ctx context.Context, label string) ([]types.ImageSummary, error) {
@@ -208,89 +158,6 @@ func (orch *Docker) Build(ctx context.Context, req *BuildRequest) error {
 	return err
 }
 
-// type dockerLogWriter struct {
-// 	w   io.Writer
-// 	buf *bytes.Buffer
-// }
-
-// func (w *dockerLogWriter) Close() error {
-// 	_, err := w.w.Write(w.buf.Bytes())
-
-// 	w.buf.Reset()
-// 	w.buf = nil
-
-// 	return err
-// }
-
-// func (w *dockerLogWriter) Write(b []byte) (int, error) {
-// 	i := bytes.IndexRune(b, '\n')
-// 	if i < 0 {
-// 		fmt.Printf("NO NEWLINE '%s'\n", b)
-// 		return w.buf.Write(b)
-// 	}
-
-// 	toWrite := append(w.buf.Bytes(), b[:i+1]...)
-// 	_, err := w.w.Write(toWrite[8:])
-// 	if err != nil {
-// 		return 0, err
-// 	}
-
-// 	w.buf.Reset()
-
-// 	_, err = w.buf.Write(b[i+1:])
-// 	if err != nil {
-// 		return 0, err
-// 	}
-
-// 	return len(b), err
-// }
-
-// Build builds a single component of a stack using 'docker build'
-// func (orch *Docker) BuildComponent(ctx context.Context, stackID string, comp *thrapb.Component, opts RequestOptions) error {
-// 	bc := comp.Build
-
-// 	tarOpt := &archive.TarOptions{}
-
-// 	ign, err := dockerfile.ReadIgnoresFile(bc.Context)
-// 	if err == nil {
-// 		tarOpt.ExcludePatterns = ign
-// 	}
-
-// 	rdc, err := archive.TarWithOptions(bc.Context, tarOpt)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer rdc.Close()
-
-// 	name := filepath.Join(stackID, comp.ID)
-// 	opt := types.ImageBuildOptions{
-// 		Tags:        []string{name},
-// 		BuildID:     comp.ID, // todo add vcs repo version
-// 		Dockerfile:  bc.Dockerfile,
-// 		NetworkMode: stackID,
-// 		// Remove:      true,
-// 	}
-
-// 	if comp.HasEnvVars() {
-// 		opt.BuildArgs = make(map[string]*string, len(comp.Env.Vars))
-// 		for k := range comp.Env.Vars {
-// 			v := comp.Env.Vars[k]
-// 			opt.BuildArgs[k] = &v
-// 		}
-// 	}
-
-// 	//fmt.Printf("%+v\n", opt)
-
-// 	resp, err := orch.cli.ImageBuild(ctx, rdc, opt)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer resp.Body.Close()
-// 	// params: reader, output writer, descriptor, isTerminal, auxCallback
-// 	err = jsonmessage.DisplayJSONMessagesStream(resp.Body, opts.Output, uintptr(rand.Uint32()), true, nil)
-// 	return err
-// }
-
 // ImagePull pulls in image from the docker registry using docker. This uses
 // dockers built in mechanism to communicate to the registry
 func (orch *Docker) ImagePull(ctx context.Context, ref string) error {
@@ -312,4 +179,16 @@ func (orch *Docker) ImageConfig(name, tag string) (*container.Config, error) {
 		return nil, err
 	}
 	return inf.Config, nil
+}
+
+// ImagePush pushes an image using the local docker engine to the remote registry
+func (orch *Docker) ImagePush(ctx context.Context, req *PushRequest) error {
+	rc, err := orch.cli.ImagePush(ctx, req.Image+":"+req.Tag, req.Options)
+	if err != nil {
+		return err
+	}
+
+	defer rc.Close()
+
+	return jsonmessage.DisplayJSONMessagesStream(rc, req.Output, 101, true, nil)
 }

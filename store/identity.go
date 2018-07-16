@@ -61,6 +61,11 @@ func (store *IdentityStore) Delete(id string) error {
 	return errors.New("to be implemented")
 }
 
+// Iter iterates over each identity in the store
+func (store *IdentityStore) Iter(start string, callback func(*thrapb.Identity) error) error {
+	return errors.New("to be implemented")
+}
+
 func (store *IdentityStore) setIdent(ident *thrapb.Identity, ref string, prev []byte) (*thrapb.ChainHeader, error) {
 	data, err := store.st.Set(ident.ID, ident)
 	if err != nil {

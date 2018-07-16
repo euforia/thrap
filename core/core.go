@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/euforia/thrap/thrapb"
-
 	"github.com/euforia/thrap/crt"
 
 	"github.com/euforia/thrap/packs"
@@ -49,6 +47,8 @@ type Config struct {
 	DataDir string
 }
 
+// Validate checks required fields and sets defaults where ever possible.  It
+// returns an error if any fields are missing
 func (conf *Config) Validate() error {
 	if conf.DataDir == "" {
 		return errDataDirMissing
@@ -64,19 +64,6 @@ func (conf *Config) Validate() error {
 // DefaultConfig returns a basic core config
 func DefaultConfig() *Config {
 	return &Config{DataDir: consts.DefaultDataDir}
-}
-
-// StackStorage is a stack storage interface
-type StackStorage interface {
-	Get(string) (*thrapb.Stack, error)
-	Create(*thrapb.Stack) (*thrapb.Stack, error)
-}
-
-// IdentityStorage is a identity storage interface
-type IdentityStorage interface {
-	Get(string) (*thrapb.Identity, error)
-	Create(*thrapb.Identity) (*thrapb.Identity, error)
-	Update(*thrapb.Identity) (*thrapb.Identity, error)
 }
 
 // Core is the thrap core
@@ -128,6 +115,7 @@ func NewCore(conf *Config) (*Core, error) {
 		return nil, errDataDirMissing
 	}
 
+	// Init CRT
 	dkr, err := crt.NewDocker()
 	if err != nil {
 		return nil, err
