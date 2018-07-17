@@ -325,8 +325,10 @@ func (core *Core) initStores(datadir string) error {
 		return err
 	}
 
-	iobj := store.NewBadgerObjectStore(db, sha256.New, "/identity")
-	core.ist = store.NewIdentityStore(iobj)
+	core.ist = store.NewBadgerIdentityStorage(db)
+
+	// iobj := store.NewBadgerObjectStore(db, sha256.New, "/identity")
+	// core.ist = store.NewIdentityStore(iobj)
 	return nil
 }
 

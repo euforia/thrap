@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_thrap(t *testing.T) {
+func Test_NewBadgerObjectStore(t *testing.T) {
 	tmpdir, _ := ioutil.TempDir("/tmp", "thrap-")
 	defer os.RemoveAll(tmpdir)
 

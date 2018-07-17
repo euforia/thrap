@@ -58,3 +58,19 @@ func (s *GRPCService) ConfirmIdentity(ctx context.Context, ident *thrapb.Identit
 	nident, err := idt.Confirm(ident)
 	return nident, err
 }
+
+func (s *GRPCService) GetIdentity(ctx context.Context, ident *thrapb.Identity) (*thrapb.Identity, error) {
+	s.handleIncomingContext(ctx, "identity."+ident.ID+".get")
+
+	idt := s.core.Identity()
+	return idt.Get(ident.ID)
+}
+
+func (s *GRPCService) IterIdentities(opts *thrapb.IterOptions, stream thrapb.Thrap_IterIdentitiesServer) error {
+	s.handleIncomingContext(stream.Context(), "identity.list")
+
+	idt := s.core.Identity()
+	return idt.Iter(opts.Prefix, func(ident *thrapb.Identity) error {
+		return stream.Send(ident)
+	})
+}

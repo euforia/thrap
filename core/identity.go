@@ -83,3 +83,7 @@ func (idt *Identity) Get(id string) (*thrapb.Identity, error) {
 	ident, err := idt.store.Get(id)
 	return ident, err
 }
+
+func (idt *Identity) Iter(prefix string, f func(*thrapb.Identity) error) error {
+	return idt.store.Iter(prefix, f)
+}

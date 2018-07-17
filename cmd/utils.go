@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 
@@ -9,62 +11,10 @@ import (
 	"github.com/euforia/thrap/utils"
 )
 
-//
-// func fileExists(p string) bool {
-// 	_, err := os.Stat(p)
-// 	return err == nil
-// }
-
-// func writeGitIgnoresFile(dpath string) error {
-// 	if fileExists(dpath) {
-// 		return os.ErrExist
-// 	}
-//
-// 	ign := vcs.DefaultGitIgnores()
-// 	ignores := []byte(strings.Join(ign, "\n"))
-//
-// 	return ioutil.WriteFile(dpath, ignores, 0644)
-// }
-//
-// func writeSecretsFile(comp *thrapb.Component, dir string) error {
-// 	name := filepath.Join(dir, comp.Secrets.Destination)
-//
-// 	if fileExists(name) {
-// 		return os.ErrExist
-// 	}
-//
-// 	fh, err := os.Create(name)
-// 	if err == nil {
-// 		err = fh.Close()
-// 	}
-// 	return err
-// }
-
-// func writeDockerfile(st *thrapb.Stack, comp *thrapb.Component, lang *languages.Language, dir string) error {
-// 	name := filepath.Join(dir, comp.Build.Dockerfile)
-//
-// 	df, err := thrap.BuildDockerfile(st.ID, comp, lang)
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	if fileExists(name) {
-// 		return os.ErrExist
-// 	}
-//
-// 	b := []byte(df.String())
-// 	return ioutil.WriteFile(name, b, 0644)
-// }
-
-// func writeReadme(st *thrapb.Stack, dir string) error {
-// 	apath := filepath.Join(dir, "README.md")
-// 	if fileExists(apath) {
-// 		return nil
-// 	}
-//
-// 	readme := builder.DefaultReadmeText(st.Name, st.Description)
-// 	return ioutil.WriteFile(apath, []byte(readme), 0644)
-// }
+func writeJSON(v interface{}) {
+	b, _ := json.MarshalIndent(v, "", "  ")
+	fmt.Printf("%s\n", b)
+}
 
 func writeHCLManifest(stack *thrapb.Stack, w io.Writer) error {
 
