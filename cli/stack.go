@@ -1,14 +1,16 @@
-package main
+package cli
 
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"text/tabwriter"
 
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/manifest"
+	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
 	"gopkg.in/urfave/cli.v2"
 )
@@ -18,48 +20,20 @@ func commandStack() *cli.Command {
 		Name:  "stack",
 		Usage: "Stack operations",
 		Subcommands: []*cli.Command{
+			commandStackList(),
 			commandStackInit(),
+			commandStackRegister(),
+			commandStackCommit(),
 			commandStackBuild(),
 			commandStackDeploy(),
 			commandStackStatus(),
 			commandStackLogs(),
-			commandStackRegister(),
-			// commandStackValidate(),
 			commandStackStop(),
 			commandStackDestroy(),
 			commandStackVersion(),
 		},
 	}
 }
-
-// func commandStackValidate() *cli.Command {
-// 	return &cli.Command{
-// 		Name:      "validate",
-// 		Usage:     "Validate a manifest",
-// 		ArgsUsage: "[path to manifest]",
-// 		Action: func(ctx *cli.Context) error {
-
-// 			mfile := ctx.Args().Get(0)
-// 			mf, err := manifest.LoadManifest(mfile)
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			core, err := core.NewCore(&core.Config{PacksDir: consts.DefaultPacksDir})
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			stm := core.Stack()
-// 			err = stm.Validate(mf)
-// 			if err == nil {
-// 				writeHCLManifest(mf, os.Stdout)
-// 			}
-
-// 			return err
-// 		},
-// 	}
-// }
 
 func commandStackVersion() *cli.Command {
 	return &cli.Command{
@@ -243,6 +217,49 @@ func commandStackLogs() *cli.Command {
 			}
 
 			return stm.Log(c, cid+"."+stack.ID, os.Stdout, os.Stderr)
+		},
+	}
+}
+
+func commandStackList() *cli.Command {
+	return &cli.Command{
+		Name:    "list",
+		Usage:   "List all stacks",
+		Aliases: []string{"ls"},
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "prefix",
+				Aliases: []string{"p"},
+				Usage:   "filter by `prefix`",
+			},
+		},
+		Action: func(ctx *cli.Context) error {
+			tclient, err := newThrapClient(ctx)
+			if err != nil {
+				return err
+			}
+
+			stream, err := tclient.IterStacks(context.Background(), &thrapb.IterOptions{
+				Prefix: ctx.String("prefix"),
+			})
+			if err != nil {
+				return err
+			}
+
+			tw := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.StripEscape)
+			fmt.Fprintf(tw, "ID\tVERSION\n")
+			for {
+				stack, err := stream.Recv()
+				if err != nil {
+					defer tw.Flush()
+					if err == io.EOF {
+						return stream.CloseSend()
+					}
+					return err
+				}
+
+				fmt.Fprintf(tw, "%s\t%s\n", stack.ID, stack.Version)
+			}
 		},
 	}
 }

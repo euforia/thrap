@@ -67,7 +67,7 @@ func (idt *Identity) Register(ident *thrapb.Identity) (*thrapb.Identity, []*Acti
 
 	er := &ActionReport{}
 	er.Data, er.Error = idt.store.Create(ident)
-	if er.Error == store.ErrRefExists {
+	if er.Error == store.ErrIdentityExists {
 		er.Error = ErrIdentityAlreadyRegistered
 	}
 	er.Action = NewAction("create", "identity", ident.ID)

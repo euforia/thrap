@@ -2,7 +2,6 @@ package core
 
 import (
 	"crypto/ecdsa"
-	"crypto/sha256"
 	"log"
 	"os"
 	"path/filepath"
@@ -319,12 +318,13 @@ func (core *Core) initStores(datadir string) error {
 		return err
 	}
 
-	sobj := store.NewBadgerObjectStore(db, sha256.New, "/stack")
-	core.sst, err = store.NewStackStore(sobj)
-	if err != nil {
-		return err
-	}
+	// sobj := store.NewBadgerObjectStore(db, sha256.New, "/stack")
+	// core.sst, err = store.NewStackStore(sobj)
+	// if err != nil {
+	// 	return err
+	// }
 
+	core.sst = store.NewBadgerStackStorage(db)
 	core.ist = store.NewBadgerIdentityStorage(db)
 
 	// iobj := store.NewBadgerObjectStore(db, sha256.New, "/identity")

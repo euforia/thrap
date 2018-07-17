@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ var usageTextInit = `thrap init [command options] [directory]
 func commandStackInit() *cli.Command {
 	return &cli.Command{
 		Name:      "init",
-		Usage:     "Initialize a new project",
+		Usage:     "Initialize a new stack",
 		UsageText: usageTextInit,
 		Flags: []cli.Flag{
 			&cli.StringFlag{

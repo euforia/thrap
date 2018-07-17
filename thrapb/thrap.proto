@@ -124,6 +124,9 @@ message IterOptions {
 
 service Thrap {
     rpc RegisterStack(Stack) returns (Stack);
+    rpc CommitStack(Stack) returns (Stack);
+    rpc GetStack(Stack) returns (Stack);
+    rpc IterStacks(IterOptions) returns (stream Stack);
     rpc RegisterIdentity(Identity) returns (Identity);
     rpc IterIdentities(IterOptions) returns (stream Identity);
     rpc ConfirmIdentity(Identity) returns (Identity);

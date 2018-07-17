@@ -24,23 +24,6 @@ func NewService(core *core.Core, logger *log.Logger) *GRPCService {
 	return s
 }
 
-func (s *GRPCService) handleIncomingContext(ctx context.Context, call string) {
-	// TODO: auth
-	md, ok := metadata.FromIncomingContext(ctx)
-	if ok {
-		s.log.Println(call, ":", md)
-	}
-}
-
-// RegisterStack implements the server-side grpc call
-func (s *GRPCService) RegisterStack(ctx context.Context, st *thrapb.Stack) (*thrapb.Stack, error) {
-	s.handleIncomingContext(ctx, "stack."+st.ID+".register")
-
-	stk := s.core.Stack()
-	stack, _, err := stk.Register(st)
-	return stack, err
-}
-
 // RegisterIdentity implements the server-side grpc call
 func (s *GRPCService) RegisterIdentity(ctx context.Context, ident *thrapb.Identity) (*thrapb.Identity, error) {
 	s.handleIncomingContext(ctx, "identity."+ident.ID+".register")
@@ -73,4 +56,44 @@ func (s *GRPCService) IterIdentities(opts *thrapb.IterOptions, stream thrapb.Thr
 	return idt.Iter(opts.Prefix, func(ident *thrapb.Identity) error {
 		return stream.Send(ident)
 	})
+}
+
+// RegisterStack implements the server-side grpc call
+func (s *GRPCService) RegisterStack(ctx context.Context, st *thrapb.Stack) (*thrapb.Stack, error) {
+	s.handleIncomingContext(ctx, "stack."+st.ID+".register")
+
+	stk := s.core.Stack()
+	stack, _, err := stk.Register(st)
+	return stack, err
+}
+
+func (s *GRPCService) CommitStack(ctx context.Context, stack *thrapb.Stack) (*thrapb.Stack, error) {
+	s.handleIncomingContext(ctx, "stack."+stack.ID+".commit")
+
+	stk := s.core.Stack()
+	return stk.Commit(stack)
+}
+
+func (s *GRPCService) GetStack(ctx context.Context, stack *thrapb.Stack) (*thrapb.Stack, error) {
+	s.handleIncomingContext(ctx, "stack."+stack.ID+".get")
+
+	st := s.core.Stack()
+	return st.Get(stack.ID)
+}
+
+func (s *GRPCService) IterStacks(opts *thrapb.IterOptions, stream thrapb.Thrap_IterStacksServer) error {
+	s.handleIncomingContext(stream.Context(), "identity.list")
+
+	st := s.core.Stack()
+	return st.Iter(opts.Prefix, func(stack *thrapb.Stack) error {
+		return stream.Send(stack)
+	})
+}
+
+func (s *GRPCService) handleIncomingContext(ctx context.Context, call string) {
+	// TODO: auth
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		s.log.Println(call, ":", md)
+	}
 }

@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 func commandStackRegister() *cli.Command {
 	return &cli.Command{
 		Name:  "register",
-		Usage: "Register a new project",
+		Usage: "Register a new stack",
 		Action: func(ctx *cli.Context) error {
 
 			stack, err := manifest.LoadManifest("")
@@ -31,6 +31,38 @@ func commandStackRegister() *cli.Command {
 			}
 
 			resp, err := tclient.RegisterStack(context.Background(), stack)
+			if err != nil {
+				return err
+			}
+
+			m := map[string]*thrapb.Stack{
+				"stack": resp,
+			}
+
+			b, _ := hclencoder.Encode(m)
+			fmt.Printf("\n%s\n", b)
+			return nil
+		},
+	}
+}
+
+func commandStackCommit() *cli.Command {
+	return &cli.Command{
+		Name:  "commit",
+		Usage: "Commit stack definition",
+		Action: func(ctx *cli.Context) error {
+
+			stack, err := manifest.LoadManifest("")
+			if err != nil {
+				return err
+			}
+
+			tclient, err := newThrapClient(ctx)
+			if err != nil {
+				return err
+			}
+
+			resp, err := tclient.CommitStack(context.Background(), stack)
 			if err != nil {
 				return err
 			}

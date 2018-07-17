@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/euforia/thrap/cli"
 )
 
 var (
@@ -25,7 +27,7 @@ func version() string {
 }
 
 func main() {
-	app := newCLI()
+	app := cli.NewCLI(version())
 	err := app.Run(os.Args)
 	if err != nil {
 		fmt.Println(err)

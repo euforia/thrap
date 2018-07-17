@@ -1,6 +1,7 @@
-package main
+package cli
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"google.golang.org/grpc"
@@ -17,10 +18,11 @@ import (
 )
 
 var (
-	errRemoteRequired = errors.New("thrap remote required")
+	errThrapAddrRequired = errors.New("--thrap-addr required")
+	errNotConfigured     = errors.New("thrap not configured. Try running 'thrap configure'")
 )
 
-func newCLI() *cli.App {
+func NewCLI(version string) *cli.App {
 	cli.VersionPrinter = func(ctx *cli.Context) {
 		fmt.Println(ctx.App.Version)
 	}
@@ -28,7 +30,7 @@ func newCLI() *cli.App {
 	app := &cli.App{
 		Name:     "thrap",
 		HelpName: "thrap",
-		Version:  version(),
+		Version:  version,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "thrap-addr",
@@ -56,7 +58,7 @@ func commandVersion() *cli.Command {
 		Name:  "version",
 		Usage: "Show version",
 		Action: func(ctx *cli.Context) error {
-			fmt.Println(version())
+			fmt.Println(ctx.App.Version)
 			return nil
 		},
 	}
@@ -103,13 +105,11 @@ func commandConfigure() *cli.Command {
 	}
 }
 
-var errNotConfigured = errors.New("thrap not configured. Try running 'thrap configure'")
-
 func newThrapClient(ctx *cli.Context) (thrapb.ThrapClient, error) {
 	// Check remote addr
 	remoteAddr := ctx.String("thrap-addr")
 	if remoteAddr == "" {
-		return nil, errRemoteRequired
+		return nil, errThrapAddrRequired
 	}
 
 	cc, err := grpc.Dial(remoteAddr, grpc.WithInsecure())
@@ -118,4 +118,9 @@ func newThrapClient(ctx *cli.Context) (thrapb.ThrapClient, error) {
 	}
 
 	return thrapb.NewThrapClient(cc), nil
+}
+
+func writeJSON(v interface{}) {
+	b, _ := json.MarshalIndent(v, "", "  ")
+	fmt.Printf("%s\n", b)
 }

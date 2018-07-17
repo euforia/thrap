@@ -6,6 +6,8 @@ import "github.com/euforia/thrap/thrapb"
 type StackStorage interface {
 	Get(string) (*thrapb.Stack, error)
 	Create(*thrapb.Stack) (*thrapb.Stack, error)
+	Update(*thrapb.Stack) (*thrapb.Stack, error)
+	Iter(string, func(*thrapb.Stack) error) error
 }
 
 // IdentityStorage is a identity storage interface

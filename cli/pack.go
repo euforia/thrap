@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"fmt"
@@ -41,8 +41,9 @@ func commandPackUpdate() *cli.Command {
 
 func commandPackList() *cli.Command {
 	return &cli.Command{
-		Name:  "list",
-		Usage: "List available packs",
+		Name:    "list",
+		Usage:   "List available packs",
+		Aliases: []string{"ls"},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "type",
@@ -83,7 +84,6 @@ func commandPackList() *cli.Command {
 			case "":
 				w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.StripEscape)
 				fmt.Fprintf(w, "TYPE\tID\n")
-				fmt.Fprintf(w, "----\t--\n")
 
 				dp := pks.Dev()
 				list, _ := dp.List()

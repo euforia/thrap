@@ -85,7 +85,7 @@ func (st *Stack) Register(stack *thrapb.Stack) (*thrapb.Stack, []*ActionReport, 
 
 	stack, err := st.sst.Create(stack)
 	if err != nil {
-		if err == store.ErrRefExists {
+		if err == store.ErrStackExists {
 			return nil, nil, ErrStackAlreadyRegistered
 		}
 		return nil, nil, err
@@ -111,20 +111,27 @@ func (st *Stack) Validate(stack *thrapb.Stack) error {
 	return nil
 }
 
+// Commit updates a stack definition
+func (st *Stack) Commit(stack *thrapb.Stack) (*thrapb.Stack, error) {
+	errs := stack.Validate()
+	if len(errs) > 0 {
+		return nil, utils.FlattenErrors(errs)
+	}
+
+	return st.sst.Update(stack)
+}
+
 // populatePorts populates ports into the stack from the container images if
 // no ports have been defined
 func (st *Stack) populatePorts(stack *thrapb.Stack) error {
 	var err error
 	for _, comp := range stack.Components {
-		// if len(comp.Ports) > 0 {
-		// 	continue
-		// }
-
+		// Ensure we have the image locally
 		er := st.crt.ImagePull(context.Background(), comp.Name+":"+comp.Version)
 		if er != nil {
 			continue
 		}
-
+		// Get image config
 		ic, er := st.crt.ImageConfig(comp.Name, comp.Version)
 		if er != nil {
 			err = er
@@ -351,6 +358,16 @@ func (st *Stack) Status(ctx context.Context, stack *thrapb.Stack) []*CompStatus 
 	return out
 }
 
+// Get returns a stack from the store by id
+func (st *Stack) Get(id string) (*thrapb.Stack, error) {
+	return st.sst.Get(id)
+}
+
+// Iter iterates over each stack definition in the store.
+func (st *Stack) Iter(prefix string, f func(*thrapb.Stack) error) error {
+	return st.sst.Iter(prefix, f)
+}
+
 // Build starts all require services, then starts all the builds
 func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack) error {
 	if errs := stack.Validate(); len(errs) > 0 {
@@ -384,6 +401,105 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack) error {
 
 	// Start head builds
 	err = st.startBuilds(ctx, stack, scopeVars, true)
+
+	return err
+}
+
+// Destroy removes call components of the stack from the container runtime
+func (st *Stack) Destroy(ctx context.Context, stack *thrapb.Stack) []*ActionReport {
+	ar := make([]*ActionReport, 0, len(stack.Components))
+
+	for _, c := range stack.Components {
+		r := &ActionReport{Action: NewAction("destroy", "comp", c.ID)}
+		r.Error = st.crt.Remove(ctx, c.ID+"."+stack.ID)
+		ar = append(ar, r)
+	}
+	return ar
+}
+
+// Stop shutsdown any running containers in the stack.
+func (st *Stack) Stop(ctx context.Context, stack *thrapb.Stack) []*ActionReport {
+	ar := make([]*ActionReport, 0, len(stack.Components))
+
+	for _, c := range stack.Components {
+		r := &ActionReport{Action: NewAction("stop", "comp", c.ID)}
+		r.Error = st.crt.Stop(ctx, c.ID+"."+stack.ID)
+		ar = append(ar, r)
+	}
+	return ar
+}
+
+// Deploy deploys all components of the stack.
+func (st *Stack) Deploy(stack *thrapb.Stack) error {
+	if errs := stack.Validate(); len(errs) > 0 {
+		return utils.FlattenErrors(errs)
+	}
+
+	var (
+		ctx = context.Background()
+		err = st.crt.CreateNetwork(ctx, stack.ID)
+	)
+
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err != nil {
+			st.Destroy(ctx, stack)
+		}
+	}()
+
+	svars := st.scopeVars(stack)
+
+	// Deploy services like db's etc
+	err = st.startServices(ctx, stack, svars)
+	if err != nil {
+		return err
+	}
+
+	// Deploy non-head containers
+	for _, comp := range stack.Components {
+		if !comp.IsBuildable() {
+			continue
+		}
+
+		if comp.Head {
+			continue
+		}
+
+		if err = st.evalComponent(comp, svars); err != nil {
+			return err
+		}
+
+		err = st.startContainer(ctx, stack.ID, comp)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(comp.ID)
+	}
+
+	// Start head containers
+	for _, comp := range stack.Components {
+		if !comp.IsBuildable() {
+			continue
+		}
+		if !comp.Head {
+			continue
+		}
+
+		if err = st.evalComponent(comp, svars); err != nil {
+			break
+		}
+
+		err = st.startContainer(ctx, stack.ID, comp)
+		if err != nil {
+			break
+		}
+
+		fmt.Println(comp.ID)
+	}
 
 	return err
 }
@@ -552,103 +668,4 @@ func (st *Stack) evalComponent(comp *thrapb.Component, scopeVars scope.Variables
 	}
 
 	return nil
-}
-
-// Destroy removes call components of the stack from the container runtime
-func (st *Stack) Destroy(ctx context.Context, stack *thrapb.Stack) []*ActionReport {
-	ar := make([]*ActionReport, 0, len(stack.Components))
-
-	for _, c := range stack.Components {
-		r := &ActionReport{Action: NewAction("destroy", "comp", c.ID)}
-		r.Error = st.crt.Remove(ctx, c.ID+"."+stack.ID)
-		ar = append(ar, r)
-	}
-	return ar
-}
-
-// Stop shutsdown any running containers in the stack.
-func (st *Stack) Stop(ctx context.Context, stack *thrapb.Stack) []*ActionReport {
-	ar := make([]*ActionReport, 0, len(stack.Components))
-
-	for _, c := range stack.Components {
-		r := &ActionReport{Action: NewAction("stop", "comp", c.ID)}
-		r.Error = st.crt.Stop(ctx, c.ID+"."+stack.ID)
-		ar = append(ar, r)
-	}
-	return ar
-}
-
-// Deploy deploys all components of the stack.
-func (st *Stack) Deploy(stack *thrapb.Stack) error {
-	if errs := stack.Validate(); len(errs) > 0 {
-		return utils.FlattenErrors(errs)
-	}
-
-	var (
-		ctx = context.Background()
-		err = st.crt.CreateNetwork(ctx, stack.ID)
-	)
-
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if err != nil {
-			st.Destroy(ctx, stack)
-		}
-	}()
-
-	svars := st.scopeVars(stack)
-
-	// Deploy services like db's etc
-	err = st.startServices(ctx, stack, svars)
-	if err != nil {
-		return err
-	}
-
-	// Deploy non-head containers
-	for _, comp := range stack.Components {
-		if !comp.IsBuildable() {
-			continue
-		}
-
-		if comp.Head {
-			continue
-		}
-
-		if err = st.evalComponent(comp, svars); err != nil {
-			return err
-		}
-
-		err = st.startContainer(ctx, stack.ID, comp)
-		if err != nil {
-			return err
-		}
-
-		fmt.Println(comp.ID)
-	}
-
-	// Start head containers
-	for _, comp := range stack.Components {
-		if !comp.IsBuildable() {
-			continue
-		}
-		if !comp.Head {
-			continue
-		}
-
-		if err = st.evalComponent(comp, svars); err != nil {
-			break
-		}
-
-		err = st.startContainer(ctx, stack.ID, comp)
-		if err != nil {
-			break
-		}
-
-		fmt.Println(comp.ID)
-	}
-
-	return err
 }

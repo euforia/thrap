@@ -2,7 +2,6 @@ package store
 
 import (
 	"errors"
-	"time"
 
 	"github.com/dgraph-io/badger"
 	"github.com/gogo/protobuf/proto"
@@ -13,10 +12,13 @@ import (
 const defaultIdentityPrefix = "/identity/"
 
 var (
+	// ErrIdentityNotFound is used when an identity is not found in the store
 	ErrIdentityNotFound = errors.New("identity not found")
-	ErrIdentityExists   = errors.New("identity exists")
+	// ErrIdentityExists is used when an identity exists
+	ErrIdentityExists = errors.New("identity exists")
 )
 
+// BadgerIdentityStorage implements a badger backed IdentityStorage interface
 type BadgerIdentityStorage struct {
 	db *badger.DB
 }
@@ -40,10 +42,6 @@ func (store *BadgerIdentityStorage) Get(id string) (*thrapb.Identity, error) {
 		ident, err = store.getIdentity(txn, key)
 		return err
 	})
-
-	if ident == nil {
-		ident = &thrapb.Identity{}
-	}
 
 	return ident, err
 }
@@ -146,79 +144,4 @@ func identityFromItem(item *badger.Item) (*thrapb.Identity, error) {
 	err = proto.Unmarshal(val, &ident)
 
 	return &ident, err
-}
-
-// IdentityStore is the identity storage system
-type IdentityStore struct {
-	st ObjectStorage
-}
-
-// NewIdentityStore returns a new IdentityStore instance
-func NewIdentityStore(objs ObjectStorage) *IdentityStore {
-	return &IdentityStore{st: objs}
-}
-
-// Get returns an identity by the id
-func (store *IdentityStore) Get(id string) (*thrapb.Identity, error) {
-	ref, _, err := store.st.GetRef(id, "latest")
-	if err != nil {
-		return nil, err
-	}
-
-	var ident thrapb.Identity
-	err = store.st.Get(id, ref.DataDigest, &ident)
-
-	return &ident, err
-}
-
-// Create cretes a new identity
-func (store *IdentityStore) Create(ident *thrapb.Identity) (*thrapb.Identity, error) {
-	if ident.ID == "" {
-		return nil, errIDMissing
-	}
-
-	prev, _, err := store.st.CreateRef(ident.ID, "latest")
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = store.setIdent(ident, "latest", prev)
-	return ident, err
-}
-
-// Update updates an identity with the ident provided
-func (store *IdentityStore) Update(ident *thrapb.Identity) (*thrapb.Identity, error) {
-	_, prev, err := store.st.GetRef(ident.ID, "latest")
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = store.setIdent(ident, "latest", prev)
-	return ident, err
-}
-
-// Delete deletes an identity by the id
-func (store *IdentityStore) Delete(id string) error {
-	return errors.New("to be implemented")
-}
-
-// Iter iterates over each identity in the store
-func (store *IdentityStore) Iter(start string, callback func(*thrapb.Identity) error) error {
-	return errors.New("to be implemented")
-}
-
-func (store *IdentityStore) setIdent(ident *thrapb.Identity, ref string, prev []byte) (*thrapb.ChainHeader, error) {
-	data, err := store.st.Set(ident.ID, ident)
-	if err != nil {
-		return nil, err
-	}
-
-	refobj := &thrapb.ChainHeader{
-		Previous:   prev,
-		DataDigest: data,
-		Timestamp:  time.Now().UnixNano(),
-	}
-
-	_, err = store.st.SetRef(ident.ID, ref, refobj)
-	return refobj, err
 }
