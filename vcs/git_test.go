@@ -8,6 +8,10 @@ import (
 	git "gopkg.in/src-d/go-git.v4"
 )
 
+func Test_GetRepoVersion(t *testing.T) {
+	t.Log(GetRepoVersion("../"))
+}
+
 func Test_VCS(t *testing.T) {
 	conf := &Config{Provider: "xxx"}
 	_, err := New(conf)

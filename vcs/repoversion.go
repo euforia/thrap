@@ -39,7 +39,20 @@ func GetRepoVersion(path string) RepoVersion {
 	tags, _ := repo.Tags()
 
 	var rc *object.Commit
-	lastTag, _ := tags.Next()
+
+	var lastTag *plumbing.Reference
+	for {
+		t, err := tags.Next()
+		if err != nil {
+			// fmt.Println(err)
+			// return RepoVersion{}
+			break
+		}
+
+		lastTag = t
+	}
+
+	// lastTag, _ := tags.Next()
 	if lastTag != nil {
 		tagLabel = lastTag.Name().Short()
 		to, _ := repo.TagObject(lastTag.Hash())
