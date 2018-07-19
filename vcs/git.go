@@ -24,6 +24,11 @@ var (
 	errPathNotSpecified = errors.New("path not specified")
 )
 
+// DefaultGitRemoteURL returns the default url scheme scheme for remote access
+func DefaultGitRemoteURL(addr, owner, name string) string {
+	return "ssh://git@" + addr + "/" + owner + "/" + name
+}
+
 // SetupLocalGitRepo initializes a new git repo.  It returns an error
 // if it already has been initialized or fails
 func SetupLocalGitRepo(projName, repoOwner, projPath, remoteAddr string) (VCS, *git.Repository, error) {
@@ -42,11 +47,6 @@ func SetupLocalGitRepo(projName, repoOwner, projPath, remoteAddr string) (VCS, *
 
 	return vcsp, resp.(*git.Repository), nil
 
-}
-
-// DefaultGitRemoteURL returns the default url scheme scheme for remote access
-func DefaultGitRemoteURL(addr, owner, name string) string {
-	return "ssh://git@" + addr + "/" + owner + "/" + name
 }
 
 // GitVCS implements a git version controlled interface

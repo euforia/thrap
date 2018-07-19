@@ -44,7 +44,6 @@ func (st *Stack) createVcsRepo(stack *thrapb.Stack) *ActionReport {
 		return er
 	}
 
-	var vcsOpt vcs.Option
 	repo := &vcs.Repository{
 		Name:        stack.ID,
 		Description: stack.Description,
@@ -55,6 +54,7 @@ func (st *Stack) createVcsRepo(stack *thrapb.Stack) *ActionReport {
 		repo.Owner = vc.Repo.Owner
 	}
 
+	var vcsOpt vcs.Option
 	er.Data, er.Error = st.vcs.Create(repo, vcsOpt)
 
 	return er

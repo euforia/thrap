@@ -98,7 +98,8 @@ func commandStackInit() *cli.Command {
 			opts := core.ConfigureOptions{
 				DataDir: projPath,
 				VCS: &config.VCSConfig{
-					ID: defaultVCS.ID,
+					Addr: defaultVCS.Addr,
+					ID:   defaultVCS.ID,
 					Repo: &config.VCSRepoConfig{
 						Name:  projName,
 						Owner: repoOwner,

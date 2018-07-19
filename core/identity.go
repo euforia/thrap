@@ -84,6 +84,7 @@ func (idt *Identity) Get(id string) (*thrapb.Identity, error) {
 	return ident, err
 }
 
+// Iter iterates over each identity with the matching prefix
 func (idt *Identity) Iter(prefix string, f func(*thrapb.Identity) error) error {
 	return idt.store.Iter(prefix, f)
 }
