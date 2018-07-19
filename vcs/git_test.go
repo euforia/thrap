@@ -1,15 +1,67 @@
 package vcs
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
+func committer() *git.CommitOptions {
+	return &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "thrap",
+			Email: "thrap",
+			When:  time.Now(),
+		},
+	}
+}
+
 func Test_GetRepoVersion(t *testing.T) {
-	t.Log(GetRepoVersion("../"))
+
+	tmpdir, _ := ioutil.TempDir("/tmp", "grv-")
+	defer os.RemoveAll(tmpdir)
+
+	ver := GetRepoVersion(tmpdir)
+	assert.Equal(t, "v0.0.0", ver.String())
+
+	_, repo, _ := SetupLocalGitRepo("test", "me", tmpdir, "foo.com")
+	ver, _ = getRepoVersion(repo)
+	assert.Equal(t, "v0.0.0", ver.String())
+
+	wt, _ := repo.Worktree()
+	wt.AddGlob("dkfjdkfj")
+
+	wt.Commit("Initial commit", committer())
+
+	ver, _ = getRepoVersion(repo)
+	assert.Equal(t, 1, ver.Count)
+
+	for i, s := range []string{"foo", "bar", "baz", "bees", "wx"} {
+		wt.AddGlob(s)
+		ch, _ := wt.Commit("message", committer())
+
+		if (i%3) == 0 && i != 0 {
+			// tag
+			refName := plumbing.ReferenceName(fmt.Sprintf("refs/tags/tag%d", i))
+			ref := plumbing.NewHashReference(refName, ch)
+			repo.Storer.SetReference(ref)
+
+			ver, _ = getRepoVersion(repo)
+			assert.Zero(t, ver.Count)
+		}
+
+	}
+
+	ver, _ = getRepoVersion(repo)
+	assert.Equal(t, "tag3", ver.Tag)
+
 }
 
 func Test_VCS(t *testing.T) {
