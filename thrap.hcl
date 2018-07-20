@@ -73,7 +73,6 @@ manifest "thrap" {
 
       secrets {
         destination = ".thrap/creds.hcl"
-        format      = "hcl"
       }
 
       head = true

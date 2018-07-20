@@ -97,8 +97,16 @@ func (orch *Docker) CreateNetwork(ctx context.Context, netID string) error {
 
 // ListImagesWithLabel returns a list of images that match the given label
 func (orch *Docker) ListImagesWithLabel(ctx context.Context, label string) ([]types.ImageSummary, error) {
-	opts := types.ImageListOptions{Filters: filters.Args{}}
-	opts.Filters.Add("label", label)
+	args := filters.NewArgs(filters.Arg("label", label))
+
+	// kvp := make([]filters.KeyValuePair, 0, len(labels))
+	// for k, v := range labels {
+	// 	kvp = append(kvp, filters.KeyValuePair{Key: k, Value: v})
+	// }
+	// args := filters.NewArgs(kvp...)
+
+	opts := types.ImageListOptions{Filters: args}
+	// fmt.Println(opts)
 	return orch.cli.ImageList(ctx, opts)
 }
 

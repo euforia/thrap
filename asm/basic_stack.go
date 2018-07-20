@@ -98,7 +98,6 @@ func makeDevComp(compID string, lang thrapb.LanguageID) *thrapb.Component {
 		},
 		Secrets: &thrapb.Secrets{
 			Destination: consts.DefaultSecretsFile,
-			Format:      consts.DefaultSecretsFileFormat,
 		},
 	}
 }

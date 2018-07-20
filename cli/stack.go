@@ -6,8 +6,8 @@ import (
 	"io"
 	"os"
 	"text/tabwriter"
+	"time"
 
-	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/thrapb"
@@ -25,6 +25,7 @@ func commandStack() *cli.Command {
 			commandStackRegister(),
 			commandStackCommit(),
 			commandStackBuild(),
+			commandStackArtifacts(),
 			commandStackDeploy(),
 			commandStackStatus(),
 			commandStackLogs(),
@@ -61,12 +62,12 @@ func commandStackBuild() *cli.Command {
 				return err
 			}
 
-			core, err := core.NewCore(&core.Config{DataDir: consts.DefaultDataDir})
+			cr, err := loadCore()
 			if err != nil {
 				return err
 			}
 
-			stm := core.Stack()
+			stm := cr.Stack()
 
 			return stm.Build(context.Background(), stack)
 		},
@@ -87,7 +88,7 @@ func commandStackStop() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			core, err := core.NewCore(&core.Config{DataDir: consts.DefaultDataDir})
+			core, err := loadCore()
 			if err != nil {
 				return err
 			}
@@ -122,7 +123,7 @@ func commandStackDestroy() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			core, err := core.NewCore(&core.Config{DataDir: consts.DefaultDataDir})
+			core, err := loadCore()
 			if err != nil {
 				return err
 			}
@@ -155,36 +156,86 @@ func commandStackStatus() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			// fmt.Println("Version:", stack.Version)
-
-			core, err := core.NewCore(&core.Config{DataDir: consts.DefaultDataDir})
+			core, err := loadCore()
 			if err != nil {
 				return err
 			}
 
 			stm := core.Stack()
-			resp := stm.Status(context.Background(), stack)
 
-			tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)
-			fmt.Fprintf(tw, "Component\tImage\tStatus\tDetails\n")
-			fmt.Fprintf(tw, "---------\t-----\t------\t-------\n")
-			for _, s := range resp {
-
-				d := s.Details
-				st := d.State
-
-				if s.Error != nil {
-					fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", s.ID, d.Config.Image, st.Status, s.Error)
-				} else {
-					fmt.Fprintf(tw, "%s\t%s\t%s\t%v\n", s.ID, d.Config.Image, st.Status, d.NetworkSettings.Ports)
-				}
-
-			}
-			tw.Flush()
+			fmt.Println()
+			printStackStatus(stm, stack)
+			fmt.Println()
 
 			return nil
 		},
 	}
+}
+
+func commandStackArtifacts() *cli.Command {
+	return &cli.Command{
+		Name:    "artifacts",
+		Aliases: []string{"arts"},
+		Usage:   "List stack artifacts",
+		Action: func(ctx *cli.Context) error {
+
+			stack, err := manifest.LoadManifest("")
+			if err != nil {
+				return err
+			}
+			if errs := stack.Validate(); len(errs) > 0 {
+				return utils.FlattenErrors(errs)
+			}
+
+			core, err := loadCore()
+			if err != nil {
+				return err
+			}
+
+			stm := core.Stack()
+
+			fmt.Println()
+			printStackImages(stm, stack)
+			fmt.Println()
+
+			return nil
+		},
+	}
+}
+
+func printStackImages(stm *core.Stack, stack *thrapb.Stack) {
+	imgs := stm.Images(stack)
+	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)
+	fmt.Fprintf(tw, "Name\tID\tCreated\tSize\n")
+	fmt.Fprintf(tw, "----\t--\t-------\t----\n")
+	for _, img := range imgs {
+		for _, tag := range img.Tags {
+			d := time.Now().Sub(img.Created)
+			fmt.Fprintf(tw, "%s\t%s\t%s ago\t%d MB\n", tag, img.ID.Hex()[:12], d.Round(time.Second), img.Size/(1024*1024))
+		}
+
+	}
+	tw.Flush()
+}
+
+func printStackStatus(stm *core.Stack, stack *thrapb.Stack) {
+	resp := stm.Status(context.Background(), stack)
+	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)
+	fmt.Fprintf(tw, "Component\tImage\tStatus\tDetails\n")
+	fmt.Fprintf(tw, "---------\t-----\t------\t-------\n")
+	for _, s := range resp {
+
+		d := s.Details
+		st := d.State
+
+		if s.Error != nil {
+			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", s.ID, d.Config.Image, st.Status, s.Error)
+		} else {
+			fmt.Fprintf(tw, "%s\t%s\t%s\t%v\n", s.ID, d.Config.Image, st.Status, d.NetworkSettings.Ports)
+		}
+
+	}
+	tw.Flush()
 }
 
 func commandStackLogs() *cli.Command {
@@ -203,7 +254,7 @@ func commandStackLogs() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			core, err := core.NewCore(&core.Config{DataDir: consts.DefaultDataDir})
+			core, err := loadCore()
 			if err != nil {
 				return err
 			}

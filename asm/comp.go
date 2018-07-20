@@ -11,11 +11,7 @@ import (
 	"github.com/euforia/thrap/thrapb"
 )
 
-// type baseComp struct {
-// 	cfg  *thrapb.Container
-// 	comp *thrapb.Component
-// }
-
+// ComponentAssembler implements a component assembly interface
 type ComponentAssembler interface {
 	Dockerfile() *dockerfile.Dockerfile
 	Assemble(scope.Variables) error
@@ -35,9 +31,6 @@ type BuildCompAsm struct {
 
 	// Working/Context directory
 	ctxDir string
-
-	// Assembled files after rendering
-	// files map[string][]byte
 
 	// HICL language vm
 	vm *pseudo.VM

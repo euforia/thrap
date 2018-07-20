@@ -8,6 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/opencontainers/go-digest"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -35,6 +38,37 @@ var (
 	// ErrStackAlreadyRegistered is used when a stack is already registered
 	ErrStackAlreadyRegistered = errors.New("stack already registered")
 )
+
+// CompImage holds image info about a component
+type CompImage struct {
+	ID      digest.Digest
+	Tags    []string
+	Labels  map[string]string
+	Created time.Time
+	Size    int64
+}
+
+func NewCompImage(id string, tags []string) *CompImage {
+	c := &CompImage{ID: digest.Digest(id)}
+	c.SetTags(tags)
+	return c
+}
+
+func (ci *CompImage) SetTags(tags []string) {
+	ci.Tags = make([]string, 0, len(tags))
+	for _, tag := range tags {
+		if tag == "<none>:<none>" {
+			ci.Tags = append(ci.Tags, "<none>")
+
+		} else {
+			ci.Tags = append(ci.Tags, tag)
+		}
+	}
+}
+
+func (ci *CompImage) IsTagged() bool {
+	return len(ci.Tags) > 0 && ci.Tags[0] != "<none>"
+}
 
 // CompStatus holds the overall component status
 type CompStatus struct {
@@ -332,30 +366,61 @@ func (st *Stack) Logs(ctx context.Context, stack *thrapb.Stack, stdout, stderr i
 func (st *Stack) Status(ctx context.Context, stack *thrapb.Stack) []*CompStatus {
 	out := make([]*CompStatus, 0, len(stack.Components))
 	for _, comp := range stack.Components {
-		ss := &CompStatus{ID: comp.ID}
 		id := comp.ID + "." + stack.ID
-		ss.Details, ss.Error = st.crt.Inspect(ctx, id)
-
-		if ss.Error == nil {
-			if ss.Details.State.Status == "exited" {
-				// 	ss.Error = errors.New(ss.Details.State.Error)
-				s := ss.Details.State
-				// fmt.Println(s.Error, s.ExitCode,ss.Details.)
-				ss.Error = fmt.Errorf("code=%d", s.ExitCode)
-			}
-
-		} else {
-			ss.Details = types.ContainerJSON{
-				ContainerJSONBase: &types.ContainerJSONBase{
-					State: &types.ContainerState{Status: "failed"},
-				},
-				Config: &container.Config{},
-			}
-		}
+		ss := st.getCompStatus(ctx, id)
+		ss.ID = comp.ID
 
 		out = append(out, ss)
 	}
+
 	return out
+}
+
+func (st *Stack) getCompStatus(ctx context.Context, id string) *CompStatus {
+
+	ss := &CompStatus{}
+	ss.Details, ss.Error = st.crt.Inspect(ctx, id)
+
+	if ss.Error == nil {
+		if ss.Details.State.Status == "exited" {
+			s := ss.Details.State
+			ss.Error = fmt.Errorf("code=%d", s.ExitCode)
+		}
+
+	} else {
+		ss.Details = types.ContainerJSON{
+			ContainerJSONBase: &types.ContainerJSONBase{
+				State: &types.ContainerState{Status: "failed"},
+			},
+			Config: &container.Config{},
+		}
+	}
+
+	return ss
+}
+
+func (st *Stack) Images(stack *thrapb.Stack) []*CompImage {
+	images := make([]*CompImage, 0, len(stack.Components))
+
+	ctx := context.Background()
+
+	// for _, comp := range stack.Components {
+	// label := getBuildLabel(stack.ID, comp.ID, comp.Version)
+	conts, err := st.crt.ListImagesWithLabel(ctx, "stack="+stack.ID)
+	if err != nil {
+		return images
+	}
+
+	for _, c := range conts {
+		ci := NewCompImage(c.ID, c.RepoTags)
+		ci.Labels = c.Labels
+		ci.Created = time.Unix(c.Created, 0)
+		ci.Size = c.Size
+		images = append(images, ci)
+	}
+	// }
+
+	return images
 }
 
 // Get returns a stack from the store by id
@@ -524,7 +589,7 @@ func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, scopeVars
 		}
 
 		// err = st.buildStages(ctx, stack.ID, comp)
-		err = st.doBuild(ctx, stack.ID, comp)
+		_, err = st.doBuild(ctx, stack.ID, comp)
 		if err != nil {
 			break
 		}
@@ -609,43 +674,76 @@ func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, scopeVars
 // 	return st.crt.Build(ctx, req)
 // }
 
-func (st *Stack) doBuild(ctx context.Context, sid string, comp *thrapb.Component) error {
-	tbase := filepath.Join(sid, comp.ID)
+// getBuildImageTags returns tags that should be applied to a given image build
+func (st *Stack) getBuildImageTags(stackID string, comp *thrapb.Component) []string {
+	base := filepath.Join(stackID, comp.ID)
+	out := []string{base}
+	if len(comp.Version) > 0 {
+		out = append(out, base+":"+comp.Version)
+	}
 
+	rconf := st.conf.GetDefaultRegistry()
+	if rconf != nil && len(rconf.Addr) > 0 {
+		rbase := filepath.Join(rconf.Addr, base)
+		out = append(out, rbase)
+		if len(comp.Version) > 0 {
+			out = append(out, rbase+":"+comp.Version)
+		}
+	}
+	return out
+}
+
+// func getBuildLabel(sid, cid, value string) string {
+// 	return sid + "." + cid + ".build=" + value
+// }
+
+func (st *Stack) makeBuildRequest(sid string, comp *thrapb.Component) *crt.BuildRequest {
 	req := &crt.BuildRequest{
 		Output:     os.Stdout,
 		ContextDir: comp.Build.Context,
 		BuildOpts: &types.ImageBuildOptions{
-			Tags:        []string{tbase},
-			BuildID:     comp.ID, // todo add vcs repo version
+			Tags: st.getBuildImageTags(sid, comp),
+			// ID to use in order to cancel the build
+			BuildID:     comp.ID,
 			Dockerfile:  comp.Build.Dockerfile,
 			NetworkMode: sid,
 			// Add labels to query later
 			Labels: map[string]string{
-				sid + "." + comp.ID + ".build": comp.Version,
+				"stack":     sid,
+				"component": comp.ID,
+				// "component.version": comp.Version,
+				// sid + "." + comp.ID + ".build": comp.Version,
 			},
 			// Remove:      true,
 		},
 	}
 
-	if len(comp.Version) > 0 {
-		req.BuildOpts.Tags = append(req.BuildOpts.Tags, tbase+":"+comp.Version)
-	}
-
 	if comp.HasEnvVars() {
-		req.BuildOpts.BuildArgs = make(map[string]*string, len(comp.Env.Vars))
+		args := make(map[string]*string, len(comp.Env.Vars))
+
 		fmt.Printf("\nBuild arguments:\n\n")
 		for k := range comp.Env.Vars {
-			v := comp.Env.Vars[k]
 			fmt.Println(k)
-			req.BuildOpts.BuildArgs[k] = &v
+
+			v := comp.Env.Vars[k]
+			args[k] = &v
 		}
 		fmt.Println()
+
+		req.BuildOpts.BuildArgs = args
 	}
 
-	// Blocking
+	return req
+}
+
+func (st *Stack) doBuild(ctx context.Context, sid string, comp *thrapb.Component) (map[string]string, error) {
+	req := st.makeBuildRequest(sid, comp)
+
 	fmt.Printf("Building %s:\n\n", comp.ID)
-	return st.crt.Build(ctx, req)
+
+	// Blocking
+	err := st.crt.Build(ctx, req)
+	return req.BuildOpts.Labels, err
 }
 
 func (st *Stack) evalComponent(comp *thrapb.Component, scopeVars scope.Variables) error {

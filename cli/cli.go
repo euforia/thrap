@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/euforia/thrap/consts"
+	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vars"
 
 	"github.com/pkg/errors"
@@ -123,4 +124,19 @@ func newThrapClient(ctx *cli.Context) (thrapb.ThrapClient, error) {
 func writeJSON(v interface{}) {
 	b, _ := json.MarshalIndent(v, "", "  ")
 	fmt.Printf("%s\n", b)
+}
+
+func loadCore() (*core.Core, error) {
+	conf := &core.Config{DataDir: consts.DefaultDataDir}
+
+	lpath, _ := utils.GetLocalPath("")
+
+	var err error
+
+	conf.ThrapConfig, err = config.ReadProjectConfig(lpath)
+	if err != nil {
+		return nil, err
+	}
+
+	return core.NewCore(conf)
 }

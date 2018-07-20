@@ -10,69 +10,6 @@ import (
 	"github.com/hashicorp/hcl"
 )
 
-// OrchestratorConfig holds oconfigurations for a orchestration
-type OrchestratorConfig struct {
-	ID   string `hcl:"id" hcle:"omit"`
-	Addr string `hcl:"addr" hcle:"omitempty"`
-}
-
-// Clone returns a copy of the config
-func (conf *OrchestratorConfig) Clone() *OrchestratorConfig {
-	if conf == nil {
-		return nil
-	}
-	return &OrchestratorConfig{
-		ID:   conf.ID,
-		Addr: conf.Addr,
-	}
-}
-
-// Merge merges the other config into the one. Only non-empty fields are
-// considered
-func (conf *OrchestratorConfig) Merge(other *OrchestratorConfig) {
-	if other == nil {
-		return
-	}
-
-	if other.ID != "" {
-		conf.ID = other.ID
-	}
-
-	if other.Addr != "" {
-		conf.Addr = other.Addr
-	}
-}
-
-// SecretsConfig holds secrets provider configurations
-type SecretsConfig struct {
-	ID   string `hcl:"id"   hcle:"omit"`
-	Addr string `hcl:"addr" hcle:"omitempty"`
-}
-
-// Clone returns a copy of the config
-func (conf *SecretsConfig) Clone() *SecretsConfig {
-	if conf == nil {
-		return nil
-	}
-	return &SecretsConfig{ID: conf.ID, Addr: conf.Addr}
-}
-
-// Merge merges the other config into the one. Only non-empty fields are
-// considered
-func (conf *SecretsConfig) Merge(other *SecretsConfig) {
-	if other == nil {
-		return
-	}
-
-	if other.ID != "" {
-		conf.ID = other.ID
-	}
-
-	if other.Addr != "" {
-		conf.Addr = other.Addr
-	}
-}
-
 // ThrapConfig holds configs for all providers
 type ThrapConfig struct {
 	VCS          map[string]*VCSConfig          `hcl:"vcs"`
@@ -197,7 +134,6 @@ func (conf *ThrapConfig) ScopeVars() scope.Variables {
 	for k, v := range conf.VCS {
 		vars := v.ScopeVars("vcs." + k + ".")
 		for k1, v1 := range vars {
-			// svars["vcs."+k+"."+k1] = v1
 			svars[k1] = v1
 		}
 	}
@@ -205,7 +141,6 @@ func (conf *ThrapConfig) ScopeVars() scope.Variables {
 	for k, v := range conf.Registry {
 		vars := v.ScopeVars("registry." + k + ".")
 		for k1, v1 := range vars {
-			// svars["registry."+k+"."+k1] = v1
 			svars[k1] = v1
 		}
 	}
@@ -227,10 +162,7 @@ func DefaultThrapConfig() *ThrapConfig {
 		},
 		Registry: make(map[string]*RegistryConfig),
 		Secrets: map[string]*SecretsConfig{
-			"file": &SecretsConfig{
-				// For file this is the path
-				//Addr: "secrets",
-			},
+			"file": &SecretsConfig{},
 		},
 	}
 }
@@ -272,6 +204,13 @@ func ReadThrapConfig(filename string) (*ThrapConfig, error) {
 	return &conf, nil
 }
 
+// ReadProjectConfig reads the configs from the project config directory under a given
+// path
+func ReadProjectConfig(projPath string) (*ThrapConfig, error) {
+	filename := filepath.Join(projPath, consts.WorkDir, consts.ConfigFile)
+	return ReadThrapConfig(filename)
+}
+
 // func ReadGlobalConfig() (*ThrapConfig, error) {
 // 	filename, err := homedir.Expand("~/" + consts.WorkDir + "/" + consts.ConfigFile)
 // 	if err == nil {
@@ -279,11 +218,6 @@ func ReadThrapConfig(filename string) (*ThrapConfig, error) {
 // 	}
 // 	return nil, err
 // }
-
-func ReadProjectConfig(projPath string) (*ThrapConfig, error) {
-	filename := filepath.Join(projPath, consts.WorkDir, consts.ConfigFile)
-	return ReadThrapConfig(filename)
-}
 
 // func ReadGlobalCreds() (*CredsConfig, error) {
 // 	filename, err := homedir.Expand("~/" + consts.WorkDir + "/" + consts.CredsFile)

@@ -171,7 +171,7 @@ func (comp *Component) Hash(h hash.Hash) {
 	}
 	if comp.Secrets != nil {
 		h.Write([]byte(comp.Secrets.Destination))
-		h.Write([]byte(comp.Secrets.Format))
+		h.Write([]byte(comp.Secrets.Template))
 	}
 
 	if comp.Ports != nil {

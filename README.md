@@ -4,6 +4,11 @@ simpifying various integration points
 
 ## Getting Started 
 
+### Pre-requisites
+
+The following are required for thrap:
+- Docker
+
 ### Installation
 
 Download the appropriate binary based on your platform from [here](https://github.com/euforia/thrap/releases)

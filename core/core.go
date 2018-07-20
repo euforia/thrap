@@ -247,9 +247,9 @@ func (core *Core) initVCS() (err error) {
 	}
 
 	core.vcs, err = vcs.New(vconf)
-	if err == nil {
-		core.log.Println("DEBUG VCS:", vc.ID)
-	}
+	// if err == nil {
+	// 	core.log.Println("DEBUG VCS:", vc.ID)
+	// }
 	return err
 }
 
@@ -268,7 +268,7 @@ func (core *Core) initRegistry() error {
 		}
 
 		core.regs[k] = reg
-		core.log.Println("DEBUG Registry:", rc.ID)
+		// core.log.Println("DEBUG Registry:", rc.ID)
 	}
 
 	return nil
@@ -288,9 +288,9 @@ func (core *Core) initSecrets() (err error) {
 	}
 
 	core.sec, err = secrets.New(sconf)
-	if err == nil {
-		core.log.Println("DEBUG Secrets:", sc.ID)
-	}
+	// if err == nil {
+	// 	core.log.Println("DEBUG Secrets:", sc.ID)
+	// }
 
 	return err
 }
@@ -299,9 +299,9 @@ func (core *Core) initOrchestrator() (err error) {
 	c := core.conf.GetDefaultOrchestrator()
 	conf := &orchestrator.Config{Provider: c.ID}
 	core.orch, err = orchestrator.New(conf)
-	if err == nil {
-		core.log.Println("DEBUG Orchestrator:", core.orch.ID())
-	}
+	// if err == nil {
+	// 	core.log.Println("DEBUG Orchestrator:", core.orch.ID())
+	// }
 	return
 }
 
@@ -318,89 +318,8 @@ func (core *Core) initStores(datadir string) error {
 		return err
 	}
 
-	// sobj := store.NewBadgerObjectStore(db, sha256.New, "/stack")
-	// core.sst, err = store.NewStackStore(sobj)
-	// if err != nil {
-	// 	return err
-	// }
-
 	core.sst = store.NewBadgerStackStorage(db)
 	core.ist = store.NewBadgerIdentityStorage(db)
 
-	// iobj := store.NewBadgerObjectStore(db, sha256.New, "/identity")
-	// core.ist = store.NewIdentityStore(iobj)
 	return nil
 }
-
-// // returns the report and an error if any component failed
-// func (core *Core) ensureComponentResources(stack *thrapb.Stack) []*ActionReport {
-
-// 	r := make([]*ActionReport, 0, len(stack.Components))
-// 	for i, comp := range stack.Components {
-
-// 		if !comp.IsBuildable() {
-// 			continue
-// 		}
-// 		// TEMP use ecr
-// 		r = append(r, core.createRegistryRepo("ecr", stack.ID, i))
-
-// 		if comp.HasSecrets() {
-// 			r = append(r, core.createSecrets(i))
-// 		}
-
-// 	}
-
-// 	return r
-// }
-
-// func (core *Core) createVcsRepo(stack *thrapb.Stack) *ActionReport {
-
-// 	er := &ActionReport{Action: NewAction("create", "vcs.repo."+core.vcs.ID(), stack.ID)}
-
-// 	if core.vcs == nil {
-// 		er.Error = errProviderNotConfigured
-// 		return er
-// 	}
-
-// 	var vcsOpt vcs.Option
-// 	repo := &vcs.Repository{
-// 		Name:        stack.ID,
-// 		Description: stack.Description,
-// 	}
-// 	vc := core.conf.VCS[core.vcs.ID()]
-// 	if vc.Repo.Owner != "" {
-// 		repo.Owner = vc.Repo.Owner
-// 	}
-
-// 	er.Data, er.Error = core.vcs.Create(repo, vcsOpt)
-
-// 	return er
-// }
-
-// // createSecrets performs actions for secret creation for the given component
-// // id
-// func (core *Core) createSecrets(compID string) *ActionReport {
-// 	return &ActionReport{
-// 		Action: NewAction("create", "secrets", compID),
-// 		Error:  errors.New("to be implemented"),
-// 	}
-// }
-
-// // createRegistryRepo performs actions for registry creation
-// func (core *Core) createRegistryRepo(regID, stackID, compID string) *ActionReport {
-// 	repoName := stackID + "/" + compID
-// 	er := &ActionReport{
-// 		Action: NewAction("create", "registry.repo", compID),
-// 	}
-
-// 	reg, ok := core.regs[regID]
-// 	if !ok {
-// 		er.Error = errors.Wrap(errProviderNotConfigured, regID)
-// 		return er
-// 	}
-
-// 	// Create registry repo
-// 	er.Data, er.Error = reg.Create(repoName)
-
-// 	return er
-// }

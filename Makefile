@@ -16,30 +16,25 @@ clean:
 	rm -rf dist
 	rm -f $(NAME)
 
+.PHONY: deps
 deps:
 	go get github.com/c4milo/github-release
 	go get github.com/golang/dep/cmd/dep
 	dep ensure -v
 
+.PHONY: test
 test:
 	go test -cover $(SOURCE_PACKAGES)
 	
-
 $(NAME):
 	$(BUILD_CMD) -o $(NAME) $(SOURCE_FILES)
 
+# linux is always done last as it is used in the container build
 dist:
 	mkdir dist
-	GOOS=linux $(BUILD_CMD) $(DIST_OPTS) -o dist/$(NAME)-linux $(SOURCE_FILES)
-	GOOS=darwin $(BUILD_CMD) $(DIST_OPTS) -o dist/$(NAME)-darwin $(SOURCE_FILES)
+	for goos in darwin linux; do \
+	GOOS=$${goos} $(BUILD_CMD) $(DIST_OPTS) -o dist/$(NAME) $(SOURCE_FILES); \
+	tar -czf dist/$(NAME)-$${goos}.tgz -C dist $(NAME); done
 
-dist/$(NAME)-darwin.tgz:
-	cd dist && tar -czf $(NAME)-darwin.tgz $(NAME)-darwin
-
-dist/$(NAME)-linux.tgz:
-	cd dist && tar -czf $(NAME)-linux.tgz $(NAME)-linux
-
-.PHONY: release 
-release: dist dist/$(NAME)-darwin.tgz dist/$(NAME)-linux.tgz
 	
 	

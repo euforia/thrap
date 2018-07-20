@@ -9,14 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// func Test_Config(t *testing.T) {
-// 	c, err := ParseFile("../etc/config.hcl")
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	t.Logf("%s", c)
-// }
-
 var testCreds1 = `
 registry ecr {
     key = "key"

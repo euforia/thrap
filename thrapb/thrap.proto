@@ -14,7 +14,7 @@ message Secrets {
     // Destination path
     string Destination = 1 [(gogoproto.moretags) = "hcl:\"destination\""];
     // Format ie. hcl, json, yaml etc.
-    string Format = 2 [(gogoproto.moretags) = "hcl:\"format\""];
+    string Template = 2 [(gogoproto.moretags) = "hcl:\"template\""];
 }
 
 message Envionment {
