@@ -84,6 +84,15 @@ func (comp *Component) HasPort(port int32) bool {
 	return false
 }
 
+func (comp *Component) HasVolumeTarget(target string) bool {
+	for _, vol := range comp.Volumes {
+		if vol.Target == target {
+			return true
+		}
+	}
+	return false
+}
+
 // IsBuildable returns true if a build file has been specified signifying the
 // component is buildable
 func (comp *Component) IsBuildable() bool {
@@ -209,5 +218,10 @@ func (comp *Component) Hash(h hash.Hash) {
 		for _, k := range keys {
 			h.Write([]byte(k + comp.Config[k]))
 		}
+	}
+
+	for _, vol := range comp.Volumes {
+		h.Write([]byte(vol.Source))
+		h.Write([]byte(vol.Target))
 	}
 }

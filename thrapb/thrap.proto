@@ -17,6 +17,11 @@ message Secrets {
     string Template = 2 [(gogoproto.moretags) = "hcl:\"template\""];
 }
 
+message Volume {
+    string Source = 1 [(gogoproto.moretags) = "hcl:\"source\" hcle:\"omitempty\" yaml:\",omitempty\""];
+    string Target = 2 [(gogoproto.moretags) = "hcl:\"target\""];
+}
+
 message Envionment {
     // File to read environment variables from
     string File = 1 [(gogoproto.moretags) = "hcl:\"file\""];
@@ -52,7 +57,9 @@ message Component {
     Envionment Env = 11 [(gogoproto.moretags) = "hcl:\"env\" hcle:\"omitempty\" yaml:\",omitempty\""];
 
     // Arbitrary KV config map
-	map<string, string> Config = 12 [(gogoproto.moretags) = "hcl:\"config\" hcle:\"omitempty\" yaml:\",omitempty\""];
+    map<string, string> Config = 12 [(gogoproto.moretags) = "hcl:\"config\" hcle:\"omitempty\" yaml:\",omitempty\""];
+    
+    repeated Volume Volumes = 13 [(gogoproto.moretags) = "hcl:\"volumes\" hcle:\"omitempty\" yaml:\",omitempty\""];
 }
 
 message PackManifest {
