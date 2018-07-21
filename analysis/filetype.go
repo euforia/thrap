@@ -103,9 +103,11 @@ func BuildFileTypeSpread(dirpath string) *FileTypeSpread {
 
 		// Skip VCS files
 		p := strings.TrimPrefix(path, dirpath)
-		switch p[:4] {
-		case ".git", ".svn":
-			return nil
+		if len(p) > 3 {
+			switch p[:4] {
+			case ".git", ".svn":
+				return nil
+			}
 		}
 
 		// Update the total
