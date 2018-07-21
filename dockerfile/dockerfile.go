@@ -7,12 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Instruction implements a dockerfile instruction interface
-type Instruction interface {
-	Key() string
-	String() string
-}
-
 // Stage is a group of instructions containing a single FROM statement
 type Stage []Instruction
 
@@ -48,8 +42,18 @@ func (stage Stage) GetOp(op string) (Instruction, int) {
 	return nil, -1
 }
 
+// Dockerfile holds a completely parsed dockerfile
 type Dockerfile struct {
 	Stages []Stage
+}
+
+// StepCount returns the total number of steps in the dockerfile
+func (df *Dockerfile) StepCount() int {
+	var c int
+	for _, st := range df.Stages {
+		c += len(st)
+	}
+	return c
 }
 
 // AddInstruction adds an instuction to the given stage it handles the addition
@@ -71,14 +75,13 @@ func (df *Dockerfile) AddInstruction(stage int, inst Instruction) error {
 		nst = append(st, inst)
 
 	case KeyArg:
+		// Only add if does not exist
 		ai := inst.(*Arg)
 		for _, s := range st {
 			if s.Key() != KeyArg {
 				continue
 			}
-
 			if s.(*Arg).Name == ai.Name {
-				// return errors.Wrap(errArgExists, ai.Name)
 				return nil
 			}
 		}
@@ -126,41 +129,12 @@ func (df *Dockerfile) String() string {
 	return str
 }
 
-// RawInstruction is a single dockerfile instruction
-type RawInstruction struct {
-	Op   string
-	Data []byte
-}
-
-// Key returns the op key
-func (ri *RawInstruction) Key() string {
-	return ri.Op
-}
-
-func (ri *RawInstruction) String() string {
-	return string(ri.Data)
-}
-
-// RawInstructions are a set of instructions in order
-type RawInstructions []*RawInstruction
-
-// HasOp returns true if the instruction set contains the operation
-// in any one of its items
-func (insts RawInstructions) HasOp(op string) bool {
-	for _, i := range insts {
-		if i.Op == op {
-			return true
-		}
-	}
-
-	return false
-}
-
 // RawDockerfile contains parsed elements of a dockerfile
 type RawDockerfile struct {
 	Stages []RawInstructions
 }
 
+// ParseRaw parses a raw dockerfile to concrete dockerfile
 func ParseRaw(raw *RawDockerfile) *Dockerfile {
 	df := &Dockerfile{Stages: make([]Stage, len(raw.Stages))}
 
@@ -179,8 +153,8 @@ func ParseRaw(raw *RawDockerfile) *Dockerfile {
 	return df
 }
 
-// Parse parses a dockerfile at the given path into a raw format
-func Parse(fpath string) (d *RawDockerfile, err error) {
+// ParseFile parses a dockerfile at the given path into a raw format
+func ParseFile(fpath string) (d *RawDockerfile, err error) {
 	var b []byte
 	b, err = ioutil.ReadFile(fpath)
 	if err == nil {

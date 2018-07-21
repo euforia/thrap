@@ -73,10 +73,12 @@ func ParseInstruction(r *RawInstruction) (Instruction, error) {
 	}
 }
 
+// Arg is the ARG keyword in a dockerfile
 type Arg struct {
 	Name string
 }
 
+// ParseArg parses a byte slice to a Arg struct
 func ParseArg(b []byte) (*Arg, error) {
 	p := strings.Split(string(b), " ")
 	if len(p) != 1 {
@@ -95,6 +97,7 @@ func (e *Arg) String() string {
 	return e.Name
 }
 
+// Env is the ENV keyword in a dockerfile
 type Env struct {
 	Vars map[string]string
 }
@@ -104,6 +107,7 @@ func (e *Env) Key() string {
 	return KeyEnv
 }
 
+// Clone returns a clone of Env
 func (e *Env) Clone() *Env {
 	c := &Env{Vars: make(map[string]string, len(e.Vars))}
 	for k, v := range e.Vars {
@@ -121,6 +125,7 @@ func (e *Env) String() string {
 	return out[:len(out)-1]
 }
 
+// WorkDir is the WORKDIR keyword in a dockerfile
 type WorkDir struct {
 	Path string
 }
@@ -134,6 +139,7 @@ func (wd *WorkDir) Key() string {
 	return KeyWorkDir
 }
 
+// ParseWorkDir parses a workdir instruction from a dockerfile
 func ParseWorkDir(b []byte) (*WorkDir, error) {
 	if string(b) == "" {
 		return nil, errors.New("WORKDIR not specified")
@@ -155,6 +161,7 @@ func (cmt *Comment) Key() string {
 	return KeyComment
 }
 
+// ParseComment parse a comment in a dockerfile
 func ParseComment(b []byte) (*Comment, error) {
 	s := strings.TrimSpace(string(b))
 	if s[0] != '#' {
@@ -165,6 +172,7 @@ func ParseComment(b []byte) (*Comment, error) {
 	}, nil
 }
 
+// Run is the RUN keyword in a dockerfile
 type Run struct {
 	Command string
 }
@@ -193,6 +201,7 @@ func (cmd *Cmd) Key() string {
 	return KeyCmd
 }
 
+// EntryPoint is the ENTRYPOINT keyword in a dockerfile
 type EntryPoint struct {
 	Command string
 }
@@ -206,6 +215,7 @@ func (ep *EntryPoint) Key() string {
 	return KeyEntrypoint
 }
 
+// Volume is the VOLUME keyword in a dockerfile
 type Volume struct {
 	Paths []string
 }

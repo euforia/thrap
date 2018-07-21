@@ -21,7 +21,7 @@ func fatal(t *testing.T, err error) {
 }
 
 func Test_Parse(t *testing.T) {
-	m, err := Parse(testDockerfile)
+	m, err := ParseFile(testDockerfile)
 	fatal(t, err)
 
 	assert.Equal(t, 1, len(m.Stages))
@@ -48,7 +48,7 @@ func Test_Parse(t *testing.T) {
 }
 
 func Test_Parse_multistage(t *testing.T) {
-	m, err := Parse(testMultiStageDockerfile)
+	m, err := ParseFile(testMultiStageDockerfile)
 	fatal(t, err)
 
 	assert.Equal(t, 2, len(m.Stages))

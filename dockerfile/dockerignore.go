@@ -8,9 +8,11 @@ import (
 	"github.com/euforia/thrap/utils"
 )
 
+// DockerIgnoresFile is the docker ignore filename
 const DockerIgnoresFile = ".dockerignore"
 
-func ReadIgnoresFile(dir string) ([]string, error) {
+// ParseIgnoresFile reads and parses the ignores file from the directory
+func ParseIgnoresFile(dir string) ([]string, error) {
 	fpath := filepath.Join(dir, DockerIgnoresFile)
 	if !utils.FileExists(fpath) {
 		return []string{}, nil
