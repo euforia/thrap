@@ -19,11 +19,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-// RequestOptions are the common request options for crt's
-// type RequestOptions struct {
-// 	Output io.Writer
-// }
-
+// BuildRequest is a request to build an image
 type BuildRequest struct {
 	ContextDir string
 	TarOpts    *archive.TarOptions
@@ -44,6 +40,7 @@ type Docker struct {
 	cli *client.Client
 }
 
+// NewDocker returns a new docker container runtime interface
 func NewDocker() (*Docker, error) {
 	os.Setenv("DOCKER_API_VERSION", "1.37")
 	cli, err := client.NewEnvClient()
@@ -98,7 +95,6 @@ func (orch *Docker) CreateNetwork(ctx context.Context, netID string) error {
 // ListImagesWithLabel returns a list of images that match the given label
 func (orch *Docker) ListImagesWithLabel(ctx context.Context, label string) ([]types.ImageSummary, error) {
 	args := filters.NewArgs(filters.Arg("label", label))
-
 	// kvp := make([]filters.KeyValuePair, 0, len(labels))
 	// for k, v := range labels {
 	// 	kvp = append(kvp, filters.KeyValuePair{Key: k, Value: v})
@@ -133,8 +129,9 @@ func (orch *Docker) Logs(ctx context.Context, containerID string, stdout, stderr
 	return err
 }
 
+// Build builds an image with the request params
 func (orch *Docker) Build(ctx context.Context, req *BuildRequest) error {
-	ign, err := dockerfile.ReadIgnoresFile(req.ContextDir)
+	ign, err := dockerfile.ParseIgnoresFile(req.ContextDir)
 	if err != nil {
 		return err
 	}
@@ -161,6 +158,7 @@ func (orch *Docker) Build(ctx context.Context, req *BuildRequest) error {
 		return err
 	}
 	defer resp.Body.Close()
+
 	// params: reader, output writer, descriptor, isTerminal, auxCallback
 	err = jsonmessage.DisplayJSONMessagesStream(resp.Body, req.Output, uintptr(rand.Uint32()), true, nil)
 	return err
@@ -181,8 +179,8 @@ func (orch *Docker) ImagePull(ctx context.Context, ref string) error {
 }
 
 // ImageConfig returns an image config for the given name and tagged image
-func (orch *Docker) ImageConfig(name, tag string) (*container.Config, error) {
-	inf, _, err := orch.cli.ImageInspectWithRaw(context.Background(), name+":"+tag)
+func (orch *Docker) ImageConfig(name string) (*container.Config, error) {
+	inf, _, err := orch.cli.ImageInspectWithRaw(context.Background(), name)
 	if err != nil {
 		return nil, err
 	}

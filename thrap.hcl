@@ -72,9 +72,27 @@ manifest "thrap" {
       }
 
       secrets {
+        // Destination of secrets relative to working dir.
         destination = ".thrap/creds.hcl"
+
+        // Secrets file template
+        template = <<EOF
+registry {
+  ecr {
+    key    = "${aws_access_key_id}"
+    secret = "${aws_secret_access_key}"
+  }
+}
+
+vcs {
+  github {
+    token = "${github_token}"
+  }
+}
+EOF
       }
 
+      // Head of the stack i.e. api or ui or application exposed interface
       head = true
 
       env {

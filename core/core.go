@@ -29,7 +29,7 @@ var (
 )
 
 const (
-	// temporary default
+	// Temporary default
 	defaultPacksRepoURL = "https://github.com/euforia/thrap-packs.git"
 )
 

@@ -1,94 +1,56 @@
 package crt
 
-// func Test_scopeVars(t *testing.T) {
-// 	if !utils.FileExists("/var/run/docker.sock") {
-// 		t.Skip("Skipping: docker file descriptor not found")
-// 	}
+import (
+	"fmt"
+	"os"
+	"testing"
 
-// 	stack, err := manifest.LoadManifest("../test-fixtures/thrap.hcl")
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	errs := stack.Validate()
-// 	if len(errs) > 0 {
-// 		t.Fatal(errs)
-// 	}
+	"github.com/docker/docker/api/types"
+	"github.com/euforia/thrap/dockerfile"
+	"github.com/euforia/thrap/utils"
+	"github.com/stretchr/testify/assert"
 
-// 	dr, err := NewDocker()
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	for _, comp := range stack.Components {
-// 		var (
-// 			ic  *container.Config
-// 			err error
-// 		)
+	"golang.org/x/net/context"
+)
 
-// 		if comp.IsBuildable() {
-// 			ic, err = dr.ImageConfig(stack.ID+"/"+comp.Name, "latest")
-// 		} else {
-// 			ic, err = dr.ImageConfig(comp.Name, comp.Version)
-// 		}
+func Test_Docker_Build(t *testing.T) {
+	if !utils.FileExists("/var/run/docker.sock") {
+		t.Skip("Skipping: docker file descriptor not found")
+	}
 
-// 		if err == nil {
-// 			comp.Ports = make(map[string]int32, len(ic.ExposedPorts))
-// 			for k := range ic.ExposedPorts {
-// 				comp.Ports[k.Port()] = int32(k.Int())
-// 			}
-// 		}
+	dkr, _ := NewDocker()
 
-// 	}
+	lr := NewDockerBuildLog(os.Stdout)
+	req := &BuildRequest{
+		Output:     lr,
+		ContextDir: "../test-fixtures",
+		BuildOpts: &types.ImageBuildOptions{
+			Dockerfile: "multi-stage.Dockerfile",
+		},
+	}
 
-// 	svars := stack.ScopeVars()
-// 	b, _ := json.MarshalIndent(svars, "", "  ")
-// 	fmt.Printf("\n%s\n", b)
-// }
+	err := dkr.Build(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// func Test_Docker_Build2(t *testing.T) {
-// 	bldr, err := NewDocker()
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	logSteps, err := lr.Steps()
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// 	st, err := manifest.LoadManifest("../test-fixtures/builder.yml")
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	st.Validate()
+	raw, _ := dockerfile.ParseFile("../test-fixtures/multi-stage.Dockerfile")
+	df := dockerfile.ParseRaw(raw)
+	assert.Equal(t, df.StepCount(), len(logSteps))
 
-// 	var bcomp *thrapb.Component
-// 	for _, comp := range st.Components {
-// 		if comp.IsBuildable() {
-// 			bcomp = comp
-// 			bcomp.Build.Context = "../test-fixtures"
-// 			break
-// 		}
-// 	}
-// }
+	for i, step := range logSteps {
+		_, err := dkr.ImageConfig(step.ID())
+		assert.Nil(t, err)
+		if i < len(logSteps)-1 {
+			assert.Equal(t, "", step.Log())
+		}
 
-// func Test_Docker_Build(t *testing.T) {
-// 	bldr, err := NewDocker()
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+		fmt.Println(step.ID(), step.Cmd())
 
-// 	st, err := manifest.LoadManifest("../test-fixtures/builder.yml")
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	st.Validate()
-
-// 	var bcomp *thrapb.Component
-// 	for _, comp := range st.Components {
-// 		if comp.IsBuildable() {
-// 			bcomp = comp
-// 			bcomp.Build.Context = "../test-fixtures"
-// 			break
-// 		}
-// 	}
-// 	ctx := context.Background()
-
-// 	err = bldr.Build(ctx, "default", bcomp, RequestOptions{Output: os.Stdout})
-// 	assert.Nil(t, err)
-
-// }
+	}
+}

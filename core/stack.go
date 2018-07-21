@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opencontainers/go-digest"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/hashicorp/hil"
@@ -37,45 +35,8 @@ import (
 var (
 	// ErrStackAlreadyRegistered is used when a stack is already registered
 	ErrStackAlreadyRegistered = errors.New("stack already registered")
+	errComponentNotBuildable  = errors.New("component not buildable")
 )
-
-// CompImage holds image info about a component
-type CompImage struct {
-	ID      digest.Digest
-	Tags    []string
-	Labels  map[string]string
-	Created time.Time
-	Size    int64
-}
-
-func NewCompImage(id string, tags []string) *CompImage {
-	c := &CompImage{ID: digest.Digest(id)}
-	c.SetTags(tags)
-	return c
-}
-
-func (ci *CompImage) SetTags(tags []string) {
-	ci.Tags = make([]string, 0, len(tags))
-	for _, tag := range tags {
-		if tag == "<none>:<none>" {
-			ci.Tags = append(ci.Tags, "<none>")
-
-		} else {
-			ci.Tags = append(ci.Tags, tag)
-		}
-	}
-}
-
-func (ci *CompImage) IsTagged() bool {
-	return len(ci.Tags) > 0 && ci.Tags[0] != "<none>"
-}
-
-// CompStatus holds the overall component status
-type CompStatus struct {
-	ID      string
-	Details types.ContainerJSON
-	Error   error
-}
 
 // Stack provides various stack based operations
 type Stack struct {
@@ -100,12 +61,6 @@ type Stack struct {
 // Assembler returns a new assembler for the stack
 func (st *Stack) Assembler(cwd string, stack *thrapb.Stack) (*asm.StackAsm, error) {
 	scopeVars := st.conf.VCS[st.vcs.ID()].ScopeVars("vcs.")
-	//vconf := st.conf.VCS[st.vcs.ID()]
-	// r, err := st.vcs.Open()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// gitRepo := r.(*git.Repository)
 	return asm.NewStackAsm(stack, cwd, st.vcs, nil, scopeVars, st.packs)
 }
 
@@ -155,36 +110,30 @@ func (st *Stack) Commit(stack *thrapb.Stack) (*thrapb.Stack, error) {
 	return st.sst.Update(stack)
 }
 
-// populatePorts populates ports into the stack from the container images if
-// no ports have been defined
-func (st *Stack) populatePorts(stack *thrapb.Stack) error {
-	var err error
-	for _, comp := range stack.Components {
-		// Ensure we have the image locally
-		er := st.crt.ImagePull(context.Background(), comp.Name+":"+comp.Version)
-		if er != nil {
-			continue
-		}
-		// Get image config
-		ic, er := st.crt.ImageConfig(comp.Name, comp.Version)
-		if er != nil {
-			err = er
-			continue
-		}
+func (st *Stack) populateFromImageConf(stack *thrapb.Stack) {
+	confs := st.getContainerConfigs(stack)
+	st.populatePorts(stack, confs)
+	st.populateVolumes(stack, confs)
+}
 
+// populatePorts populates ports into the stack from the container images for ports
+// that have not been defined in the stack but are in the image config
+func (st *Stack) populatePorts(stack *thrapb.Stack, contConfs map[string]*container.Config) {
+	for id, cfg := range contConfs {
+		comp := stack.Components[id]
 		if comp.Ports == nil {
-			comp.Ports = make(map[string]int32, len(ic.ExposedPorts))
+			comp.Ports = make(map[string]int32, len(cfg.ExposedPorts))
 		}
 
-		if len(ic.ExposedPorts) == 1 {
-			for k := range ic.ExposedPorts {
+		if len(cfg.ExposedPorts) == 1 {
+			for k := range cfg.ExposedPorts {
 				if !comp.HasPort(int32(k.Int())) {
 					comp.Ports["default"] = int32(k.Int())
 				}
 				break
 			}
 		} else {
-			for k := range ic.ExposedPorts {
+			for k := range cfg.ExposedPorts {
 				if !comp.HasPort(int32(k.Int())) {
 					// HCL does not allow numbers as keys
 					comp.Ports["port"+k.Port()] = int32(k.Int())
@@ -192,8 +141,39 @@ func (st *Stack) populatePorts(stack *thrapb.Stack) error {
 			}
 		}
 	}
+}
 
-	return err
+func (st *Stack) populateVolumes(stack *thrapb.Stack, contConfs map[string]*container.Config) {
+	for id, cfg := range contConfs {
+		comp := stack.Components[id]
+		vols := make([]*thrapb.Volume, 0, len(cfg.Volumes))
+
+		for k := range cfg.Volumes {
+			if !comp.HasVolumeTarget(k) {
+				vols = append(vols, &thrapb.Volume{Target: k})
+			}
+		}
+		comp.Volumes = append(comp.Volumes, vols...)
+	}
+}
+
+func (st *Stack) getContainerConfigs(stack *thrapb.Stack) map[string]*container.Config {
+	out := make(map[string]*container.Config, len(stack.Components))
+	for _, comp := range stack.Components {
+		// Ensure we have the image locally
+		err := st.crt.ImagePull(context.Background(), comp.Name+":"+comp.Version)
+		if err != nil {
+			continue
+		}
+		// Get image config
+		ic, err := st.crt.ImageConfig(comp.Name + ":" + comp.Version)
+		if err != nil {
+			continue
+		}
+
+		out[comp.ID] = ic
+	}
+	return out
 }
 
 // Init initializes a basic stack with the configuration and options provided. This should only be
@@ -204,7 +184,6 @@ func (st *Stack) Init(stconf *asm.BasicStackConfig, opt ConfigureOptions) (*thra
 	if err != nil {
 		return nil, err
 	}
-	// st.conf.Merge(lconf)
 
 	repo := opt.VCS.Repo
 	vcsp, gitRepo, err := vcs.SetupLocalGitRepo(repo.Name, repo.Owner, opt.DataDir, opt.VCS.Addr)
@@ -216,12 +195,11 @@ func (st *Stack) Init(stconf *asm.BasicStackConfig, opt ConfigureOptions) (*thra
 	if err != nil {
 		return nil, err
 	}
-
-	st.populatePorts(stack)
-
 	if errs := stack.Validate(); len(errs) > 0 {
-		return stack, utils.FlattenErrors(errs)
+		return nil, utils.FlattenErrors(errs)
 	}
+
+	st.populateFromImageConf(stack)
 
 	scopeVars := st.conf.VCS[st.vcs.ID()].ScopeVars("vcs.")
 	stasm, err := asm.NewStackAsm(stack, opt.DataDir, vcsp, gitRepo, scopeVars, st.packs)
@@ -399,13 +377,11 @@ func (st *Stack) getCompStatus(ctx context.Context, id string) *CompStatus {
 	return ss
 }
 
+// Images returns all known images for the stack
 func (st *Stack) Images(stack *thrapb.Stack) []*CompImage {
 	images := make([]*CompImage, 0, len(stack.Components))
 
 	ctx := context.Background()
-
-	// for _, comp := range stack.Components {
-	// label := getBuildLabel(stack.ID, comp.ID, comp.Version)
 	conts, err := st.crt.ListImagesWithLabel(ctx, "stack="+stack.ID)
 	if err != nil {
 		return images
@@ -418,7 +394,6 @@ func (st *Stack) Images(stack *thrapb.Stack) []*CompImage {
 		ci.Size = c.Size
 		images = append(images, ci)
 	}
-	// }
 
 	return images
 }
@@ -448,7 +423,6 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack) error {
 	fmt.Printf("\nScope:\n\n")
 	fmt.Println(strings.Join(scopeVars.Names(), "\n"))
 	fmt.Println()
-	// st.log.Printf("DEBUG Scope: %v", scopeVars.Names())
 
 	defer st.Destroy(ctx, stack)
 
@@ -607,73 +581,6 @@ func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, scopeVars
 	return err
 }
 
-// buildStages builds each stage in the docker file and appropriately tags it.
-// func (st *Stack) buildStages(ctx context.Context, stackID string, comp *thrapb.Component) error {
-// 	tbase := filepath.Join(stackID, comp.ID)
-
-// 	dpath := filepath.Join(comp.Build.Context, comp.Build.Dockerfile)
-// 	raw, err := dockerfile.Parse(dpath)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	df := dockerfile.ParseRaw(raw)
-
-// 	// TODO
-// 	for i := range df.Stages {
-// 		var (
-// 			target     = fmt.Sprintf("%d", i)
-// 			tags       []string
-// 			finalStage = i == len(df.Stages)-1
-// 		)
-
-// 		if finalStage {
-// 			tags = []string{tbase}
-// 			if len(comp.Version) > 0 {
-// 				tags = append(tags, tbase+":"+comp.Version)
-// 			}
-// 		} else {
-// 			tags = []string{tbase + ":" + comp.Version + fmt.Sprintf("-build-%d", i)}
-// 		}
-
-// 		err = st.buildTarget(ctx, comp, target, tags, stackID)
-// 		if err != nil {
-// 			break
-// 		}
-// 	}
-
-// 	return err
-// }
-
-// // buildTarget builds a given target from the dockerfile
-// func (st *Stack) buildTarget(ctx context.Context, comp *thrapb.Component, target string, tags []string, netMode string) error {
-// 	// tbase := filepath.Join(sid, comp.ID)
-// 	req := &crt.BuildRequest{
-// 		Output:     os.Stdout,
-// 		ContextDir: comp.Build.Context,
-// 		BuildOpts: &types.ImageBuildOptions{
-// 			Tags:        tags,
-// 			BuildID:     comp.ID, // todo add vcs repo version
-// 			Dockerfile:  comp.Build.Dockerfile,
-// 			NetworkMode: netMode,
-// 		},
-// 	}
-
-// 	if comp.HasEnvVars() {
-// 		req.BuildOpts.BuildArgs = make(map[string]*string, len(comp.Env.Vars))
-// 		fmt.Printf("\nBuild arguments:\n\n")
-// 		for k := range comp.Env.Vars {
-// 			v := comp.Env.Vars[k]
-// 			fmt.Println(k)
-// 			req.BuildOpts.BuildArgs[k] = &v
-// 		}
-// 		fmt.Println()
-// 	}
-
-// 	// Blocking
-// 	fmt.Printf("Building %s.%s:\n\n", comp.ID, target)
-// 	return st.crt.Build(ctx, req)
-// }
-
 // getBuildImageTags returns tags that should be applied to a given image build
 func (st *Stack) getBuildImageTags(stackID string, comp *thrapb.Component) []string {
 	base := filepath.Join(stackID, comp.ID)
@@ -693,10 +600,6 @@ func (st *Stack) getBuildImageTags(stackID string, comp *thrapb.Component) []str
 	return out
 }
 
-// func getBuildLabel(sid, cid, value string) string {
-// 	return sid + "." + cid + ".build=" + value
-// }
-
 func (st *Stack) makeBuildRequest(sid string, comp *thrapb.Component) *crt.BuildRequest {
 	req := &crt.BuildRequest{
 		Output:     os.Stdout,
@@ -711,10 +614,7 @@ func (st *Stack) makeBuildRequest(sid string, comp *thrapb.Component) *crt.Build
 			Labels: map[string]string{
 				"stack":     sid,
 				"component": comp.ID,
-				// "component.version": comp.Version,
-				// sid + "." + comp.ID + ".build": comp.Version,
 			},
-			// Remove:      true,
 		},
 	}
 
@@ -746,13 +646,7 @@ func (st *Stack) doBuild(ctx context.Context, sid string, comp *thrapb.Component
 	return req.BuildOpts.Labels, err
 }
 
-func (st *Stack) evalComponent(comp *thrapb.Component, scopeVars scope.Variables) error {
-	if !comp.HasEnvVars() {
-		return nil
-	}
-
-	vm := pseudo.NewVM()
-
+func (st *Stack) evalCompEnv(comp *thrapb.Component, vm *pseudo.VM, scopeVars scope.Variables) error {
 	for k, v := range comp.Env.Vars {
 		result, err := vm.ParseEval(v, scopeVars)
 		if err != nil {
@@ -762,8 +656,23 @@ func (st *Stack) evalComponent(comp *thrapb.Component, scopeVars scope.Variables
 			return fmt.Errorf("env value must be string key=%s value=%s", k, v)
 		}
 		comp.Env.Vars[k] = result.Value.(string)
-		// st.log.Printf("DEBUG env.%s='%s'", k, comp.Env.Vars[k])
 	}
 
 	return nil
+}
+
+func (st *Stack) evalComponent(comp *thrapb.Component, scopeVars scope.Variables) error {
+
+	var (
+		vm  = pseudo.NewVM()
+		err error
+	)
+
+	if comp.HasEnvVars() {
+		err = st.evalCompEnv(comp, vm, scopeVars)
+	}
+
+	// TODO: In the future, eval other parts of the component
+
+	return err
 }

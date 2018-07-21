@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -100,9 +101,6 @@ func Test_Core_Build(t *testing.T) {
 	}
 
 	st := c.Stack()
-	st.populatePorts(stack)
-	assert.Equal(t, 1, len(stack.Components["vault"].Ports))
-	assert.Equal(t, 5, len(stack.Components["consul"].Ports))
 
 	err = st.Build(context.Background(), stack)
 	if err != nil {
@@ -111,8 +109,54 @@ func Test_Core_Build(t *testing.T) {
 
 }
 
+func Test_Core_populateFromImageConf(t *testing.T) {
+	if !utils.FileExists("/var/run/docker.sock") {
+		t.Skip("Skipping: docker file descriptor not found")
+	}
+
+	tmpdir, _ := ioutil.TempDir("/tmp", "core-")
+	defer os.RemoveAll(tmpdir)
+
+	opt := DefaultConfigureOptions()
+	opt.NoPrompt = true
+	opt.DataDir = tmpdir
+	err := ConfigureGlobal(opt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	conf := &Config{DataDir: tmpdir, ThrapConfig: &config.ThrapConfig{
+		Registry: map[string]*config.RegistryConfig{
+			"ecr": &config.RegistryConfig{
+				ID:   "ecr",
+				Addr: "foobar.com",
+			},
+		},
+	}}
+	c, err := NewCore(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	stack, err := manifest.LoadManifest("../test-fixtures/thrap.hcl")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	stack.Validate()
+
+	st := c.Stack()
+
+	st.populateFromImageConf(stack)
+	assert.Equal(t, 1, len(stack.Components["vault"].Ports))
+	assert.Equal(t, 5, len(stack.Components["consul"].Ports))
+	assert.True(t, stack.Components["consul"].HasVolumeTarget("/consul/data"))
+}
+
 func Test_Core_Assembler(t *testing.T) {
 	tmpdir, _ := ioutil.TempDir("/tmp", "core.stack-")
+	defer os.RemoveAll(tmpdir)
+
 	opt := DefaultConfigureOptions()
 	opt.NoPrompt = true
 	opt.DataDir = tmpdir
