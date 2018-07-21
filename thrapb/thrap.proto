@@ -96,6 +96,7 @@ message Language {
 	// Base images usable to publish
 	repeated string PubImages = 7;
 
+    // Additional files part of the language pack
     repeated string ScaffoldFiles = 8;
 }
 
@@ -108,13 +109,6 @@ message Stack {
     string                 Description  = 7 [(gogoproto.moretags) = "hcl:\"description\" yaml:\",omitempty\" hcle:\"omit\""];
 }
 
-message ChainHeader {
-    bytes  Previous   = 1;
-    uint64 Height     = 2;
-    int64  Timestamp  = 3;
-    bytes  DataDigest = 4;
-}
-
 message Identity {
     string ID        = 1 [(gogoproto.moretags) = "hcl:\"id\""];
     string Email     = 2 [(gogoproto.moretags) = "hcl:\"email\""];
@@ -123,6 +117,14 @@ message Identity {
     bytes  Signature = 5 [(gogoproto.moretags) = "hcl:\"signature\"" "hcle:\"omit\""];
     // Meta identities e.g. github user, ldap user etc.
     map<string, string> Meta      = 6 [(gogoproto.moretags) = "hcl:\"meta\""];
+}
+
+message Artifact {
+    string             ID       = 1 [(gogoproto.casttype) = "github.com/opencontainers/go-digest.Digest"];
+    repeated string    Tags     = 2;
+    map<string,string> Labels   = 3;
+    int64              Created  = 4;
+    int64              DataSize = 5;
 }
 
 message IterOptions {

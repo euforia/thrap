@@ -1,7 +1,6 @@
 package thrapb
 
 import (
-	"encoding/binary"
 	"errors"
 	"hash"
 	"sort"
@@ -15,16 +14,6 @@ import (
 var (
 	errDepCannotBuild = errors.New("dependencies cannot be built")
 )
-
-// Hash returns the hash of the header using the given hash function
-func (header *ChainHeader) Hash(h hash.Hash) []byte {
-	h.Reset()
-	binary.Write(h, binary.BigEndian, header.Height)
-	h.Write(header.Previous)
-	binary.Write(h, binary.BigEndian, header.Timestamp)
-	h.Write(header.DataDigest)
-	return h.Sum(nil)
-}
 
 // ScopeVars returns the scoped variables usable for interpolation
 func (stack *Stack) ScopeVars() scope.Variables {

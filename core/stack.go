@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -377,9 +376,9 @@ func (st *Stack) getCompStatus(ctx context.Context, id string) *CompStatus {
 	return ss
 }
 
-// Images returns all known images for the stack
-func (st *Stack) Images(stack *thrapb.Stack) []*CompImage {
-	images := make([]*CompImage, 0, len(stack.Components))
+// Artifacts returns all known artifacts for the stack
+func (st *Stack) Artifacts(stack *thrapb.Stack) []*thrapb.Artifact {
+	images := make([]*thrapb.Artifact, 0, len(stack.Components))
 
 	ctx := context.Background()
 	conts, err := st.crt.ListImagesWithLabel(ctx, "stack="+stack.ID)
@@ -388,10 +387,10 @@ func (st *Stack) Images(stack *thrapb.Stack) []*CompImage {
 	}
 
 	for _, c := range conts {
-		ci := NewCompImage(c.ID, c.RepoTags)
+		ci := thrapb.NewArtifact(c.ID, c.RepoTags)
 		ci.Labels = c.Labels
-		ci.Created = time.Unix(c.Created, 0)
-		ci.Size = c.Size
+		ci.Created = c.Created
+		ci.DataSize = c.Size
 		images = append(images, ci)
 	}
 

@@ -84,6 +84,7 @@ func (comp *Component) HasPort(port int32) bool {
 	return false
 }
 
+// HasVolumeTarget returns true if the volume target exists
 func (comp *Component) HasVolumeTarget(target string) bool {
 	for _, vol := range comp.Volumes {
 		if vol.Target == target {

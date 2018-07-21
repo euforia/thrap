@@ -175,7 +175,7 @@ func commandStackStatus() *cli.Command {
 func commandStackArtifacts() *cli.Command {
 	return &cli.Command{
 		Name:    "artifacts",
-		Aliases: []string{"arts"},
+		Aliases: []string{"art"},
 		Usage:   "List stack artifacts",
 		Action: func(ctx *cli.Context) error {
 
@@ -195,7 +195,7 @@ func commandStackArtifacts() *cli.Command {
 			stm := core.Stack()
 
 			fmt.Println()
-			printStackImages(stm, stack)
+			printStackArtifacts(stm, stack)
 			fmt.Println()
 
 			return nil
@@ -203,15 +203,16 @@ func commandStackArtifacts() *cli.Command {
 	}
 }
 
-func printStackImages(stm *core.Stack, stack *thrapb.Stack) {
-	imgs := stm.Images(stack)
+func printStackArtifacts(stm *core.Stack, stack *thrapb.Stack) {
+	imgs := stm.Artifacts(stack)
 	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)
 	fmt.Fprintf(tw, "Name\tID\tCreated\tSize\n")
 	fmt.Fprintf(tw, "----\t--\t-------\t----\n")
 	for _, img := range imgs {
 		for _, tag := range img.Tags {
-			d := time.Now().Sub(img.Created)
-			fmt.Fprintf(tw, "%s\t%s\t%s ago\t%d MB\n", tag, img.ID.Hex()[:12], d.Round(time.Second), img.Size/(1024*1024))
+			d := time.Now().Sub(time.Unix(img.Created, 0)).Round(time.Second)
+			smb := img.DataSize / (1024 * 1024)
+			fmt.Fprintf(tw, "%s\t%s\t%s ago\t%d MB\n", tag, img.ID.Hex()[:12], d, smb)
 		}
 
 	}
