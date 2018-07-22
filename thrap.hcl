@@ -8,14 +8,18 @@ manifest "thrap" {
 
       // Image version
       version = "0.8.4"
-      type    = "api"
 
+      // Type of component used for automation
+      type = "api"
+
+      // Ports the components listens on
       ports {
         http     = 4646
         port4647 = 4647
         port4648 = 4648
       }
 
+      // Env. vars. needed by the component
       env {
         vars {
           CONSUL_ADDR      = "http://${comp.consul.container.addr.http}"
@@ -24,6 +28,7 @@ manifest "thrap" {
         }
       }
 
+      // Data needed to build the component
       build {
         dockerfile = "nomad.dockerfile"
       }
@@ -67,6 +72,9 @@ manifest "thrap" {
         dockerfile = "api.dockerfile"
       }
 
+      cmd  = "thrap"
+      args = ["agent"]
+
       ports {
         http = 10000
       }
@@ -75,7 +83,7 @@ manifest "thrap" {
         // Destination of secrets relative to working dir.
         destination = ".thrap/creds.hcl"
 
-        // Secrets file template
+        // Secrets inline template
         template = <<EOF
 registry {
   ecr {

@@ -16,6 +16,7 @@ COPY  . .
 RUN make test
 RUN make dist
 
+# Publishable artifact
 FROM alpine
 RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 VOLUME /secrets.hcl

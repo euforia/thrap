@@ -59,7 +59,14 @@ message Component {
     // Arbitrary KV config map
     map<string, string> Config = 12 [(gogoproto.moretags) = "hcl:\"config\" hcle:\"omitempty\" yaml:\",omitempty\""];
     
+    // List of volumes needed
     repeated Volume Volumes = 13 [(gogoproto.moretags) = "hcl:\"volumes\" hcle:\"omitempty\" yaml:\",omitempty\""];
+    
+    // Command to run the component
+    string Cmd = 14 [(gogoproto.moretags) = "hcl:\"cmd\" hcle:\"omitempty\" yaml:\",omitempty\""];
+
+    // Args to command
+    repeated string Args = 15 [(gogoproto.moretags) = "hcl:\"args\" hcle:\"omitempty\" yaml:\",omitempty\""];
 }
 
 message PackManifest {

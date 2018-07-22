@@ -297,6 +297,10 @@ func (core *Core) initSecrets() (err error) {
 
 func (core *Core) initOrchestrator() (err error) {
 	c := core.conf.GetDefaultOrchestrator()
+	if c == nil {
+		core.log.Printf("Orchestrator not configured")
+		return
+	}
 	conf := &orchestrator.Config{Provider: c.ID}
 	core.orch, err = orchestrator.New(conf)
 	// if err == nil {

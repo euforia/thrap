@@ -27,7 +27,9 @@ type Orchestrator interface {
 	// Init is called to initialize the orchestrator with the given config
 	Init(config map[string]interface{}) error
 
+	// ID of the orchestrator. Each orchestrator must have a unique id
 	ID() string
+
 	// Deploy should deploy the stack returning the response, deploy object
 	// based on the orchestrator or an error
 	Deploy(stack *thrapb.Stack, opts RequestOptions) (resp interface{}, def interface{}, err error)

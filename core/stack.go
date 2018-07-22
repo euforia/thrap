@@ -65,7 +65,7 @@ func (st *Stack) Assembler(cwd string, stack *thrapb.Stack) (*asm.StackAsm, erro
 
 // Register registers a new stack. It returns an error if the stack is
 // already registered or fails to register
-func (st *Stack) Register(stack *thrapb.Stack) (*thrapb.Stack, []*ActionReport, error) {
+func (st *Stack) Register(stack *thrapb.Stack) (*thrapb.Stack, []*thrapb.ActionReport, error) {
 	errs := stack.Validate()
 	if len(errs) > 0 {
 		return nil, nil, utils.FlattenErrors(errs)
@@ -107,72 +107,6 @@ func (st *Stack) Commit(stack *thrapb.Stack) (*thrapb.Stack, error) {
 	}
 
 	return st.sst.Update(stack)
-}
-
-func (st *Stack) populateFromImageConf(stack *thrapb.Stack) {
-	confs := st.getContainerConfigs(stack)
-	st.populatePorts(stack, confs)
-	st.populateVolumes(stack, confs)
-}
-
-// populatePorts populates ports into the stack from the container images for ports
-// that have not been defined in the stack but are in the image config
-func (st *Stack) populatePorts(stack *thrapb.Stack, contConfs map[string]*container.Config) {
-	for id, cfg := range contConfs {
-		comp := stack.Components[id]
-		if comp.Ports == nil {
-			comp.Ports = make(map[string]int32, len(cfg.ExposedPorts))
-		}
-
-		if len(cfg.ExposedPorts) == 1 {
-			for k := range cfg.ExposedPorts {
-				if !comp.HasPort(int32(k.Int())) {
-					comp.Ports["default"] = int32(k.Int())
-				}
-				break
-			}
-		} else {
-			for k := range cfg.ExposedPorts {
-				if !comp.HasPort(int32(k.Int())) {
-					// HCL does not allow numbers as keys
-					comp.Ports["port"+k.Port()] = int32(k.Int())
-				}
-			}
-		}
-	}
-}
-
-func (st *Stack) populateVolumes(stack *thrapb.Stack, contConfs map[string]*container.Config) {
-	for id, cfg := range contConfs {
-		comp := stack.Components[id]
-		vols := make([]*thrapb.Volume, 0, len(cfg.Volumes))
-
-		for k := range cfg.Volumes {
-			if !comp.HasVolumeTarget(k) {
-				vols = append(vols, &thrapb.Volume{Target: k})
-			}
-		}
-		comp.Volumes = append(comp.Volumes, vols...)
-	}
-}
-
-func (st *Stack) getContainerConfigs(stack *thrapb.Stack) map[string]*container.Config {
-	out := make(map[string]*container.Config, len(stack.Components))
-	for _, comp := range stack.Components {
-		// Ensure we have the image locally
-		err := st.crt.ImagePull(context.Background(), comp.Name+":"+comp.Version)
-		if err != nil {
-			continue
-		}
-		// Get image config
-		ic, err := st.crt.ImageConfig(comp.Name + ":" + comp.Version)
-		if err != nil {
-			continue
-		}
-
-		out[comp.ID] = ic
-	}
-	return out
 }
 
 // Init initializes a basic stack with the configuration and options provided. This should only be
@@ -240,22 +174,14 @@ func (st *Stack) scopeVars(stack *thrapb.Stack) scope.Variables {
 
 // startServices starts services needed to perform the build that themselves do not need
 // to be built
-func (st *Stack) startServices(ctx context.Context, stack *thrapb.Stack, scopeVars scope.Variables) error {
-	var (
-		err error
-		//opt = crt.RequestOptions{Output: os.Stdout}
-	)
+func (st *Stack) startServices(ctx context.Context, stack *thrapb.Stack) error {
+	var err error
 
 	fmt.Printf("\nServices:\n\n")
 
 	for _, comp := range stack.Components {
 		if comp.IsBuildable() {
 			continue
-		}
-
-		// eval hcl/hil
-		if err = st.evalComponent(comp, scopeVars); err != nil {
-			break
 		}
 
 		// Pull image if we do not locally have it
@@ -317,7 +243,19 @@ func (st *Stack) startContainer(ctx context.Context, sid string, comp *thrapb.Co
 		}
 	}
 
-	return nil
+	// May need this to get proper state
+	//<-time.After(200*time.Millisecond)
+	var cstate types.ContainerJSON
+	cstate, err = st.crt.Inspect(ctx, cfg.Name)
+	if err == nil {
+		if cstate.State.Dead {
+			if cstate.State.ExitCode != 0 {
+				err = errors.New(cstate.State.Error)
+			}
+		}
+	}
+
+	return err
 }
 
 // Log writes the log for a running component to the writers
@@ -422,49 +360,31 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack) error {
 	fmt.Printf("\nScope:\n\n")
 	fmt.Println(strings.Join(scopeVars.Names(), "\n"))
 	fmt.Println()
+	// Evali variables
+	for _, comp := range stack.Components {
+		if err = st.evalComponent(comp, scopeVars); err != nil {
+			return err
+		}
+	}
 
 	defer st.Destroy(ctx, stack)
 
 	// Start containers needed for build
-	err = st.startServices(ctx, stack, scopeVars)
+	err = st.startServices(ctx, stack)
 	if err != nil {
 		return err
 	}
 
 	// Start non-head builds
-	err = st.startBuilds(ctx, stack, scopeVars, false)
+	err = st.startBuilds(ctx, stack, false)
 	if err != nil {
 		return err
 	}
 
 	// Start head builds
-	err = st.startBuilds(ctx, stack, scopeVars, true)
+	err = st.startBuilds(ctx, stack, true)
 
 	return err
-}
-
-// Destroy removes call components of the stack from the container runtime
-func (st *Stack) Destroy(ctx context.Context, stack *thrapb.Stack) []*ActionReport {
-	ar := make([]*ActionReport, 0, len(stack.Components))
-
-	for _, c := range stack.Components {
-		r := &ActionReport{Action: NewAction("destroy", "comp", c.ID)}
-		r.Error = st.crt.Remove(ctx, c.ID+"."+stack.ID)
-		ar = append(ar, r)
-	}
-	return ar
-}
-
-// Stop shutsdown any running containers in the stack.
-func (st *Stack) Stop(ctx context.Context, stack *thrapb.Stack) []*ActionReport {
-	ar := make([]*ActionReport, 0, len(stack.Components))
-
-	for _, c := range stack.Components {
-		r := &ActionReport{Action: NewAction("stop", "comp", c.ID)}
-		r.Error = st.crt.Stop(ctx, c.ID+"."+stack.ID)
-		ar = append(ar, r)
-	}
-	return ar
 }
 
 // Deploy deploys all components of the stack.
@@ -472,6 +392,21 @@ func (st *Stack) Deploy(stack *thrapb.Stack) error {
 	if errs := stack.Validate(); len(errs) > 0 {
 		return utils.FlattenErrors(errs)
 	}
+
+	// Evaluate variables
+	svars := st.scopeVars(stack)
+	for _, comp := range stack.Components {
+		if err := st.evalComponent(comp, svars); err != nil {
+			return err
+		}
+	}
+
+	// opts := orchestrator.RequestOptions{}
+	// _, _, err := st.orch.Deploy(stack, opts)
+	// if err!=nil {
+	// st.orch.Destroy(stack)
+	//}
+	// return err
 
 	var (
 		ctx = context.Background()
@@ -488,10 +423,8 @@ func (st *Stack) Deploy(stack *thrapb.Stack) error {
 		}
 	}()
 
-	svars := st.scopeVars(stack)
-
 	// Deploy services like db's etc
-	err = st.startServices(ctx, stack, svars)
+	err = st.startServices(ctx, stack)
 	if err != nil {
 		return err
 	}
@@ -504,10 +437,6 @@ func (st *Stack) Deploy(stack *thrapb.Stack) error {
 
 		if comp.Head {
 			continue
-		}
-
-		if err = st.evalComponent(comp, svars); err != nil {
-			return err
 		}
 
 		err = st.startContainer(ctx, stack.ID, comp)
@@ -527,10 +456,6 @@ func (st *Stack) Deploy(stack *thrapb.Stack) error {
 			continue
 		}
 
-		if err = st.evalComponent(comp, svars); err != nil {
-			break
-		}
-
 		err = st.startContainer(ctx, stack.ID, comp)
 		if err != nil {
 			break
@@ -542,7 +467,31 @@ func (st *Stack) Deploy(stack *thrapb.Stack) error {
 	return err
 }
 
-func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, scopeVars scope.Variables, head bool) error {
+// Destroy removes call components of the stack from the container runtime
+func (st *Stack) Destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionReport {
+	ar := make([]*thrapb.ActionReport, 0, len(stack.Components))
+
+	for _, c := range stack.Components {
+		r := &thrapb.ActionReport{Action: thrapb.NewAction("destroy", "comp", c.ID)}
+		r.Error = st.crt.Remove(ctx, c.ID+"."+stack.ID)
+		ar = append(ar, r)
+	}
+	return ar
+}
+
+// Stop shutsdown any running containers in the stack.
+func (st *Stack) Stop(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionReport {
+	ar := make([]*thrapb.ActionReport, 0, len(stack.Components))
+
+	for _, c := range stack.Components {
+		r := &thrapb.ActionReport{Action: thrapb.NewAction("stop", "comp", c.ID)}
+		r.Error = st.crt.Stop(ctx, c.ID+"."+stack.ID)
+		ar = append(ar, r)
+	}
+	return ar
+}
+
+func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, head bool) error {
 	var err error
 
 	// Start build containers after
@@ -557,9 +506,9 @@ func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, scopeVars
 		}
 
 		// eval hcl/hil
-		if err = st.evalComponent(comp, scopeVars); err != nil {
-			break
-		}
+		// if err = st.evalComponent(comp, scopeVars); err != nil {
+		// 	break
+		// }
 
 		// err = st.buildStages(ctx, stack.ID, comp)
 		_, err = st.doBuild(ctx, stack.ID, comp)

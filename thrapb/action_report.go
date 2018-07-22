@@ -1,4 +1,4 @@
-package core
+package thrapb
 
 // Action represents any noteworthy command, transaction etc.
 type Action struct {

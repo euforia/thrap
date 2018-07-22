@@ -1,8 +1,6 @@
 package orchestrator
 
 import (
-	"errors"
-
 	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/thrapb"
 	nomad "github.com/hashicorp/nomad/api"
@@ -67,9 +65,7 @@ func (orch *nomadOrchestrator) Deploy(st *thrapb.Stack, opts RequestOptions) (re
 		return
 	}
 
-	// TODO:
-	// regOpts := &nomad.RegisterOptions{}
-	// resp, _, err = jobs.RegisterOpts(njob, regOpts, q)
-	// return
-	return nil, nil, errors.New("to be implemented")
+	regOpts := &nomad.RegisterOptions{}
+	resp, _, err = jobs.RegisterOpts(njob, regOpts, q)
+	return
 }

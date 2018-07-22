@@ -1,7 +1,6 @@
 package manifest
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/euforia/hclencoder"
@@ -81,21 +80,11 @@ func MakeNomadJob(stack *thrapb.Stack) (*api.Job, error) {
 	return job, nil
 }
 
-func WriteNomadJob(job *api.Job, w io.Writer) error {
-	wrappedJob := hclWrapNomadJob(job)
-	b, err := hclencoder.Encode(wrappedJob)
-	if err == nil {
-		_, err = w.Write(append(b, []byte("\n")...))
-	}
-	return err
-}
-
 func makeNomadTaskDocker(sid, gid string, comp *thrapb.Component) *api.Task {
 	cid := sid + "." + gid + "." + comp.ID
 	task := api.NewTask(cid, "docker")
 
-	task.SetConfig("image", fmt.Sprintf("%s:%s", comp.Name, comp.Version))
-
+	task.SetConfig("image", comp.Name+":"+comp.Version)
 	task.SetConfig("labels", []map[string]interface{}{
 		map[string]interface{}{
 			"nomad.taskgroup": gid,
@@ -122,9 +111,18 @@ func makeNomadTaskDocker(sid, gid string, comp *thrapb.Component) *api.Task {
 		portmap[k] = v
 
 		task.Services = append(task.Services, &api.Service{
+			Id:        sid + "." + k,
 			Name:      sid,
 			Tags:      []string{k + "." + comp.ID},
 			PortLabel: k,
+			// Checks: []api.ServiceCheck{
+			// 	api.ServiceCheck{
+			// 		Path:     "/",
+			// 		Method:   "GET",
+			// 		Interval: 25e9,
+			// 		Timeout:  3e9,
+			// 	},
+			// },
 		})
 
 		netPorts = append(netPorts, api.Port{Label: k})
@@ -132,33 +130,12 @@ func makeNomadTaskDocker(sid, gid string, comp *thrapb.Component) *api.Task {
 
 	task.SetConfig("port_map", []map[string]interface{}{portmap})
 
-	rsrc := makeResources(defaultCPUMHz, defaultMemMB, defaultNetMbits)
-	rsrc.Networks[0].DynamicPorts = netPorts
-	task.Require(rsrc)
-	// task.Services = []*api.Service{
-	// 	&api.Service{
-	// 		Name:      sid,
-	// 		Tags:      []string{comp.ID},
-	// 		PortLabel: defaultPortLabel,
-	// 		Checks: []api.ServiceCheck{
-	// 			api.ServiceCheck{
-	// 				Path:     "/",
-	// 				Method:   "GET",
-	// 				Interval: 25e9,
-	// 				Timeout:  3e9,
-	// 			},
-	// 		},
-	// },
-	// }
+	resources := makeResources(defaultCPUMHz, defaultMemMB, defaultNetMbits)
+	resources.Networks[0].DynamicPorts = netPorts
+	task.Require(resources)
 
 	return task
 }
-
-// func makeNomadBatchJob(id, name string) *api.Job {
-// 	job := api.NewBatchJob(id, name, defaultRegion, defaultPriority)
-
-// 	return job
-// }
 
 func defaultServiceCheck() api.ServiceCheck {
 	return api.ServiceCheck{
@@ -170,10 +147,10 @@ func defaultServiceCheck() api.ServiceCheck {
 	}
 }
 
-func makeResources(cpu, mem, mbits int) *api.Resources {
-	// cpu := defaultCPUMHz
-	// mem := defaultMemMB
-	// mbits := defaultNetMbits
+func makeResources(icpu, imem, imbits int) *api.Resources {
+	cpu := icpu
+	mem := imem
+	mbits := imbits
 
 	return &api.Resources{
 		CPU:      &cpu,
@@ -186,11 +163,16 @@ func makeResources(cpu, mem, mbits int) *api.Resources {
 		},
 	}
 
-	// if portLabel != "" {
-	// 	rsrc.Networks[0].DynamicPorts = []api.Port{api.Port{Label: portLabel}}
-	// }
+}
 
-	// return rsrc
+// WriteNomadJob write writes the nomad job in hcl format to the writer w
+func WriteNomadJob(job *api.Job, w io.Writer) error {
+	wrappedJob := hclWrapNomadJob(job)
+	b, err := hclencoder.Encode(wrappedJob)
+	if err == nil {
+		_, err = w.Write(append(b, []byte("\n")...))
+	}
+	return err
 }
 
 func hclWrapNomadJob(job *api.Job) map[string]interface{} {

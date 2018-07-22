@@ -58,24 +58,24 @@ func (idt *Identity) Confirm(ident *thrapb.Identity) (*thrapb.Identity, error) {
 
 // Register registers a new identity. It returns an error if the identity exists
 // or fails to register
-func (idt *Identity) Register(ident *thrapb.Identity) (*thrapb.Identity, []*ActionReport, error) {
+func (idt *Identity) Register(ident *thrapb.Identity) (*thrapb.Identity, []*thrapb.ActionReport, error) {
 	err := ident.Validate()
 	if err != nil {
 		return nil, nil, err
 	}
 	ident.Nonce = rand.Uint64()
 
-	er := &ActionReport{}
+	er := &thrapb.ActionReport{}
 	er.Data, er.Error = idt.store.Create(ident)
 	if er.Error == store.ErrIdentityExists {
 		er.Error = ErrIdentityAlreadyRegistered
 	}
-	er.Action = NewAction("create", "identity", ident.ID)
+	er.Action = thrapb.NewAction("create", "identity", ident.ID)
 	if err == nil {
 		idt.log.Printf("User registration request user=%s", ident.ID)
 	}
 
-	return ident, []*ActionReport{er}, er.Error
+	return ident, []*thrapb.ActionReport{er}, er.Error
 }
 
 // Get returns an Identity by the id

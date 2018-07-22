@@ -6,18 +6,18 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (st *Stack) ensureStackResources(stack *thrapb.Stack) []*ActionReport {
+func (st *Stack) ensureStackResources(stack *thrapb.Stack) []*thrapb.ActionReport {
 	report := st.createVcsRepo(stack)
 	reports := st.ensureComponentResources(stack)
 
 	// Concat results from both of the above
-	return append([]*ActionReport{report}, reports...)
+	return append([]*thrapb.ActionReport{report}, reports...)
 }
 
 // returns the report and an error if any component failed
-func (st *Stack) ensureComponentResources(stack *thrapb.Stack) []*ActionReport {
+func (st *Stack) ensureComponentResources(stack *thrapb.Stack) []*thrapb.ActionReport {
 
-	r := make([]*ActionReport, 0, len(stack.Components))
+	r := make([]*thrapb.ActionReport, 0, len(stack.Components))
 	for i, comp := range stack.Components {
 
 		if !comp.IsBuildable() {
@@ -35,9 +35,11 @@ func (st *Stack) ensureComponentResources(stack *thrapb.Stack) []*ActionReport {
 	return r
 }
 
-func (st *Stack) createVcsRepo(stack *thrapb.Stack) *ActionReport {
+func (st *Stack) createVcsRepo(stack *thrapb.Stack) *thrapb.ActionReport {
 
-	er := &ActionReport{Action: NewAction("create", "vcs.repo."+st.vcs.ID(), stack.ID)}
+	er := &thrapb.ActionReport{
+		Action: thrapb.NewAction("create", "vcs.repo."+st.vcs.ID(), stack.ID),
+	}
 
 	if st.vcs == nil {
 		er.Error = errProviderNotConfigured
@@ -62,18 +64,18 @@ func (st *Stack) createVcsRepo(stack *thrapb.Stack) *ActionReport {
 
 // createSecrets performs actions for secret creation for the given component
 // id
-func (st *Stack) createSecrets(compID string) *ActionReport {
-	return &ActionReport{
-		Action: NewAction("create", "secrets", compID),
+func (st *Stack) createSecrets(compID string) *thrapb.ActionReport {
+	return &thrapb.ActionReport{
+		Action: thrapb.NewAction("create", "secrets", compID),
 		Error:  errors.New("to be implemented"),
 	}
 }
 
 // createRegistryRepo performs actions for registry creation
-func (st *Stack) createRegistryRepo(regID, stackID, compID string) *ActionReport {
+func (st *Stack) createRegistryRepo(regID, stackID, compID string) *thrapb.ActionReport {
 	repoName := stackID + "/" + compID
-	er := &ActionReport{
-		Action: NewAction("create", "registry.repo", compID),
+	er := &thrapb.ActionReport{
+		Action: thrapb.NewAction("create", "registry.repo", compID),
 	}
 
 	reg, ok := st.regs[regID]

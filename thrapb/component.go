@@ -5,6 +5,7 @@ import (
 	"errors"
 	"hash"
 	"sort"
+	"strings"
 
 	"github.com/euforia/pseudo/scope"
 	"github.com/euforia/thrap/consts"
@@ -20,13 +21,13 @@ const (
 	CompTypeUnknown = ""
 	// CompTypeWeb represents a ui component of the stack
 	CompTypeWeb CompType = "web"
-	// CompTypeAPI represents an api component of the stack
+	// CompTypeAPI represents an api component of the stack i.e. services
 	CompTypeAPI CompType = "api"
 	// CompTypeDatastore is a datastore component. This includes dataabases,
 	// caches, storage and similar constructs
 	CompTypeDatastore CompType = "datastore"
 	// CompTypeBatch are components such as batch jobs, aws lamdba functions
-	// and similar constructs
+	// and similar constructs that are destined to finish at some point in time.
 	CompTypeBatch CompType = "batch"
 	// CompTypePeriodic are components like cron
 	CompTypePeriodic CompType = "periodic"
@@ -225,4 +226,8 @@ func (comp *Component) Hash(h hash.Hash) {
 		h.Write([]byte(vol.Source))
 		h.Write([]byte(vol.Target))
 	}
+
+	h.Write([]byte(comp.Cmd))
+	h.Write([]byte(strings.Join(comp.Args, "")))
+
 }

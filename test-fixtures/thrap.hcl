@@ -17,6 +17,10 @@ manifest "test" {
       version = "0.10.3"
       type    = "api"
 
+      ports {
+        default = 8200
+      }
+
       env {
         vars {
           CONSUL_ADDR = "http://${comp.consul.container.addr.http}"
