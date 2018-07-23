@@ -23,6 +23,7 @@ var (
 	errNotConfigured     = errors.New("thrap not configured. Try running 'thrap configure'")
 )
 
+// NewCLI returns a new command line app
 func NewCLI(version string) *cli.App {
 	cli.VersionPrinter = func(ctx *cli.Context) {
 		fmt.Println(ctx.App.Version)
@@ -127,12 +128,12 @@ func writeJSON(v interface{}) {
 }
 
 func loadCore() (*core.Core, error) {
+	lpath, err := utils.GetLocalPath("")
+	if err != nil {
+		return nil, err
+	}
+
 	conf := &core.Config{DataDir: consts.DefaultDataDir}
-
-	lpath, _ := utils.GetLocalPath("")
-
-	var err error
-
 	conf.ThrapConfig, err = config.ReadProjectConfig(lpath)
 	if err != nil {
 		return nil, err

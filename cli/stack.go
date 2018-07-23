@@ -67,7 +67,10 @@ func commandStackBuild() *cli.Command {
 				return err
 			}
 
-			stm := cr.Stack()
+			stm, err := cr.Stack(core.DefaultProfile())
+			if err != nil {
+				return err
+			}
 
 			return stm.Build(context.Background(), stack)
 		},
@@ -88,12 +91,15 @@ func commandStackStop() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			core, err := loadCore()
+			cr, err := loadCore()
 			if err != nil {
 				return err
 			}
 
-			stm := core.Stack()
+			stm, err := cr.Stack(core.DefaultProfile())
+			if err != nil {
+				return err
+			}
 
 			report := stm.Stop(context.Background(), stack)
 			for _, r := range report {
@@ -123,12 +129,15 @@ func commandStackDestroy() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			core, err := loadCore()
+			cr, err := loadCore()
 			if err != nil {
 				return err
 			}
 
-			stm := core.Stack()
+			stm, err := cr.Stack(core.DefaultProfile())
+			if err != nil {
+				return err
+			}
 
 			report := stm.Destroy(context.Background(), stack)
 			for _, r := range report {
@@ -156,12 +165,15 @@ func commandStackStatus() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			core, err := loadCore()
+			cr, err := loadCore()
 			if err != nil {
 				return err
 			}
 
-			stm := core.Stack()
+			stm, err := cr.Stack(core.DefaultProfile())
+			if err != nil {
+				return err
+			}
 
 			fmt.Println()
 			printStackStatus(stm, stack)
@@ -187,12 +199,15 @@ func commandStackArtifacts() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			core, err := loadCore()
+			cr, err := loadCore()
 			if err != nil {
 				return err
 			}
 
-			stm := core.Stack()
+			stm, err := cr.Stack(core.DefaultProfile())
+			if err != nil {
+				return err
+			}
 
 			fmt.Println()
 			printStackArtifacts(stm, stack)
@@ -255,12 +270,15 @@ func commandStackLogs() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			core, err := loadCore()
+			cr, err := loadCore()
 			if err != nil {
 				return err
 			}
 
-			stm := core.Stack()
+			stm, err := cr.Stack(core.DefaultProfile())
+			if err != nil {
+				return err
+			}
 
 			cid := ctx.Args().Get(0)
 			c := context.Background()

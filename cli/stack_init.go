@@ -115,7 +115,11 @@ func commandStackInit() *cli.Command {
 
 			fmt.Println()
 
-			stm := cr.Stack()
+			stm, err := cr.Stack(core.DefaultProfile())
+			if err != nil {
+				return err
+			}
+
 			stack, err := stm.Init(bsc, opts)
 			if err != nil {
 				return err

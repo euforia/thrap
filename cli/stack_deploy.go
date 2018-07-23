@@ -3,8 +3,6 @@ package cli
 import (
 	"fmt"
 
-	"github.com/euforia/thrap/config"
-	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/utils"
@@ -25,33 +23,29 @@ func commandStackDeploy() *cli.Command {
 			},
 		},
 		Action: func(ctx *cli.Context) error {
-
 			stack, err := manifest.LoadManifest("")
 			if err != nil {
 				return err
 			}
-
-			lpath, _ := utils.GetLocalPath("")
+			// Load stack version
+			lpath, err := utils.GetLocalPath("")
+			if err != nil {
+				return err
+			}
 			stack.Version = vcs.GetRepoVersion(lpath).String()
 			fmt.Println(stack.ID, stack.Version)
 
-			pconf, err := config.ReadProjectConfig(lpath)
+			cr, err := loadCore()
 			if err != nil {
 				return err
 			}
 
-			conf := &core.Config{
-				DataDir:     consts.DefaultDataDir,
-				ThrapConfig: pconf,
-			}
-			cr, err := core.NewCore(conf)
+			st, err := cr.Stack(core.DefaultProfile())
 			if err != nil {
 				return err
 			}
 
-			st := cr.Stack()
-			err = st.Deploy(stack)
-			return err
+			return st.Deploy(stack)
 		},
 	}
 }

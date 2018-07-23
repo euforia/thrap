@@ -42,6 +42,7 @@ func (s *GRPCService) ConfirmIdentity(ctx context.Context, ident *thrapb.Identit
 	return nident, err
 }
 
+// GetIdentity implements the server-side grpc call
 func (s *GRPCService) GetIdentity(ctx context.Context, ident *thrapb.Identity) (*thrapb.Identity, error) {
 	s.handleIncomingContext(ctx, "identity."+ident.ID+".get")
 
@@ -49,6 +50,7 @@ func (s *GRPCService) GetIdentity(ctx context.Context, ident *thrapb.Identity) (
 	return idt.Get(ident.ID)
 }
 
+// IterIdentities implements the server-side grpc call
 func (s *GRPCService) IterIdentities(opts *thrapb.IterOptions, stream thrapb.Thrap_IterIdentitiesServer) error {
 	s.handleIncomingContext(stream.Context(), "identity.list")
 
@@ -62,30 +64,45 @@ func (s *GRPCService) IterIdentities(opts *thrapb.IterOptions, stream thrapb.Thr
 func (s *GRPCService) RegisterStack(ctx context.Context, st *thrapb.Stack) (*thrapb.Stack, error) {
 	s.handleIncomingContext(ctx, "stack."+st.ID+".register")
 
-	stk := s.core.Stack()
+	stk, err := s.core.Stack(core.DefaultProfile())
+	if err != nil {
+		return nil, err
+	}
 	stack, _, err := stk.Register(st)
 	return stack, err
 }
 
+// CommitStack implements the server-side grpc call
 func (s *GRPCService) CommitStack(ctx context.Context, stack *thrapb.Stack) (*thrapb.Stack, error) {
 	s.handleIncomingContext(ctx, "stack."+stack.ID+".commit")
 
-	stk := s.core.Stack()
-	return stk.Commit(stack)
+	stk, err := s.core.Stack(core.DefaultProfile())
+	if err == nil {
+		return stk.Commit(stack)
+	}
+	return nil, err
 }
 
+// GetStack implements the server-side grpc call
 func (s *GRPCService) GetStack(ctx context.Context, stack *thrapb.Stack) (*thrapb.Stack, error) {
 	s.handleIncomingContext(ctx, "stack."+stack.ID+".get")
 
-	st := s.core.Stack()
-	return st.Get(stack.ID)
+	stk, err := s.core.Stack(core.DefaultProfile())
+	if err == nil {
+		return stk.Get(stack.ID)
+	}
+	return nil, err
 }
 
+// IterStacks implements the server-side grpc call
 func (s *GRPCService) IterStacks(opts *thrapb.IterOptions, stream thrapb.Thrap_IterStacksServer) error {
 	s.handleIncomingContext(stream.Context(), "identity.list")
 
-	st := s.core.Stack()
-	return st.Iter(opts.Prefix, func(stack *thrapb.Stack) error {
+	stk, err := s.core.Stack(core.DefaultProfile())
+	if err != nil {
+		return err
+	}
+	return stk.Iter(opts.Prefix, func(stack *thrapb.Stack) error {
 		return stream.Send(stack)
 	})
 }

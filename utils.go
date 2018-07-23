@@ -6,54 +6,6 @@ import (
 	"math/big"
 )
 
-// func LoadManifest() (*thrapb.Stack, error) {
-// 	mfile, err := utils.GetLocalPath(consts.DefaultManifestFile)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return manifest.LoadManifest(mfile)
-// }
-
-// func LoadGlobalScopeVars() (scope.Variables, error) {
-// 	hdir, err := homedir.Dir()
-// 	if err == nil {
-// 		fpath := filepath.Join(hdir, consts.WorkDir, consts.ConfigFile)
-// 		return LoadVariablesFromFile(fpath)
-// 	}
-// 	return nil, err
-// }
-
-// func LoadProjectScopeVars(projPath string) (scope.Variables, error) {
-// 	return LoadVariablesFromFile(filepath.Join(projPath, consts.WorkDir, consts.ConfigFile))
-// }
-
-// func LoadVariablesFromFile(name string) (scope.Variables, error) {
-// 	in, err := ioutil.ReadFile(name)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return LoadVariables(in, "")
-// }
-
-// func LoadVariables(in []byte, prefix string) (scope.Variables, error) {
-// 	pbld := scope.NewPseudoBuilder(prefix)
-// 	err := pbld.Build(in)
-// 	if err == nil {
-// 		return pbld.Variables(), nil
-// 	}
-
-// 	return nil, err
-
-// }
-
-// func LoadUserKeyPair() (*ecdsa.PrivateKey, error) {
-// 	filename, err := homedir.Expand("~/" + consts.WorkDir + "/" + consts.KeyFile)
-// 	if err == nil {
-// 		return decodeECDSA(filename)
-// 	}
-// 	return nil, err
-// }
-
 func makePubKeyFromBytes(curve elliptic.Curve, pubkey []byte) *ecdsa.PublicKey {
 	x := big.Int{}
 	y := big.Int{}

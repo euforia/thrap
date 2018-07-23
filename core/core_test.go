@@ -56,9 +56,12 @@ func Test_NewCore(t *testing.T) {
 	assert.NotNil(t, c.regs)
 	assert.NotNil(t, c.sec)
 	assert.NotNil(t, c.vcs)
-	assert.NotNil(t, c.orch)
+	assert.NotNil(t, c.orchs)
 	assert.NotNil(t, c.packs)
-	assert.Equal(t, "nomad", c.orch.ID())
+	assert.NotNil(t, c.orchs["nomad"])
+
+	_, err = c.Stack(&Profile{Orchestrator: "foo"})
+	assert.Contains(t, err.Error(), errOrchNotSupported.Error())
 }
 
 func Test_Core_Build(t *testing.T) {
@@ -84,6 +87,9 @@ func Test_Core_Build(t *testing.T) {
 				Addr: "foobar.com",
 			},
 		},
+		Orchestrator: map[string]*config.OrchestratorConfig{
+			"docker": &config.OrchestratorConfig{},
+		},
 	}}
 	c, err := NewCore(conf)
 	if err != nil {
@@ -100,8 +106,10 @@ func Test_Core_Build(t *testing.T) {
 		fatal(t, utils.FlattenErrors(errs))
 	}
 
-	st := c.Stack()
-
+	st, err := c.Stack(DefaultProfile())
+	if err != nil {
+		t.Fatal(err)
+	}
 	err = st.Build(context.Background(), stack)
 	if err != nil {
 		t.Fatal(err)
@@ -132,6 +140,9 @@ func Test_Core_populateFromImageConf(t *testing.T) {
 				Addr: "foobar.com",
 			},
 		},
+		Orchestrator: map[string]*config.OrchestratorConfig{
+			"docker": &config.OrchestratorConfig{},
+		},
 	}}
 	c, err := NewCore(conf)
 	if err != nil {
@@ -145,7 +156,10 @@ func Test_Core_populateFromImageConf(t *testing.T) {
 
 	stack.Validate()
 
-	st := c.Stack()
+	st, err := c.Stack(DefaultProfile())
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	st.populateFromImageConf(stack)
 	assert.Equal(t, 1, len(stack.Components["vault"].Ports))
@@ -178,7 +192,10 @@ func Test_Core_Assembler(t *testing.T) {
 	stack, _ := manifest.LoadManifest("../thrap.hcl")
 	stack.Validate()
 
-	st := c.Stack()
+	st, err := c.Stack(DefaultProfile())
+	if err != nil {
+		t.Fatal(err)
+	}
 	sasm, err := st.Assembler("../", stack)
 	if err != nil {
 		t.Fatal(err)

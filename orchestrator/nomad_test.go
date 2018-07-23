@@ -1,6 +1,7 @@
 package orchestrator
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -30,7 +31,8 @@ func Test_nomad_dryrun(t *testing.T) {
 	st, _ := manifest.LoadManifest("../thrap.hcl")
 	st.Validate()
 
-	_, ijob, err := orch.Deploy(st, RequestOptions{Dryrun: true})
+	ctx := context.Background()
+	_, ijob, err := orch.Deploy(ctx, st, RequestOptions{Dryrun: true})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -37,8 +37,17 @@ var (
 	errComponentNotBuildable  = errors.New("component not buildable")
 )
 
+// StackStore implements a thrap stack store
+type StackStore interface {
+	Get(id string) (*thrapb.Stack, error)
+	Iter(prefix string, f func(*thrapb.Stack) error) error
+	Register(stack *thrapb.Stack) (*thrapb.Stack, []*thrapb.ActionReport, error)
+}
+
 // Stack provides various stack based operations
 type Stack struct {
+	// profile id the stack was loaded with
+	profile string
 	// builder is docker runtime
 	crt *crt.Docker
 	// config to use for this instance
@@ -351,20 +360,21 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack) error {
 		return utils.FlattenErrors(errs)
 	}
 
-	err := st.crt.CreateNetwork(ctx, stack.ID)
-	if err != nil {
-		return err
-	}
-
 	scopeVars := st.scopeVars(stack)
 	fmt.Printf("\nScope:\n\n")
 	fmt.Println(strings.Join(scopeVars.Names(), "\n"))
 	fmt.Println()
-	// Evali variables
+
+	// Eval variables
 	for _, comp := range stack.Components {
-		if err = st.evalComponent(comp, scopeVars); err != nil {
+		if err := st.evalComponent(comp, scopeVars); err != nil {
 			return err
 		}
+	}
+
+	err := st.crt.CreateNetwork(ctx, stack.ID)
+	if err != nil {
+		return err
 	}
 
 	defer st.Destroy(ctx, stack)
@@ -401,70 +411,73 @@ func (st *Stack) Deploy(stack *thrapb.Stack) error {
 		}
 	}
 
-	// opts := orchestrator.RequestOptions{}
-	// _, _, err := st.orch.Deploy(stack, opts)
-	// if err!=nil {
-	// st.orch.Destroy(stack)
-	//}
-	// return err
+	ctx := context.Background()
 
-	var (
-		ctx = context.Background()
-		err = st.crt.CreateNetwork(ctx, stack.ID)
-	)
-
+	opts := orchestrator.RequestOptions{}
+	_, _, err := st.orch.Deploy(ctx, stack, opts)
 	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if err != nil {
-			st.Destroy(ctx, stack)
-		}
-	}()
-
-	// Deploy services like db's etc
-	err = st.startServices(ctx, stack)
-	if err != nil {
-		return err
-	}
-
-	// Deploy non-head containers
-	for _, comp := range stack.Components {
-		if !comp.IsBuildable() {
-			continue
-		}
-
-		if comp.Head {
-			continue
-		}
-
-		err = st.startContainer(ctx, stack.ID, comp)
-		if err != nil {
-			return err
-		}
-
-		fmt.Println(comp.ID)
-	}
-
-	// Start head containers
-	for _, comp := range stack.Components {
-		if !comp.IsBuildable() {
-			continue
-		}
-		if !comp.Head {
-			continue
-		}
-
-		err = st.startContainer(ctx, stack.ID, comp)
-		if err != nil {
-			break
-		}
-
-		fmt.Println(comp.ID)
+		st.orch.Destroy(ctx, stack)
 	}
 
 	return err
+
+	// var (
+	// 	ctx = context.Background()
+	// 	err = st.crt.CreateNetwork(ctx, stack.ID)
+	// )
+
+	// if err != nil {
+	// 	return err
+	// }
+
+	// defer func() {
+	// 	if err != nil {
+	// 		st.Destroy(ctx, stack)
+	// 	}
+	// }()
+
+	// // Deploy services like db's etc
+	// err = st.startServices(ctx, stack)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // Deploy non-head containers
+	// for _, comp := range stack.Components {
+	// 	if !comp.IsBuildable() {
+	// 		continue
+	// 	}
+
+	// 	if comp.Head {
+	// 		continue
+	// 	}
+
+	// 	err = st.startContainer(ctx, stack.ID, comp)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+
+	// 	fmt.Println(comp.ID)
+	// }
+
+	// // Start head containers
+	// for _, comp := range stack.Components {
+	// 	if !comp.IsBuildable() {
+	// 		continue
+	// 	}
+	// 	if !comp.Head {
+	// 		continue
+	// 	}
+
+	// 	err = st.startContainer(ctx, stack.ID, comp)
+	// 	if err != nil {
+	// 		break
+	// 	}
+
+	// 	fmt.Println(comp.ID)
+	// }
+
+	// return err
 }
 
 // Destroy removes call components of the stack from the container runtime
@@ -504,11 +517,6 @@ func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, head bool
 		if comp.Head != head {
 			continue
 		}
-
-		// eval hcl/hil
-		// if err = st.evalComponent(comp, scopeVars); err != nil {
-		// 	break
-		// }
 
 		// err = st.buildStages(ctx, stack.ID, comp)
 		_, err = st.doBuild(ctx, stack.ID, comp)
@@ -594,21 +602,6 @@ func (st *Stack) doBuild(ctx context.Context, sid string, comp *thrapb.Component
 	return req.BuildOpts.Labels, err
 }
 
-func (st *Stack) evalCompEnv(comp *thrapb.Component, vm *pseudo.VM, scopeVars scope.Variables) error {
-	for k, v := range comp.Env.Vars {
-		result, err := vm.ParseEval(v, scopeVars)
-		if err != nil {
-			return err
-		}
-		if result.Type != hil.TypeString {
-			return fmt.Errorf("env value must be string key=%s value=%s", k, v)
-		}
-		comp.Env.Vars[k] = result.Value.(string)
-	}
-
-	return nil
-}
-
 func (st *Stack) evalComponent(comp *thrapb.Component, scopeVars scope.Variables) error {
 
 	var (
@@ -623,4 +616,19 @@ func (st *Stack) evalComponent(comp *thrapb.Component, scopeVars scope.Variables
 	// TODO: In the future, eval other parts of the component
 
 	return err
+}
+
+func (st *Stack) evalCompEnv(comp *thrapb.Component, vm *pseudo.VM, scopeVars scope.Variables) error {
+	for k, v := range comp.Env.Vars {
+		result, err := vm.ParseEval(v, scopeVars)
+		if err != nil {
+			return err
+		}
+		if result.Type != hil.TypeString {
+			return fmt.Errorf("env value must be string key=%s value=%s", k, v)
+		}
+		comp.Env.Vars[k] = result.Value.(string)
+	}
+
+	return nil
 }

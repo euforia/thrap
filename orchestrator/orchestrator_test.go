@@ -17,13 +17,3 @@ func Test_Orchestrator(t *testing.T) {
 	_, err = New(conf)
 	assert.Contains(t, err.Error(), "unsupported")
 }
-
-//
-// func Test_nomad(t *testing.T) {
-// 	orch := &nomadOrchestrator{}
-// 	orch.Init(nil)
-// 	specs, err := orch.NewSpec("test")
-// 	assert.Nil(t, err)
-//
-// 	assert.Contains(t, specs[0], `job "test"`)
-// }

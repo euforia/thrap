@@ -15,13 +15,6 @@ type StackTransport interface {
 	Register(addr string, stack *thrapb.Stack) (*thrapb.Stack, error)
 }
 
-// StackStore implements a thrap stack store
-type StackStore interface {
-	Get(id string) (*thrapb.Stack, error)
-	Iter(prefix string, f func(*thrapb.Stack) error) error
-	Register(stack *thrapb.Stack) (*thrapb.Stack, []*thrapb.ActionReport, error)
-}
-
 type remoteStack struct {
 	mu    sync.Mutex
 	conns map[string]thrapb.ThrapClient

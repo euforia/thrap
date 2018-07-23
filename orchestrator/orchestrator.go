@@ -1,6 +1,7 @@
 package orchestrator
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -32,7 +33,10 @@ type Orchestrator interface {
 
 	// Deploy should deploy the stack returning the response, deploy object
 	// based on the orchestrator or an error
-	Deploy(stack *thrapb.Stack, opts RequestOptions) (resp interface{}, def interface{}, err error)
+	Deploy(ctx context.Context, stack *thrapb.Stack, opts RequestOptions) (resp interface{}, def interface{}, err error)
+
+	// Destroy the stack returning results for each component
+	Destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionReport
 }
 
 // New returns a new orchestrator based on the given config
@@ -46,8 +50,8 @@ func New(conf *Config) (Orchestrator, error) {
 	case "nomad":
 		orch = &nomadOrchestrator{}
 
-	// case "docker":
-	// orch = &DockerOrchestrator{}
+	case "docker":
+		orch = &DockerOrchestrator{}
 
 	default:
 		err = fmt.Errorf("unsupported orchestrator: '%s'", conf.Provider)

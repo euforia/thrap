@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	"github.com/euforia/hclencoder"
-	"github.com/euforia/thrap/config"
-	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/thrapb"
@@ -46,21 +44,16 @@ func commandStackRegister() *cli.Command {
 
 			} else {
 				fmt.Println("Registering locally")
-				// Local
-				pconf, err := config.ReadProjectConfig(".")
+				cr, err := loadCore()
 				if err != nil {
 					return err
-				}
-				conf := &core.Config{
-					ThrapConfig: pconf,
-					DataDir:     consts.DefaultDataDir,
 				}
 
-				cr, err := core.NewCore(conf)
+				stk, err := cr.Stack(core.DefaultProfile())
 				if err != nil {
 					return err
 				}
-				stk := cr.Stack()
+
 				st, _, err = stk.Register(stack)
 				if err != nil {
 					return err

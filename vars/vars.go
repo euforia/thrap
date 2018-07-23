@@ -1,29 +1,43 @@
 package vars
 
 const (
-	OrchestratorID   = "orchestrator.id"
+	// OrchestratorID is a scope variable name
+	OrchestratorID = "orchestrator.id"
+	// OrchestratorAddr is a scope variable name
 	OrchestratorAddr = "orchestrator.addr"
 )
 
 const (
-	RegistryID       = "registry.id"
-	RegistryAddr     = "registry.addr"
-	RegistryCreds    = "registry.creds"
+	// RegistryID  is a scope variable name
+	RegistryID = "registry.id"
+	// RegistryAddr  is a scope variable name
+	RegistryAddr = "registry.addr"
+	// RegistryCreds is a scope variable name
+	RegistryCreds = "registry.creds"
+	// RegistryRepoName is a scope variable name
 	RegistryRepoName = "registry.repo.name"
 )
 
 const (
-	SecretsID   = "secrets.id"
+	// SecretsID is a scope variable name
+	SecretsID = "secrets.id"
+	// SecretsAddr is a scope variable name
 	SecretsAddr = "secrets.addr"
 )
 
 const (
-	VcsID        = "vcs.id"
-	VcsAddr      = "vcs.addr"
-	VcsUsername  = "vcs.username"
-	VcsCreds     = "vcs.creds"
+	// VcsID is a scope variable name
+	VcsID = "vcs.id"
+	// VcsAddr is a scope variable name
+	VcsAddr = "vcs.addr"
+	// VcsUsername is a scope variable name
+	VcsUsername = "vcs.username"
+	// VcsCreds is a scope variable name
+	VcsCreds = "vcs.creds"
+	// VcsRepoOwner is a scope variable name
 	VcsRepoOwner = "vcs.repo.owner"
-	VcsRepoName  = "vcs.repo.name"
+	// VcsRepoName is a scope variable name
+	VcsRepoName = "vcs.repo.name"
 )
 
 const (
