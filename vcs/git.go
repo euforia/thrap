@@ -158,6 +158,26 @@ func (g *GitVCS) Open(repo *Repository, opt Option) (interface{}, error) {
 	return git.PlainOpen(opt.Path)
 }
 
+func (g *GitVCS) Status(opt Option) (git.Status, error) {
+	repo, err := git.PlainOpen(opt.Path)
+	if err != nil {
+		return git.Status{}, err
+	}
+
+	wt, err := repo.Worktree()
+	if err != nil {
+		return git.Status{}, err
+	}
+
+	status, err := wt.Status()
+	if err != nil {
+		return git.Status{}, err
+	}
+
+	// We can only publish if everything has been committed
+	return status, nil
+}
+
 // Delete removes the .git directory leaving all other files intact
 func (g *GitVCS) Delete(repo *Repository, opt Option) error {
 	abspath := filepath.Join(opt.Path, ".git")

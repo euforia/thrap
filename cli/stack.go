@@ -55,6 +55,13 @@ func commandStackBuild() *cli.Command {
 	return &cli.Command{
 		Name:  "build",
 		Usage: "Build stack components",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:    "pub",
+				Aliases: []string{"p"},
+				Usage:   "publish artifacts",
+			},
+		},
 		Action: func(ctx *cli.Context) error {
 
 			stack, err := manifest.LoadManifest("")
@@ -73,7 +80,12 @@ func commandStackBuild() *cli.Command {
 			}
 
 			dd, _ := utils.GetLocalPath("")
-			return stm.Build(context.Background(), dd, stack)
+			opt := core.BuildOptions{
+				Workdir: dd,
+				Publish: ctx.Bool("pub"),
+			}
+
+			return stm.Build(context.Background(), stack, opt)
 		},
 	}
 }

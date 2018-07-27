@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -19,7 +19,9 @@ import (
 	"github.com/euforia/pseudo/scope"
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/crt"
+	"github.com/euforia/thrap/metrics"
 	"github.com/euforia/thrap/orchestrator"
+	"github.com/euforia/thrap/vars"
 
 	"github.com/euforia/thrap/asm"
 	"github.com/euforia/thrap/config"
@@ -36,6 +38,16 @@ var (
 	ErrStackAlreadyRegistered = errors.New("stack already registered")
 	errComponentNotBuildable  = errors.New("component not buildable")
 )
+
+// BuildOptions are options to perform a build-publish
+type BuildOptions struct {
+	// Workdir is the root of a git repo.  This is used to decide
+	// if we can auto-publish
+	Workdir string
+	// If true the build is published despite the auto-publish check,
+	// essentially a force publish
+	Publish bool
+}
 
 // StackStore implements a thrap stack store
 type StackStore interface {
@@ -186,7 +198,7 @@ func (st *Stack) scopeVars(stack *thrapb.Stack) scope.Variables {
 func (st *Stack) startServices(ctx context.Context, stack *thrapb.Stack) error {
 	var err error
 
-	fmt.Printf("\nServices:\n\n")
+	fmt.Printf("Services:\n\n")
 
 	for _, comp := range stack.Components {
 		if comp.IsBuildable() {
@@ -206,7 +218,7 @@ func (st *Stack) startServices(ctx context.Context, stack *thrapb.Stack) error {
 			break
 		}
 
-		fmt.Println(comp.ID)
+		fmt.Println(" ", comp.ID)
 
 	}
 
@@ -355,15 +367,19 @@ func (st *Stack) Iter(prefix string, f func(*thrapb.Stack) error) error {
 }
 
 // Build starts all require services, then starts all the builds
-func (st *Stack) Build(ctx context.Context, workdir string, stack *thrapb.Stack) error {
+func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack, opt BuildOptions) error {
+	var (
+		totalTime          = (&metrics.Runtime{}).Start()
+		svcTime            = &metrics.Runtime{}
+		buildTime, pubTime = &metrics.Runtime{}, &metrics.Runtime{}
+	)
+
 	if errs := stack.Validate(); len(errs) > 0 {
 		return utils.FlattenErrors(errs)
 	}
 
 	scopeVars := st.scopeVars(stack)
-	fmt.Printf("\nScope:\n\n")
-	fmt.Println(strings.Join(scopeVars.Names(), "\n"))
-	fmt.Println()
+	printScopeVars(scopeVars)
 
 	var err error
 	// Eval variables
@@ -381,28 +397,98 @@ func (st *Stack) Build(ctx context.Context, workdir string, stack *thrapb.Stack)
 	defer st.Destroy(ctx, stack)
 
 	// Start containers needed for build
+	svcTime.Start()
 	err = st.startServices(ctx, stack)
 	if err != nil {
 		return err
 	}
+	svcTime.End()
 
 	// Start non-head builds
-	err = st.startBuilds(ctx, stack, false)
+	buildTime.Start()
+	nonHeadResults, err := st.startBuilds(ctx, stack, false)
 	if err != nil {
 		return err
 	}
 
 	// Start head builds
-	err = st.startBuilds(ctx, stack, true)
+	headResults, err := st.startBuilds(ctx, stack, true)
+	if err != nil {
+		return err
+	}
+	buildTime.End()
+
+	st.printArtifacts(stack)
+
+	defer func() {
+		totalTime.End()
+		fmt.Printf("Timing:\n\n")
+		fmt.Printf("  Service:\t%v\n", svcTime.Duration(time.Millisecond))
+		fmt.Printf("  Build:\t%v\n", buildTime.Duration(time.Millisecond))
+		for k, v := range nonHeadResults {
+			fmt.Printf("    %s:\t%v\n", k, v.Runtime.Duration(time.Millisecond))
+		}
+		for k, v := range headResults {
+			fmt.Printf("    %s:\t%v\n", k, v.Runtime.Duration(time.Millisecond))
+		}
+		fmt.Printf("  Publish:\t%v\n", pubTime.Duration(time.Millisecond))
+		fmt.Printf("  Total:\t%v\n", totalTime.Duration(time.Millisecond))
+		fmt.Println()
+	}()
+
+	// Check if we can publish artifacts after the build completes
+	status, err := st.vcs.Status(vcs.Option{Path: opt.Workdir})
 	if err != nil {
 		return err
 	}
 
-	//
-	// TODO: publish artifacts
-	//
+	if !status.IsClean() {
+		fmt.Printf("Uncommitted code:\n\n")
+		fmt.Println(status)
+
+		if !opt.Publish {
+			fmt.Printf("Artifacts will not be published!\n\n")
+			return nil
+		}
+
+		fmt.Println("** Explicit artifact publish requested (source code & artifacts may be out of sync) **")
+	}
+
+	pubTime.Start()
+	st.publish(stack)
+	pubTime.End()
 
 	return nil
+}
+
+func (st *Stack) printArtifacts(stack *thrapb.Stack) {
+	fmt.Printf("\nArtifacts:\n\n")
+	for _, comp := range stack.Components {
+		if !comp.IsBuildable() {
+			continue
+		}
+
+		names := st.getBuildImageTags(stack.ID, comp)
+		for _, name := range names {
+			fmt.Println(" ", name)
+		}
+		fmt.Println()
+	}
+}
+
+func (st *Stack) publish(stack *thrapb.Stack) {
+	fmt.Printf("\n[TODO] Publishing artifacts:\n\n")
+	for _, comp := range stack.Components {
+		if !comp.IsBuildable() {
+			continue
+		}
+
+		names := st.getBuildImageTags(stack.ID, comp)
+		for _, name := range names {
+			fmt.Println(" ", name)
+		}
+		fmt.Println()
+	}
 }
 
 // Deploy deploys all components of the stack.
@@ -454,11 +540,14 @@ func (st *Stack) Stop(ctx context.Context, stack *thrapb.Stack) []*thrapb.Action
 	return ar
 }
 
-func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, head bool) error {
-	var err error
+func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, head bool) (map[string]*CompBuildResult, error) {
+	var (
+		results = make(map[string]*CompBuildResult, len(stack.Components))
+		err     error
+	)
 
 	// Start build containers after
-	for _, comp := range stack.Components {
+	for id, comp := range stack.Components {
 		if !comp.IsBuildable() {
 			continue
 		}
@@ -469,7 +558,7 @@ func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, head bool
 		}
 
 		// err = st.buildStages(ctx, stack.ID, comp)
-		_, err = st.doBuild(ctx, stack.ID, comp)
+		results[id], err = st.doBuild(ctx, stack.ID, stack.Version, comp)
 		if err != nil {
 			break
 		}
@@ -484,7 +573,7 @@ func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, head bool
 		}
 	}
 
-	return err
+	return results, err
 }
 
 // getBuildImageTags returns tags that should be applied to a given image build
@@ -506,7 +595,7 @@ func (st *Stack) getBuildImageTags(stackID string, comp *thrapb.Component) []str
 	return out
 }
 
-func (st *Stack) makeBuildRequest(sid string, comp *thrapb.Component) *crt.BuildRequest {
+func (st *Stack) makeBuildRequest(sid, sver string, comp *thrapb.Component) *crt.BuildRequest {
 	req := &crt.BuildRequest{
 		Output:     crt.NewDockerBuildLog(os.Stdout),
 		ContextDir: comp.Build.Context,
@@ -518,8 +607,10 @@ func (st *Stack) makeBuildRequest(sid string, comp *thrapb.Component) *crt.Build
 			NetworkMode: sid,
 			// Add labels to query later
 			Labels: map[string]string{
-				"stack":     sid,
-				"component": comp.ID,
+				"stack":               sid,
+				"component":           comp.ID,
+				vars.ComponentVersion: comp.Version,
+				vars.StackVersion:     sver,
 			},
 		},
 	}
@@ -529,7 +620,7 @@ func (st *Stack) makeBuildRequest(sid string, comp *thrapb.Component) *crt.Build
 
 		fmt.Printf("\nBuild arguments:\n\n")
 		for k := range comp.Env.Vars {
-			fmt.Println(k)
+			fmt.Println(" ", k)
 
 			v := comp.Env.Vars[k]
 			args[k] = &v
@@ -542,14 +633,21 @@ func (st *Stack) makeBuildRequest(sid string, comp *thrapb.Component) *crt.Build
 	return req
 }
 
-func (st *Stack) doBuild(ctx context.Context, sid string, comp *thrapb.Component) (map[string]string, error) {
-	req := st.makeBuildRequest(sid, comp)
+func (st *Stack) doBuild(ctx context.Context, sid, sver string, comp *thrapb.Component) (*CompBuildResult, error) {
+	result := &CompBuildResult{
+		Runtime: (&metrics.Runtime{}).Start(),
+	}
+
+	req := st.makeBuildRequest(sid, sver, comp)
 
 	fmt.Printf("Building %s:\n\n", comp.ID)
 
 	// Blocking
 	err := st.crt.Build(ctx, req)
-	return req.BuildOpts.Labels, err
+	result.Runtime.End()
+	result.Labels = req.BuildOpts.Labels
+
+	return result, err
 }
 
 func (st *Stack) evalComponent(comp *thrapb.Component, scopeVars scope.Variables) error {
@@ -581,4 +679,12 @@ func (st *Stack) evalCompEnv(comp *thrapb.Component, vm *pseudo.VM, scopeVars sc
 	}
 
 	return nil
+}
+
+func printScopeVars(scopeVars scope.Variables) {
+	fmt.Printf("\nScope:\n\n")
+	for _, name := range scopeVars.Names() {
+		fmt.Println(" ", name)
+	}
+	fmt.Println()
 }

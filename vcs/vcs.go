@@ -3,6 +3,8 @@ package vcs
 import (
 	"errors"
 	"fmt"
+
+	git "gopkg.in/src-d/go-git.v4"
 )
 
 var (
@@ -40,6 +42,8 @@ type VCS interface {
 	Create(*Repository, Option) (interface{}, error)
 	// Open an existing repo
 	Open(*Repository, Option) (interface{}, error)
+	// Status of a repot
+	Status(Option) (git.Status, error)
 	// Deletes a repository
 	Delete(*Repository, Option) error
 	// Name of ignores file used by this vcs

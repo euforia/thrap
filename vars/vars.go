@@ -50,6 +50,9 @@ const (
 	LangID      = "lang.id"
 	LangVersion = "lang.version"
 )
+const (
+	ComponentVersion = "component.version"
+)
 
 // Build args and env vars
 const (

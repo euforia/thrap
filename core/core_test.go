@@ -110,7 +110,7 @@ func Test_Core_Build(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = st.Build(context.Background(), "", stack)
+	err = st.Build(context.Background(), stack, BuildOptions{Workdir: "../"})
 	if err != nil {
 		t.Fatal(err)
 	}

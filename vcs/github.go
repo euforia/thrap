@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
+	git "gopkg.in/src-d/go-git.v4"
 )
 
 const defaultHookName = "thrap"
@@ -116,6 +117,10 @@ func (gh *githubVCS) Create(repo *Repository, opt Option) (interface{}, error) {
 
 func (gh *githubVCS) Open(repo *Repository, opt Option) (interface{}, error) {
 	return gh.git.Open(repo, opt)
+}
+
+func (gh *githubVCS) Status(opt Option) (git.Status, error) {
+	return gh.git.Status(opt)
 }
 
 // Delete deletes the specified repo from github
