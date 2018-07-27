@@ -44,7 +44,7 @@ func commandStackRegister() *cli.Command {
 
 			} else {
 				fmt.Println("Registering locally")
-				cr, err := loadCore()
+				cr, err := loadCore(ctx)
 				if err != nil {
 					return err
 				}

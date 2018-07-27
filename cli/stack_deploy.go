@@ -35,7 +35,7 @@ func commandStackDeploy() *cli.Command {
 			stack.Version = vcs.GetRepoVersion(lpath).String()
 			fmt.Println(stack.ID, stack.Version)
 
-			cr, err := loadCore()
+			cr, err := loadCore(ctx)
 			if err != nil {
 				return err
 			}

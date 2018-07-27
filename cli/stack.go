@@ -62,7 +62,7 @@ func commandStackBuild() *cli.Command {
 				return err
 			}
 
-			cr, err := loadCore()
+			cr, err := loadCore(ctx)
 			if err != nil {
 				return err
 			}
@@ -72,7 +72,8 @@ func commandStackBuild() *cli.Command {
 				return err
 			}
 
-			return stm.Build(context.Background(), stack)
+			dd, _ := utils.GetLocalPath("")
+			return stm.Build(context.Background(), dd, stack)
 		},
 	}
 }
@@ -91,7 +92,7 @@ func commandStackStop() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			cr, err := loadCore()
+			cr, err := loadCore(ctx)
 			if err != nil {
 				return err
 			}
@@ -129,7 +130,7 @@ func commandStackDestroy() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			cr, err := loadCore()
+			cr, err := loadCore(ctx)
 			if err != nil {
 				return err
 			}
@@ -165,7 +166,7 @@ func commandStackStatus() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			cr, err := loadCore()
+			cr, err := loadCore(ctx)
 			if err != nil {
 				return err
 			}
@@ -199,7 +200,7 @@ func commandStackArtifacts() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			cr, err := loadCore()
+			cr, err := loadCore(ctx)
 			if err != nil {
 				return err
 			}
@@ -270,7 +271,7 @@ func commandStackLogs() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
-			cr, err := loadCore()
+			cr, err := loadCore(ctx)
 			if err != nil {
 				return err
 			}

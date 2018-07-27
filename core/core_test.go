@@ -61,7 +61,7 @@ func Test_NewCore(t *testing.T) {
 	assert.NotNil(t, c.orchs["nomad"])
 
 	_, err = c.Stack(&Profile{Orchestrator: "foo"})
-	assert.Contains(t, err.Error(), errOrchNotSupported.Error())
+	assert.Contains(t, err.Error(), errOrchNotLoaded.Error())
 }
 
 func Test_Core_Build(t *testing.T) {
@@ -110,11 +110,10 @@ func Test_Core_Build(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = st.Build(context.Background(), stack)
+	err = st.Build(context.Background(), "", stack)
 	if err != nil {
 		t.Fatal(err)
 	}
-
 }
 
 func Test_Core_populateFromImageConf(t *testing.T) {

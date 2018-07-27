@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"google.golang.org/grpc"
 
@@ -38,6 +39,10 @@ func NewCLI(version string) *cli.App {
 				Name:    "thrap-addr",
 				Usage:   "thrap registry address",
 				EnvVars: []string{"THRAP_ADDR"},
+			},
+			&cli.BoolFlag{
+				Name:  "debug",
+				Usage: "Debug mode",
 			},
 		},
 		Commands: []*cli.Command{
@@ -127,13 +132,16 @@ func writeJSON(v interface{}) {
 	fmt.Printf("%s\n", b)
 }
 
-func loadCore() (*core.Core, error) {
+func loadCore(ctx *cli.Context) (*core.Core, error) {
 	lpath, err := utils.GetLocalPath("")
 	if err != nil {
 		return nil, err
 	}
 
 	conf := &core.Config{DataDir: consts.DefaultDataDir}
+	if ctx.Bool("debug") {
+		conf.Logger = core.DefaultLogger(os.Stdout)
+	}
 	conf.ThrapConfig, err = config.ReadProjectConfig(lpath)
 	if err != nil {
 		return nil, err

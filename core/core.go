@@ -23,7 +23,7 @@ var (
 	errProviderNotConfigured = errors.New("provider not configured")
 	errPacksDirMissing       = errors.New("packs directory missing")
 	errDataDirMissing        = errors.New("data directory missing")
-	errOrchNotSupported      = errors.New("orchestrator not supported")
+	errOrchNotLoaded         = errors.New("orchestrator profile not loaded")
 )
 
 const (
@@ -113,7 +113,7 @@ func (core *Core) Packs() *packs.Packs {
 func (core *Core) Stack(profile *Profile) (*Stack, error) {
 	orch, ok := core.orchs[profile.Orchestrator]
 	if !ok {
-		return nil, errors.Wrap(errOrchNotSupported, profile.Orchestrator)
+		return nil, errors.Wrap(errOrchNotLoaded, profile.Orchestrator)
 	}
 
 	return &Stack{

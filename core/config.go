@@ -1,8 +1,9 @@
 package core
 
 import (
+	"io"
+	"io/ioutil"
 	"log"
-	"os"
 
 	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
@@ -29,7 +30,7 @@ func (conf *Config) Validate() error {
 	}
 
 	if conf.Logger == nil {
-		conf.Logger = log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds)
+		conf.Logger = DefaultLogger(ioutil.Discard)
 	}
 
 	return nil
@@ -38,4 +39,9 @@ func (conf *Config) Validate() error {
 // DefaultConfig returns a basic core config
 func DefaultConfig() *Config {
 	return &Config{DataDir: consts.DefaultDataDir}
+}
+
+// DefaultLogger returns a default logger with the underlying writer
+func DefaultLogger(w io.Writer) *log.Logger {
+	return log.New(w, "", log.LstdFlags|log.Lmicroseconds)
 }

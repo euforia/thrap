@@ -154,6 +154,7 @@ func (core *Core) initOrchestrators() error {
 			return err
 		}
 		orchs[k] = orch
+		core.log.Println("Orchestrator loaded:", k)
 	}
 	core.orchs = orchs
 

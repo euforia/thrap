@@ -355,7 +355,7 @@ func (st *Stack) Iter(prefix string, f func(*thrapb.Stack) error) error {
 }
 
 // Build starts all require services, then starts all the builds
-func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack) error {
+func (st *Stack) Build(ctx context.Context, workdir string, stack *thrapb.Stack) error {
 	if errs := stack.Validate(); len(errs) > 0 {
 		return utils.FlattenErrors(errs)
 	}
@@ -365,14 +365,15 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack) error {
 	fmt.Println(strings.Join(scopeVars.Names(), "\n"))
 	fmt.Println()
 
+	var err error
 	// Eval variables
 	for _, comp := range stack.Components {
-		if err := st.evalComponent(comp, scopeVars); err != nil {
+		if err = st.evalComponent(comp, scopeVars); err != nil {
 			return err
 		}
 	}
 
-	err := st.crt.CreateNetwork(ctx, stack.ID)
+	err = st.crt.CreateNetwork(ctx, stack.ID)
 	if err != nil {
 		return err
 	}
@@ -393,8 +394,15 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack) error {
 
 	// Start head builds
 	err = st.startBuilds(ctx, stack, true)
+	if err != nil {
+		return err
+	}
 
-	return err
+	//
+	// TODO: publish artifacts
+	//
+
+	return nil
 }
 
 // Deploy deploys all components of the stack.
@@ -420,64 +428,6 @@ func (st *Stack) Deploy(stack *thrapb.Stack) error {
 	}
 
 	return err
-
-	// var (
-	// 	ctx = context.Background()
-	// 	err = st.crt.CreateNetwork(ctx, stack.ID)
-	// )
-
-	// if err != nil {
-	// 	return err
-	// }
-
-	// defer func() {
-	// 	if err != nil {
-	// 		st.Destroy(ctx, stack)
-	// 	}
-	// }()
-
-	// // Deploy services like db's etc
-	// err = st.startServices(ctx, stack)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// // Deploy non-head containers
-	// for _, comp := range stack.Components {
-	// 	if !comp.IsBuildable() {
-	// 		continue
-	// 	}
-
-	// 	if comp.Head {
-	// 		continue
-	// 	}
-
-	// 	err = st.startContainer(ctx, stack.ID, comp)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	fmt.Println(comp.ID)
-	// }
-
-	// // Start head containers
-	// for _, comp := range stack.Components {
-	// 	if !comp.IsBuildable() {
-	// 		continue
-	// 	}
-	// 	if !comp.Head {
-	// 		continue
-	// 	}
-
-	// 	err = st.startContainer(ctx, stack.ID, comp)
-	// 	if err != nil {
-	// 		break
-	// 	}
-
-	// 	fmt.Println(comp.ID)
-	// }
-
-	// return err
 }
 
 // Destroy removes call components of the stack from the container runtime
@@ -558,7 +508,7 @@ func (st *Stack) getBuildImageTags(stackID string, comp *thrapb.Component) []str
 
 func (st *Stack) makeBuildRequest(sid string, comp *thrapb.Component) *crt.BuildRequest {
 	req := &crt.BuildRequest{
-		Output:     os.Stdout,
+		Output:     crt.NewDockerBuildLog(os.Stdout),
 		ContextDir: comp.Build.Context,
 		BuildOpts: &types.ImageBuildOptions{
 			Tags: st.getBuildImageTags(sid, comp),
