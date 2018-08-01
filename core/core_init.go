@@ -88,7 +88,7 @@ func (core *Core) initProviders() (err error) {
 }
 
 func (core *Core) initVCS() (err error) {
-	vc := core.conf.GetDefaultVCS()
+	vc := core.conf.DefaultVCS()
 	vconf := &vcs.Config{
 		Provider: vc.ID,
 		Conf:     map[string]interface{}{"username": vc.Username},
@@ -105,7 +105,7 @@ func (core *Core) initVCS() (err error) {
 }
 
 func (core *Core) initSecrets() (err error) {
-	sc := core.conf.GetDefaultSecrets()
+	sc := core.conf.DefaultSecrets()
 
 	screds := core.creds.GetSecretsCreds(sc.ID)
 	sconf := &secrets.Config{

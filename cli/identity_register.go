@@ -50,7 +50,7 @@ func commandIdentityRegister() *cli.Command {
 			if err != nil {
 				return err
 			}
-			vcsp := conf.GetDefaultVCS()
+			vcsp := conf.DefaultVCS()
 			if vcsp.Username == "" {
 				return errNotConfigured
 			}
@@ -82,7 +82,6 @@ func commandIdentityRegister() *cli.Command {
 
 				idt, err := confirmUserRegistration(tclient, kp, ident, confirmCode)
 				if err == nil {
-					// fmt.Println("Registered!")
 					b, _ := json.MarshalIndent(idt, "", "  ")
 					fmt.Printf("%s\n", b)
 				}

@@ -96,32 +96,32 @@ func (conf *ThrapConfig) Merge(other *ThrapConfig) {
 
 }
 
-// GetDefaultVCS returns the first available vcs
-func (conf *ThrapConfig) GetDefaultVCS() *VCSConfig {
+// DefaultVCS returns the first available vcs
+func (conf *ThrapConfig) DefaultVCS() *VCSConfig {
 	for _, v := range conf.VCS {
 		return v
 	}
 	return nil
 }
 
-// GetDefaultOrchestrator returns the first available orchestrator
-func (conf *ThrapConfig) GetDefaultOrchestrator() *OrchestratorConfig {
+// DefaultOrchestrator returns the first available orchestrator
+func (conf *ThrapConfig) DefaultOrchestrator() *OrchestratorConfig {
 	for _, v := range conf.Orchestrator {
 		return v
 	}
 	return nil
 }
 
-// GetDefaultRegistry returns the first registry from the map
-func (conf *ThrapConfig) GetDefaultRegistry() *RegistryConfig {
+// DefaultRegistry returns the first registry from the map
+func (conf *ThrapConfig) DefaultRegistry() *RegistryConfig {
 	for _, v := range conf.Registry {
 		return v
 	}
 	return nil
 }
 
-// GetDefaultSecrets returns the first secrets provider
-func (conf *ThrapConfig) GetDefaultSecrets() *SecretsConfig {
+// DefaultSecrets returns the first secrets provider
+func (conf *ThrapConfig) DefaultSecrets() *SecretsConfig {
 	for _, v := range conf.Secrets {
 		return v
 	}
@@ -158,7 +158,7 @@ func DefaultThrapConfig() *ThrapConfig {
 			},
 		},
 		Orchestrator: map[string]*OrchestratorConfig{
-			"nomad": &OrchestratorConfig{},
+			"docker": &OrchestratorConfig{},
 		},
 		Registry: make(map[string]*RegistryConfig),
 		Secrets: map[string]*SecretsConfig{

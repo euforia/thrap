@@ -120,6 +120,7 @@ func (core *Core) Stack(profile *Profile) (*Stack, error) {
 		profile: profile.ID,
 		regs:    core.regs,
 		crt:     core.crt,
+		run:     &bdCommon{core.crt},
 		orch:    orch,
 		conf:    core.conf.Clone(),
 		vcs:     core.vcs,

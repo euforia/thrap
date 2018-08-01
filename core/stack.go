@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -21,7 +20,6 @@ import (
 	"github.com/euforia/thrap/crt"
 	"github.com/euforia/thrap/metrics"
 	"github.com/euforia/thrap/orchestrator"
-	"github.com/euforia/thrap/vars"
 
 	"github.com/euforia/thrap/asm"
 	"github.com/euforia/thrap/config"
@@ -60,8 +58,12 @@ type StackStore interface {
 type Stack struct {
 	// profile id the stack was loaded with
 	profile string
+
 	// builder is docker runtime
 	crt *crt.Docker
+	// common functions
+	run *bdCommon
+
 	// config to use for this instance
 	conf *config.ThrapConfig
 	// there can only be one vcs provider
@@ -193,92 +195,6 @@ func (st *Stack) scopeVars(stack *thrapb.Stack) scope.Variables {
 	return svars
 }
 
-// startServices starts services needed to perform the build that themselves do not need
-// to be built
-func (st *Stack) startServices(ctx context.Context, stack *thrapb.Stack) error {
-	var err error
-
-	fmt.Printf("Services:\n\n")
-
-	for _, comp := range stack.Components {
-		if comp.IsBuildable() {
-			continue
-		}
-
-		// Pull image if we do not locally have it
-		imageID := comp.Name + ":" + comp.Version
-		if !st.crt.HaveImage(ctx, imageID) {
-			err = st.crt.ImagePull(ctx, imageID)
-			if err != nil {
-				break
-			}
-		}
-
-		if err = st.startContainer(ctx, stack.ID, comp); err != nil {
-			break
-		}
-
-		fmt.Println(" ", comp.ID)
-
-	}
-
-	return err
-}
-
-func (st *Stack) startContainer(ctx context.Context, sid string, comp *thrapb.Component) error {
-	cfg := thrapb.NewContainer(sid, comp.ID)
-
-	if comp.IsBuildable() {
-		cfg.Container.Image = filepath.Join(sid, comp.Name)
-	} else {
-		cfg.Container.Image = comp.Name
-	}
-
-	// Add image version if present
-	if len(comp.Version) > 0 {
-		cfg.Container.Image += ":" + comp.Version
-	}
-
-	if comp.HasEnvVars() {
-		cfg.Container.Env = make([]string, 0, len(comp.Env.Vars))
-		for k, v := range comp.Env.Vars {
-			cfg.Container.Env = append(cfg.Container.Env, k+"="+v)
-		}
-	}
-
-	// Publish all ports for a head component.
-	// TODO: May need to map this to user defined host ports
-	if comp.Head {
-		cfg.Host.PublishAllPorts = true
-	}
-
-	// Non-blocking
-	warnings, err := st.crt.Run(ctx, cfg)
-	if err != nil {
-		return err
-	}
-
-	if len(warnings) > 0 {
-		for _, w := range warnings {
-			fmt.Printf("%s: %s\n", cfg.Name, w)
-		}
-	}
-
-	// May need this to get proper state
-	//<-time.After(200*time.Millisecond)
-	var cstate types.ContainerJSON
-	cstate, err = st.crt.Inspect(ctx, cfg.Name)
-	if err == nil {
-		if cstate.State.Dead {
-			if cstate.State.ExitCode != 0 {
-				err = errors.New(cstate.State.Error)
-			}
-		}
-	}
-
-	return err
-}
-
 // Log writes the log for a running component to the writers
 func (st *Stack) Log(ctx context.Context, id string, stdout, stderr io.Writer) error {
 	return st.crt.Logs(ctx, id, stdout, stderr)
@@ -368,20 +284,21 @@ func (st *Stack) Iter(prefix string, f func(*thrapb.Stack) error) error {
 
 // Build starts all require services, then starts all the builds
 func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack, opt BuildOptions) error {
-	var (
-		totalTime          = (&metrics.Runtime{}).Start()
-		svcTime            = &metrics.Runtime{}
-		buildTime, pubTime = &metrics.Runtime{}, &metrics.Runtime{}
-	)
 
 	if errs := stack.Validate(); len(errs) > 0 {
 		return utils.FlattenErrors(errs)
 	}
 
-	scopeVars := st.scopeVars(stack)
+	var (
+		totalTime = (&metrics.Runtime{}).Start()
+		pubTime   *metrics.Runtime
+		scopeVars = st.scopeVars(stack)
+		rconf     = st.conf.DefaultRegistry()
+		err       error
+	)
+
 	printScopeVars(scopeVars)
 
-	var err error
 	// Eval variables
 	for _, comp := range stack.Components {
 		if err = st.evalComponent(comp, scopeVars); err != nil {
@@ -389,86 +306,74 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack, opt BuildOption
 		}
 	}
 
-	err = st.crt.CreateNetwork(ctx, stack.ID)
+	bldr := newStackBuilder(st.crt, rconf, stack)
+	err = bldr.build(ctx)
 	if err != nil {
 		return err
 	}
 
-	defer st.Destroy(ctx, stack)
-
-	// Start containers needed for build
-	svcTime.Start()
-	err = st.startServices(ctx, stack)
-	if err != nil {
-		return err
-	}
-	svcTime.End()
-
-	// Start non-head builds
-	buildTime.Start()
-	nonHeadResults, err := st.startBuilds(ctx, stack, false)
-	if err != nil {
-		return err
-	}
-
-	// Start head builds
-	headResults, err := st.startBuilds(ctx, stack, true)
-	if err != nil {
-		return err
-	}
-	buildTime.End()
-
-	st.printArtifacts(stack)
-
+	// Write timings at the end
 	defer func() {
 		totalTime.End()
 		fmt.Printf("Timing:\n\n")
-		fmt.Printf("  Service:\t%v\n", svcTime.Duration(time.Millisecond))
-		fmt.Printf("  Build:\t%v\n", buildTime.Duration(time.Millisecond))
-		for k, v := range nonHeadResults {
+		fmt.Printf("  Service:\t%v\n", bldr.svcTime.Duration(time.Millisecond))
+		fmt.Printf("  Build:\t%v\n", bldr.buildTime.Duration(time.Millisecond))
+		for k, v := range bldr.results {
 			fmt.Printf("    %s:\t%v\n", k, v.Runtime.Duration(time.Millisecond))
 		}
-		for k, v := range headResults {
-			fmt.Printf("    %s:\t%v\n", k, v.Runtime.Duration(time.Millisecond))
-		}
-		fmt.Printf("  Publish:\t%v\n", pubTime.Duration(time.Millisecond))
+		fmt.Printf("  Publish:\t%v\n\n", pubTime.Duration(time.Millisecond))
 		fmt.Printf("  Total:\t%v\n", totalTime.Duration(time.Millisecond))
 		fmt.Println()
 	}()
 
+	defer func() {
+		fmt.Printf("\nBuild summary:\n")
+		bldr.printResults(os.Stdout)
+	}()
+	pubTime, err = st.handlePublish(rconf, stack, opt)
+
+	return err
+}
+
+func (st *Stack) handlePublish(rconf *config.RegistryConfig, stack *thrapb.Stack, opt BuildOptions) (*metrics.Runtime, error) {
+	runtime := &metrics.Runtime{}
+
 	// Check if we can publish artifacts after the build completes
 	status, err := st.vcs.Status(vcs.Option{Path: opt.Workdir})
 	if err != nil {
-		return err
+		return runtime, err
 	}
 
 	if !status.IsClean() {
-		fmt.Printf("Uncommitted code:\n\n")
+		fmt.Printf("\nUncommitted code:\n\n")
 		fmt.Println(status)
 
 		if !opt.Publish {
-			fmt.Printf("Artifacts will not be published!\n\n")
-			return nil
+			fmt.Println("Artifacts will not be published!")
+			return runtime, nil
 		}
 
 		fmt.Println("** Explicit artifact publish requested (source code & artifacts may be out of sync) **")
 	}
 
-	pubTime.Start()
-	st.publish(stack)
-	pubTime.End()
+	st.printArtifacts(stack, rconf)
 
-	return nil
+	runtime.Start()
+	st.publishArtifacts(stack, rconf)
+	runtime.End()
+
+	return runtime, nil
 }
 
-func (st *Stack) printArtifacts(stack *thrapb.Stack) {
+func (st *Stack) printArtifacts(stack *thrapb.Stack, rconf *config.RegistryConfig) {
+
 	fmt.Printf("\nArtifacts:\n\n")
 	for _, comp := range stack.Components {
 		if !comp.IsBuildable() {
 			continue
 		}
 
-		names := st.getBuildImageTags(stack.ID, comp)
+		names := getBuildImageTags(stack.ID, comp, rconf)
 		for _, name := range names {
 			fmt.Println(" ", name)
 		}
@@ -476,14 +381,15 @@ func (st *Stack) printArtifacts(stack *thrapb.Stack) {
 	}
 }
 
-func (st *Stack) publish(stack *thrapb.Stack) {
-	fmt.Printf("\n[TODO] Publishing artifacts:\n\n")
+func (st *Stack) publishArtifacts(stack *thrapb.Stack, rconf *config.RegistryConfig) {
+
+	fmt.Printf("[TODO] Publishing artifacts:\n\n")
 	for _, comp := range stack.Components {
 		if !comp.IsBuildable() {
 			continue
 		}
 
-		names := st.getBuildImageTags(stack.ID, comp)
+		names := getBuildImageTags(stack.ID, comp, rconf)
 		for _, name := range names {
 			fmt.Println(" ", name)
 		}
@@ -518,14 +424,7 @@ func (st *Stack) Deploy(stack *thrapb.Stack) error {
 
 // Destroy removes call components of the stack from the container runtime
 func (st *Stack) Destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionReport {
-	ar := make([]*thrapb.ActionReport, 0, len(stack.Components))
-
-	for _, c := range stack.Components {
-		r := &thrapb.ActionReport{Action: thrapb.NewAction("destroy", "comp", c.ID)}
-		r.Error = st.crt.Remove(ctx, c.ID+"."+stack.ID)
-		ar = append(ar, r)
-	}
-	return ar
+	return st.run.destroy(ctx, stack)
 }
 
 // Stop shutsdown any running containers in the stack.
@@ -538,116 +437,6 @@ func (st *Stack) Stop(ctx context.Context, stack *thrapb.Stack) []*thrapb.Action
 		ar = append(ar, r)
 	}
 	return ar
-}
-
-func (st *Stack) startBuilds(ctx context.Context, stack *thrapb.Stack, head bool) (map[string]*CompBuildResult, error) {
-	var (
-		results = make(map[string]*CompBuildResult, len(stack.Components))
-		err     error
-	)
-
-	// Start build containers after
-	for id, comp := range stack.Components {
-		if !comp.IsBuildable() {
-			continue
-		}
-
-		// Build based on whether head was requested
-		if comp.Head != head {
-			continue
-		}
-
-		// err = st.buildStages(ctx, stack.ID, comp)
-		results[id], err = st.doBuild(ctx, stack.ID, stack.Version, comp)
-		if err != nil {
-			break
-		}
-
-		// Start container from image that was just built, if this component
-		// is not the head
-		if !comp.Head {
-			err = st.startContainer(ctx, stack.ID, comp)
-			if err != nil {
-				break
-			}
-		}
-	}
-
-	return results, err
-}
-
-// getBuildImageTags returns tags that should be applied to a given image build
-func (st *Stack) getBuildImageTags(stackID string, comp *thrapb.Component) []string {
-	base := filepath.Join(stackID, comp.ID)
-	out := []string{base}
-	if len(comp.Version) > 0 {
-		out = append(out, base+":"+comp.Version)
-	}
-
-	rconf := st.conf.GetDefaultRegistry()
-	if rconf != nil && len(rconf.Addr) > 0 {
-		rbase := filepath.Join(rconf.Addr, base)
-		out = append(out, rbase)
-		if len(comp.Version) > 0 {
-			out = append(out, rbase+":"+comp.Version)
-		}
-	}
-	return out
-}
-
-func (st *Stack) makeBuildRequest(sid, sver string, comp *thrapb.Component) *crt.BuildRequest {
-	req := &crt.BuildRequest{
-		Output:     crt.NewDockerBuildLog(os.Stdout),
-		ContextDir: comp.Build.Context,
-		BuildOpts: &types.ImageBuildOptions{
-			Tags: st.getBuildImageTags(sid, comp),
-			// ID to use in order to cancel the build
-			BuildID:     comp.ID,
-			Dockerfile:  comp.Build.Dockerfile,
-			NetworkMode: sid,
-			// Add labels to query later
-			Labels: map[string]string{
-				"stack":               sid,
-				"component":           comp.ID,
-				vars.ComponentVersion: comp.Version,
-				vars.StackVersion:     sver,
-			},
-		},
-	}
-
-	if comp.HasEnvVars() {
-		args := make(map[string]*string, len(comp.Env.Vars))
-
-		fmt.Printf("\nBuild arguments:\n\n")
-		for k := range comp.Env.Vars {
-			fmt.Println(" ", k)
-
-			v := comp.Env.Vars[k]
-			args[k] = &v
-		}
-		fmt.Println()
-
-		req.BuildOpts.BuildArgs = args
-	}
-
-	return req
-}
-
-func (st *Stack) doBuild(ctx context.Context, sid, sver string, comp *thrapb.Component) (*CompBuildResult, error) {
-	result := &CompBuildResult{
-		Runtime: (&metrics.Runtime{}).Start(),
-	}
-
-	req := st.makeBuildRequest(sid, sver, comp)
-
-	fmt.Printf("Building %s:\n\n", comp.ID)
-
-	// Blocking
-	err := st.crt.Build(ctx, req)
-	result.Runtime.End()
-	result.Labels = req.BuildOpts.Labels
-
-	return result, err
 }
 
 func (st *Stack) evalComponent(comp *thrapb.Component, scopeVars scope.Variables) error {
@@ -679,12 +468,4 @@ func (st *Stack) evalCompEnv(comp *thrapb.Component, vm *pseudo.VM, scopeVars sc
 	}
 
 	return nil
-}
-
-func printScopeVars(scopeVars scope.Variables) {
-	fmt.Printf("\nScope:\n\n")
-	for _, name := range scopeVars.Names() {
-		fmt.Println(" ", name)
-	}
-	fmt.Println()
 }

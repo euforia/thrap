@@ -51,16 +51,6 @@ func (orch *nomadOrchestrator) Deploy(ctx context.Context, st *thrapb.Stack, opt
 		// Region:"",
 	}
 
-	// _, _, err = jobs.Validate(njob, q)
-	// if err != nil {
-	// 	return nil, njob, err
-	// }
-	// else {
-	// r.Warnings
-	// r.Error
-	// for i:=range r.ValidationErrors{}
-	// }
-
 	if opts.Dryrun {
 		planOpts := &nomad.PlanOptions{Diff: true}
 		resp, _, err = jobs.PlanOpts(njob, planOpts, q)

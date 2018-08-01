@@ -148,9 +148,9 @@ func Test_Config_Merge(t *testing.T) {
 
 	c1.Merge(&c2)
 
-	vcsp := c1.GetDefaultVCS()
-	secp := c1.GetDefaultSecrets()
-	regp := c1.GetDefaultRegistry()
+	vcsp := c1.DefaultVCS()
+	secp := c1.DefaultSecrets()
+	regp := c1.DefaultRegistry()
 
 	assert.Equal(t, "thrap", vcsp.Repo.Name)
 	assert.Equal(t, "http://vault:4646", secp.Addr)

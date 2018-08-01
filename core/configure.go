@@ -6,14 +6,13 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
+	"text/tabwriter"
 
 	"github.com/euforia/hclencoder"
 	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vcs"
-	homedir "github.com/mitchellh/go-homedir"
 )
 
 // ConfigureOptions holds options to configure a data directory
@@ -33,20 +32,11 @@ func DefaultConfigureOptions() ConfigureOptions {
 // ConfigureGlobal configures the global configuration
 func ConfigureGlobal(opts ConfigureOptions) error {
 	var err error
-
-	if opts.DataDir == "" {
-		opts.DataDir, err = homedir.Dir()
-	} else if strings.HasPrefix(opts.DataDir, "~") {
-		opts.DataDir, err = homedir.Expand(opts.DataDir)
-	} else if !filepath.IsAbs(opts.DataDir) {
-		opts.DataDir, err = filepath.Abs(opts.DataDir)
-	}
-
+	opts.DataDir, err = utils.GetAbsPath(opts.DataDir)
 	if err != nil {
 		return err
 	}
 
-	// hwdir := filepath.Join(opts.DataDir, consts.WorkDir)
 	if !utils.FileExists(opts.DataDir) {
 		os.MkdirAll(opts.DataDir, 0755)
 	}
@@ -77,7 +67,8 @@ func ConfigureGlobal(opts ConfigureOptions) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Config:", varsfile)
+	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)
+	fmt.Fprintf(tw, "Config:\t%s\n", varsfile)
 
 	// Creds
 	var (
@@ -97,14 +88,15 @@ func ConfigureGlobal(opts ConfigureOptions) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Creds:", credsFile)
+	fmt.Fprintf(tw, "Creds:\t%s\n", credsFile)
 
 	// Key file
 	keypath := filepath.Join(opts.DataDir, consts.KeyFile)
-	fmt.Println("Keypair:", keypath)
 	if !utils.FileExists(keypath) {
 		_, err = utils.GenerateECDSAKeyPair(keypath, elliptic.P256())
 	}
+	fmt.Fprintf(tw, "Keypair:\t%s\n", keypath)
+	tw.Flush()
 
 	return err
 }
@@ -168,13 +160,6 @@ func ConfigureLocal(conf *config.ThrapConfig, opts ConfigureOptions) (*config.Th
 		return config.ReadThrapConfig(varsfile)
 	}
 
-	// Read global config
-	// filename, _ := homedir.Expand("~/" + consts.WorkDir + "/" + consts.ConfigFile)
-	// conf, err := config.ReadThrapConfig(filename)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	// Add project settings to supplied global
 	conf.VCS[opts.VCS.ID].Repo = &config.VCSRepoConfig{
 		Name:  opts.VCS.Repo.Name,
@@ -188,75 +173,3 @@ func ConfigureLocal(conf *config.ThrapConfig, opts ConfigureOptions) (*config.Th
 
 	return conf, err
 }
-
-// func generateKeyPair(filename string) (*ecdsa.PrivateKey, error) {
-// 	c := elliptic.P256()
-// 	kp, err := ecdsa.GenerateKey(c, rand.Reader)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	priv, pub, err := encodeECDSA(kp, filename)
-// 	if err == nil {
-// 		err = writePem(priv, pub, filename)
-// 	}
-// 	return kp, err
-// }
-
-// func encodeECDSA(privateKey *ecdsa.PrivateKey, filename string) ([]byte, []byte, error) {
-
-// 	x509Encoded, err := x509.MarshalECPrivateKey(privateKey)
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-// 	// pemEncoded := pem.Encode(privH, &pem.Block{Type: "PRIVATE KEY", Bytes: x509Encoded})
-// 	pemEncoded := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: x509Encoded})
-
-// 	x509EncodedPub, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-
-// 	pemEncodedPub := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: x509EncodedPub})
-
-// 	return pemEncoded, pemEncodedPub, nil
-// }
-
-// func writePem(priv, pub []byte, filename string) error {
-// 	err := ioutil.WriteFile(filename, priv, 0600)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return ioutil.WriteFile(filename+".pub", pub, 0600)
-// }
-
-// func decodeECDSA(filename string) (*ecdsa.PrivateKey, error) {
-// 	priv, err := ioutil.ReadFile(filename)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	block, _ := pem.Decode(priv)
-// 	x509Encoded := block.Bytes
-// 	privateKey, err := x509.ParseECPrivateKey(x509Encoded)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	pub, err := ioutil.ReadFile(filename + ".pub")
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	blockPub, _ := pem.Decode(pub)
-// 	// blockPub, _ := pem.Decode(pemEncodedPub)
-// 	x509EncodedPub := blockPub.Bytes
-// 	genericPublicKey, err := x509.ParsePKIXPublicKey(x509EncodedPub)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	publicKey := genericPublicKey.(*ecdsa.PublicKey)
-// 	privateKey.PublicKey = *publicKey
-
-// 	return privateKey, nil
-// }

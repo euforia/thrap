@@ -41,36 +41,8 @@ func MakeNomadJob(stack *thrapb.Stack) (*api.Job, error) {
 	grp.ReschedulePolicy = api.NewDefaultReschedulePolicy(api.JobTypeService)
 	// grp.ReschedulePolicy.Merge(reschedPolicy)
 
-	// var (
-	//     enclave string
-	// )
-
 	for _, comp := range stack.Components {
 		task := makeNomadTaskDocker(id, gid, comp)
-
-		// resources := makeResources(defaultCPUMHz, defaultMemMB, defaultNetMbits)
-
-		// if comp.External {
-		//api.NewConstraint("${meta.hood}", "operand", "right")
-		// }
-
-		// if comp.Head {
-		// service := task.Services[0]
-		// service.Name = comp.ID + "." + id
-		// service.Name = stack.ID
-		// service.Tags = []string{comp.ID}
-		// service.Checks = []api.ServiceCheck{
-		// 	defaultServiceCheck(),
-		// }
-		// resources.Networks[0].DynamicPorts = []api.Port{
-		// 	api.Port{Label: defaultPortLabel},
-		// }
-		// service.CheckRestart = &api.CheckRestart{Limit: 15}
-		// }
-		// task.Constrain(c)
-
-		//resources.Merge(other)
-		// task.Require(resources)
 
 		grp = grp.AddTask(task)
 
