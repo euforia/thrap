@@ -11,6 +11,7 @@ import (
 	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/manifest"
+	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
 	"github.com/stretchr/testify/assert"
 )
@@ -60,7 +61,7 @@ func Test_NewCore(t *testing.T) {
 	assert.NotNil(t, c.packs)
 	assert.NotNil(t, c.orchs["docker"])
 
-	_, err = c.Stack(&Profile{Orchestrator: "foo"})
+	_, err = c.Stack(&thrapb.Profile{Orchestrator: "foo"})
 	assert.Contains(t, err.Error(), errOrchNotLoaded.Error())
 }
 
@@ -106,7 +107,7 @@ func Test_Core_Build(t *testing.T) {
 		fatal(t, utils.FlattenErrors(errs))
 	}
 
-	st, err := c.Stack(DefaultProfile())
+	st, err := c.Stack(thrapb.DefaultProfile())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,7 +157,7 @@ func Test_Core_populateFromImageConf(t *testing.T) {
 
 	stack.Validate()
 
-	st, err := c.Stack(DefaultProfile())
+	st, err := c.Stack(thrapb.DefaultProfile())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -192,7 +193,7 @@ func Test_Core_Assembler(t *testing.T) {
 	stack, _ := manifest.LoadManifest("../thrap.hcl")
 	stack.Validate()
 
-	st, err := c.Stack(DefaultProfile())
+	st, err := c.Stack(thrapb.DefaultProfile())
 	if err != nil {
 		t.Fatal(err)
 	}

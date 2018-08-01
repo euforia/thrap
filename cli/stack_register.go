@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/euforia/hclencoder"
-	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
@@ -49,7 +48,7 @@ func commandStackRegister() *cli.Command {
 					return err
 				}
 
-				stk, err := cr.Stack(core.DefaultProfile())
+				stk, err := cr.Stack(thrapb.DefaultProfile())
 				if err != nil {
 					return err
 				}

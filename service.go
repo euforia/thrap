@@ -64,7 +64,7 @@ func (s *GRPCService) IterIdentities(opts *thrapb.IterOptions, stream thrapb.Thr
 func (s *GRPCService) RegisterStack(ctx context.Context, st *thrapb.Stack) (*thrapb.Stack, error) {
 	s.handleIncomingContext(ctx, "stack."+st.ID+".register")
 
-	stk, err := s.core.Stack(core.DefaultProfile())
+	stk, err := s.core.Stack(thrapb.DefaultProfile())
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (s *GRPCService) RegisterStack(ctx context.Context, st *thrapb.Stack) (*thr
 func (s *GRPCService) CommitStack(ctx context.Context, stack *thrapb.Stack) (*thrapb.Stack, error) {
 	s.handleIncomingContext(ctx, "stack."+stack.ID+".commit")
 
-	stk, err := s.core.Stack(core.DefaultProfile())
+	stk, err := s.core.Stack(thrapb.DefaultProfile())
 	if err == nil {
 		return stk.Commit(stack)
 	}
@@ -87,7 +87,7 @@ func (s *GRPCService) CommitStack(ctx context.Context, stack *thrapb.Stack) (*th
 func (s *GRPCService) GetStack(ctx context.Context, stack *thrapb.Stack) (*thrapb.Stack, error) {
 	s.handleIncomingContext(ctx, "stack."+stack.ID+".get")
 
-	stk, err := s.core.Stack(core.DefaultProfile())
+	stk, err := s.core.Stack(thrapb.DefaultProfile())
 	if err == nil {
 		return stk.Get(stack.ID)
 	}
@@ -98,7 +98,7 @@ func (s *GRPCService) GetStack(ctx context.Context, stack *thrapb.Stack) (*thrap
 func (s *GRPCService) IterStacks(opts *thrapb.IterOptions, stream thrapb.Thrap_IterStacksServer) error {
 	s.handleIncomingContext(stream.Context(), "identity.list")
 
-	stk, err := s.core.Stack(core.DefaultProfile())
+	stk, err := s.core.Stack(thrapb.DefaultProfile())
 	if err != nil {
 		return err
 	}

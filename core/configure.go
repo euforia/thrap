@@ -11,6 +11,7 @@ import (
 	"github.com/euforia/hclencoder"
 	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
+	"github.com/euforia/thrap/store"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vcs"
 )
@@ -127,7 +128,6 @@ func configureHomeVars(conf *config.VCSConfig, noprompt bool) {
 }
 
 func configureVCSCreds(conf *config.CredsConfig, vcsID string, noprompt bool) {
-
 	token := conf.VCS[vcsID]["token"]
 	if token != "" || noprompt {
 		return
@@ -155,9 +155,20 @@ func ConfigureLocal(conf *config.ThrapConfig, opts ConfigureOptions) (*config.Th
 	tdir := filepath.Join(apath, consts.WorkDir)
 	os.MkdirAll(tdir, 0755)
 
+	// var profs config.Profiles
+	profsFile := filepath.Join(tdir, consts.ProfilesFile)
+	if !utils.FileExists(profsFile) {
+		st := store.NewHCLFileProfileStorage(profsFile)
+		err = st.Sync()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	varsfile := filepath.Join(tdir, consts.ConfigFile)
 	if utils.FileExists(varsfile) {
-		return config.ReadThrapConfig(varsfile)
+		cfg, err := config.ReadThrapConfig(varsfile)
+		return cfg, err
 	}
 
 	// Add project settings to supplied global

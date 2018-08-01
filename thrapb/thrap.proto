@@ -134,6 +134,12 @@ message Artifact {
     int64              DataSize = 5;
 }
 
+message Profile {
+    string ID = 1;
+    string Orchestrator = 2;
+    string Secrets = 3;
+}
+
 message IterOptions {
     string Prefix = 1;
 }

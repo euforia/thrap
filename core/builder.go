@@ -6,10 +6,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"text/tabwriter"
 
 	"github.com/docker/docker/api/types"
-	"github.com/euforia/pseudo/scope"
 	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/crt"
 	"github.com/euforia/thrap/metrics"
@@ -72,32 +70,27 @@ func newStackBuilder(c *crt.Docker, conf *config.RegistryConfig, stack *thrapb.S
 	}
 }
 
-func (bldr *stackBuilder) printResults(w io.Writer) {
-	w.Write([]byte("\n"))
-	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', tabwriter.StripEscape)
-	fmt.Fprintf(tw, "Component\tArtifact\tStatus\tDetails\n")
-	fmt.Fprintf(tw, "---------\t--------\t------\t-------\n")
-	for k, r := range bldr.results {
-		var (
-			status string
-			msg    string
-			art    string
-		)
-		if r.Error == nil {
-			comp := bldr.stack.Components[k]
-			status = "success"
-			art = comp.Name + ":" + comp.Version
-		} else {
-			status = "fail"
-			msg = r.Error.Error()
-		}
-		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", k, art, status, msg)
-	}
-	tw.Flush()
-	w.Write([]byte("\n"))
+// TotalTime returns the total runtime from when build is called till it returns
+func (bldr *stackBuilder) TotalTime() *metrics.Runtime {
+	return bldr.totalTime
 }
 
-func (bldr *stackBuilder) build(ctx context.Context) error {
+// BuildTime returns the time taken to build the source. This does not include
+// the setup time
+func (bldr *stackBuilder) BuildTime() *metrics.Runtime {
+	return bldr.buildTime
+}
+
+// ServiceTime returns the time taken to spin up required services for the build
+func (bldr *stackBuilder) ServiceTime() *metrics.Runtime {
+	return bldr.svcTime
+}
+
+func (bldr *stackBuilder) Results() map[string]*CompBuildResult {
+	return bldr.results
+}
+
+func (bldr *stackBuilder) Build(ctx context.Context) error {
 	bldr.totalTime.Start()
 	defer bldr.totalTime.End()
 
@@ -219,36 +212,9 @@ func (bldr *stackBuilder) makeBuildRequest(comp *thrapb.Component, output io.Wri
 	return req
 }
 
-func printScopeVars(scopeVars scope.Variables) {
-	fmt.Printf("\nScope:\n\n")
-	for _, name := range scopeVars.Names() {
-		fmt.Println(" ", name)
-	}
-	fmt.Println()
-}
-
 // build and deploy common functions
 type bdCommon struct {
 	crt *crt.Docker
-}
-
-// getBuildImageTags returns tags that should be applied to a given image build
-func getBuildImageTags(sid string, comp *thrapb.Component, rconf *config.RegistryConfig) []string {
-	base := filepath.Join(sid, comp.ID)
-	out := []string{base}
-	if len(comp.Version) > 0 {
-		out = append(out, base+":"+comp.Version)
-	}
-
-	// rconf := bldr.conf //.GetDefaultRegistry()
-	if rconf != nil && len(rconf.Addr) > 0 {
-		rbase := filepath.Join(rconf.Addr, base)
-		out = append(out, rbase)
-		if len(comp.Version) > 0 {
-			out = append(out, rbase+":"+comp.Version)
-		}
-	}
-	return out
 }
 
 // startServices starts services needed to perform the build that themselves do not need

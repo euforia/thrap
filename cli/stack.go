@@ -74,7 +74,7 @@ func commandStackBuild() *cli.Command {
 				return err
 			}
 
-			stm, err := cr.Stack(core.DefaultProfile())
+			stm, err := cr.Stack(thrapb.DefaultProfile())
 			if err != nil {
 				return err
 			}
@@ -109,7 +109,7 @@ func commandStackStop() *cli.Command {
 				return err
 			}
 
-			stm, err := cr.Stack(core.DefaultProfile())
+			stm, err := cr.Stack(thrapb.DefaultProfile())
 			if err != nil {
 				return err
 			}
@@ -147,7 +147,7 @@ func commandStackDestroy() *cli.Command {
 				return err
 			}
 
-			stm, err := cr.Stack(core.DefaultProfile())
+			stm, err := cr.Stack(thrapb.DefaultProfile())
 			if err != nil {
 				return err
 			}
@@ -183,7 +183,7 @@ func commandStackStatus() *cli.Command {
 				return err
 			}
 
-			stm, err := cr.Stack(core.DefaultProfile())
+			stm, err := cr.Stack(thrapb.DefaultProfile())
 			if err != nil {
 				return err
 			}
@@ -217,7 +217,7 @@ func commandStackArtifacts() *cli.Command {
 				return err
 			}
 
-			stm, err := cr.Stack(core.DefaultProfile())
+			stm, err := cr.Stack(thrapb.DefaultProfile())
 			if err != nil {
 				return err
 			}
@@ -288,7 +288,7 @@ func commandStackLogs() *cli.Command {
 				return err
 			}
 
-			stm, err := cr.Stack(core.DefaultProfile())
+			stm, err := cr.Stack(thrapb.DefaultProfile())
 			if err != nil {
 				return err
 			}

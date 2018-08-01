@@ -7,7 +7,7 @@ simpifying various integration points
 ### Pre-requisites
 
 The following are required for thrap:
-- Docker
+- Docker (api version >= 1.37)
 
 ### Installation
 

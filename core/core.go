@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/euforia/thrap/crt"
+	"github.com/euforia/thrap/thrapb"
 
 	"github.com/euforia/thrap/packs"
 
@@ -110,23 +111,23 @@ func (core *Core) Packs() *packs.Packs {
 // Stack returns a Stack instance that can be used to perform operations
 // against a stack.  It is loaded pased on the profile provided.  All
 // stack fields or constructed based on the profile
-func (core *Core) Stack(profile *Profile) (*Stack, error) {
+func (core *Core) Stack(profile *thrapb.Profile) (*Stack, error) {
 	orch, ok := core.orchs[profile.Orchestrator]
 	if !ok {
 		return nil, errors.Wrap(errOrchNotLoaded, profile.Orchestrator)
 	}
 
 	return &Stack{
-		profile: profile.ID,
-		regs:    core.regs,
-		crt:     core.crt,
-		run:     &bdCommon{core.crt},
-		orch:    orch,
-		conf:    core.conf.Clone(),
-		vcs:     core.vcs,
-		packs:   core.packs,
-		sst:     core.sst,
-		log:     core.log,
+		// profile: profile.ID,
+		regs: core.regs,
+		crt:  core.crt,
+		// run:   &bdCommon{core.crt},
+		orch:  orch,
+		conf:  core.conf.Clone(),
+		vcs:   core.vcs,
+		packs: core.packs,
+		sst:   core.sst,
+		log:   core.log,
 	}, nil
 }
 

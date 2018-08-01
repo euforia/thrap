@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -57,12 +56,12 @@ type StackStore interface {
 // Stack provides various stack based operations
 type Stack struct {
 	// profile id the stack was loaded with
-	profile string
+	// profile string
 
 	// builder is docker runtime
 	crt *crt.Docker
 	// common functions
-	run *bdCommon
+	// run *bdCommon
 
 	// config to use for this instance
 	conf *config.ThrapConfig
@@ -291,9 +290,9 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack, opt BuildOption
 
 	var (
 		totalTime = (&metrics.Runtime{}).Start()
-		pubTime   *metrics.Runtime
 		scopeVars = st.scopeVars(stack)
 		rconf     = st.conf.DefaultRegistry()
+		pubTime   *metrics.Runtime
 		err       error
 	)
 
@@ -307,94 +306,28 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack, opt BuildOption
 	}
 
 	bldr := newStackBuilder(st.crt, rconf, stack)
-	err = bldr.build(ctx)
+	err = bldr.Build(ctx)
 	if err != nil {
 		return err
 	}
 
+	results := bldr.Results()
+
 	// Write timings at the end
 	defer func() {
 		totalTime.End()
-		fmt.Printf("Timing:\n\n")
-		fmt.Printf("  Service:\t%v\n", bldr.svcTime.Duration(time.Millisecond))
-		fmt.Printf("  Build:\t%v\n", bldr.buildTime.Duration(time.Millisecond))
-		for k, v := range bldr.results {
-			fmt.Printf("    %s:\t%v\n", k, v.Runtime.Duration(time.Millisecond))
-		}
-		fmt.Printf("  Publish:\t%v\n\n", pubTime.Duration(time.Millisecond))
-		fmt.Printf("  Total:\t%v\n", totalTime.Duration(time.Millisecond))
+		printBuildStats(bldr, totalTime, pubTime)
 		fmt.Println()
 	}()
 
 	defer func() {
 		fmt.Printf("\nBuild summary:\n")
-		bldr.printResults(os.Stdout)
+		printBuildResults(stack, results, os.Stdout)
 	}()
-	pubTime, err = st.handlePublish(rconf, stack, opt)
+
+	pubTime, err = st.publish(rconf, stack, opt)
 
 	return err
-}
-
-func (st *Stack) handlePublish(rconf *config.RegistryConfig, stack *thrapb.Stack, opt BuildOptions) (*metrics.Runtime, error) {
-	runtime := &metrics.Runtime{}
-
-	// Check if we can publish artifacts after the build completes
-	status, err := st.vcs.Status(vcs.Option{Path: opt.Workdir})
-	if err != nil {
-		return runtime, err
-	}
-
-	if !status.IsClean() {
-		fmt.Printf("\nUncommitted code:\n\n")
-		fmt.Println(status)
-
-		if !opt.Publish {
-			fmt.Println("Artifacts will not be published!")
-			return runtime, nil
-		}
-
-		fmt.Println("** Explicit artifact publish requested (source code & artifacts may be out of sync) **")
-	}
-
-	st.printArtifacts(stack, rconf)
-
-	runtime.Start()
-	st.publishArtifacts(stack, rconf)
-	runtime.End()
-
-	return runtime, nil
-}
-
-func (st *Stack) printArtifacts(stack *thrapb.Stack, rconf *config.RegistryConfig) {
-
-	fmt.Printf("\nArtifacts:\n\n")
-	for _, comp := range stack.Components {
-		if !comp.IsBuildable() {
-			continue
-		}
-
-		names := getBuildImageTags(stack.ID, comp, rconf)
-		for _, name := range names {
-			fmt.Println(" ", name)
-		}
-		fmt.Println()
-	}
-}
-
-func (st *Stack) publishArtifacts(stack *thrapb.Stack, rconf *config.RegistryConfig) {
-
-	fmt.Printf("[TODO] Publishing artifacts:\n\n")
-	for _, comp := range stack.Components {
-		if !comp.IsBuildable() {
-			continue
-		}
-
-		names := getBuildImageTags(stack.ID, comp, rconf)
-		for _, name := range names {
-			fmt.Println(" ", name)
-		}
-		fmt.Println()
-	}
 }
 
 // Deploy deploys all components of the stack.
@@ -424,7 +357,7 @@ func (st *Stack) Deploy(stack *thrapb.Stack) error {
 
 // Destroy removes call components of the stack from the container runtime
 func (st *Stack) Destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionReport {
-	return st.run.destroy(ctx, stack)
+	return st.orch.Destroy(ctx, stack)
 }
 
 // Stop shutsdown any running containers in the stack.
@@ -437,6 +370,52 @@ func (st *Stack) Stop(ctx context.Context, stack *thrapb.Stack) []*thrapb.Action
 		ar = append(ar, r)
 	}
 	return ar
+}
+
+// publish checks if artifacts are publishable and only then will publish them
+func (st *Stack) publish(rconf *config.RegistryConfig, stack *thrapb.Stack, opt BuildOptions) (*metrics.Runtime, error) {
+	runtime := &metrics.Runtime{}
+
+	// Check if we can publish artifacts after the build completes
+	status, err := st.vcs.Status(vcs.Option{Path: opt.Workdir})
+	if err != nil {
+		return runtime, err
+	}
+
+	if !status.IsClean() {
+		fmt.Printf("\nUncommitted code:\n\n")
+		fmt.Println(status)
+
+		if !opt.Publish {
+			fmt.Println("Artifacts will not be published!")
+			return runtime, nil
+		}
+
+		fmt.Println("** Explicit artifact publish requested (source code & artifacts may be out of sync) **")
+	}
+
+	printArtifacts(stack, rconf)
+
+	runtime.Start()
+	st.publishArtifacts(stack, rconf)
+	runtime.End()
+
+	return runtime, nil
+}
+
+func (st *Stack) publishArtifacts(stack *thrapb.Stack, rconf *config.RegistryConfig) {
+	fmt.Printf("[TODO] Publishing artifacts:\n\n")
+	for _, comp := range stack.Components {
+		if !comp.IsBuildable() {
+			continue
+		}
+
+		names := getBuildImageTags(stack.ID, comp, rconf)
+		for _, name := range names {
+			fmt.Println(" ", name)
+		}
+		fmt.Println()
+	}
 }
 
 func (st *Stack) evalComponent(comp *thrapb.Component, scopeVars scope.Variables) error {
