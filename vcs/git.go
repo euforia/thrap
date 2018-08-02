@@ -26,6 +26,7 @@ var (
 
 // DefaultGitRemoteURL returns the default url scheme scheme for remote access
 func DefaultGitRemoteURL(addr, owner, name string) string {
+	// User is required
 	return "ssh://git@" + addr + "/" + owner + "/" + name
 }
 

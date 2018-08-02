@@ -3,10 +3,12 @@ package registry
 import (
 	"errors"
 	"os"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/euforia/thrap/config"
 )
 
 var (
@@ -16,17 +18,20 @@ var (
 type awsContainerRegistry struct {
 	sess *session.Session
 	ecr  *ecr.ECR
+
+	conf *config.RegistryConfig
 }
 
 // Envionment Variables:
 // AWS_ACCESS_KEY_ID
 // AWS_SECRET_ACCESS_KEY
 // AWS_DEFAULT_REGION
-func (ar *awsContainerRegistry) Init(config Config) error {
+func (ar *awsContainerRegistry) Init(rconf *config.RegistryConfig) error {
+	ar.conf = rconf
 
 	conf := aws.NewConfig()
 
-	c := config.Conf
+	c := rconf.Config
 	// Override region if supplied
 	if val, ok := c["region"]; ok {
 		region, ok := val.(string)
@@ -59,12 +64,12 @@ func (ar *awsContainerRegistry) Init(config Config) error {
 }
 
 func (ar *awsContainerRegistry) ID() string {
-	return "ecr"
+	return ar.conf.ID
 }
 
-func (ar *awsContainerRegistry) Type() Type {
-	return TypeContainer
-}
+// func (ar *awsContainerRegistry) Type() Type {
+// 	return TypeContainer
+// }
 
 func (ar *awsContainerRegistry) GetManifest(name, tag string) (interface{}, error) {
 	imageID := &ecr.ImageIdentifier{}
@@ -81,6 +86,11 @@ func (ar *awsContainerRegistry) GetManifest(name, tag string) (interface{}, erro
 		return nil, err
 	}
 	return resp.Images[0], nil
+}
+
+// ImageName returns the name prepended with the registry address delimited by /
+func (ar *awsContainerRegistry) ImageName(name string) string {
+	return filepath.Join(ar.conf.Addr, name)
 }
 
 func (ar *awsContainerRegistry) Get(name string) (interface{}, error) {

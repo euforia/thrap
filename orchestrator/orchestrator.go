@@ -37,6 +37,8 @@ type Orchestrator interface {
 
 	// Destroy the stack returning results for each component
 	Destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionReport
+	// Status of all comps
+	Status(ctx context.Context, stack *thrapb.Stack) []*thrapb.CompStatus
 }
 
 // New returns a new orchestrator based on the given config

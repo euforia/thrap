@@ -57,12 +57,20 @@ func (st *HCLFileProfileStorage) Sync() error {
 
 // ParseProfiles parses profiles at the given path
 func parseProfiles(profPath string) (map[string]*thrapb.Profile, error) {
-	profs := make(map[string]map[string]*thrapb.Profile)
+	wprofs := make(map[string]map[string]*thrapb.Profile)
 	b, err := ioutil.ReadFile(profPath)
 	if err != nil {
 		return nil, err
 	}
 
-	err = hcl.Unmarshal(b, &profs)
-	return profs["profile"], err
+	err = hcl.Unmarshal(b, &wprofs)
+	if err != nil {
+		return nil, err
+	}
+
+	profs := wprofs["profiles"]
+	for k, v := range profs {
+		v.ID = k
+	}
+	return profs, err
 }

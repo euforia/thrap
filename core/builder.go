@@ -8,13 +8,23 @@ import (
 	"path/filepath"
 
 	"github.com/docker/docker/api/types"
-	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/crt"
 	"github.com/euforia/thrap/metrics"
+	"github.com/euforia/thrap/registry"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/vars"
 	"github.com/pkg/errors"
 )
+
+// BuildOptions are options to perform a build-publish
+type BuildOptions struct {
+	// Workdir is the root of a git repo.  This is used to decide
+	// if we can auto-publish
+	Workdir string
+	// If true the build is published despite the auto-publish check,
+	// essentially a force publish
+	Publish bool
+}
 
 // CompBuildResult is the result of a component build
 type CompBuildResult struct {
@@ -37,10 +47,16 @@ func (result *CompBuildResult) HasError() bool {
 }
 
 type stackBuilder struct {
-	conf *config.RegistryConfig
+	// optional registry config
+	// rconf *config.RegistryConfig
+
+	// stack being built
+	stack *thrapb.Stack
+
+	// image registry
+	reg registry.Registry
 	// builder
 	crt *crt.Docker
-
 	// build and deploy common functions
 	run *bdCommon
 
@@ -53,14 +69,13 @@ type stackBuilder struct {
 
 	// Build result per component
 	results map[string]*CompBuildResult
-
-	// stack being built
-	stack *thrapb.Stack
+	// Overall build status
+	failed bool
 }
 
-func newStackBuilder(c *crt.Docker, conf *config.RegistryConfig, stack *thrapb.Stack) *stackBuilder {
+func newStackBuilder(c *crt.Docker, reg registry.Registry, stack *thrapb.Stack) *stackBuilder {
 	return &stackBuilder{
-		conf:      conf,
+		reg:       reg,
 		crt:       c,
 		run:       &bdCommon{c},
 		totalTime: &metrics.Runtime{},
@@ -68,6 +83,11 @@ func newStackBuilder(c *crt.Docker, conf *config.RegistryConfig, stack *thrapb.S
 		results:   make(map[string]*CompBuildResult, len(stack.Components)),
 		stack:     stack,
 	}
+}
+
+// Succeeded returns true if the whole build succeeded
+func (bldr *stackBuilder) Succeeded() bool {
+	return !bldr.failed
 }
 
 // TotalTime returns the total runtime from when build is called till it returns
@@ -171,6 +191,22 @@ func (bldr *stackBuilder) doBuild(ctx context.Context, comp *thrapb.Component) {
 
 	// Add result
 	bldr.results[comp.ID] = result
+
+	if result.Error != nil {
+		bldr.failed = true
+	}
+}
+
+func (bldr *stackBuilder) getBuildTags(comp *thrapb.Component) []string {
+	// Local tags
+	base := bldr.stack.ArtifactName(comp.ID)
+	out := []string{base, base + ":" + comp.Version}
+	// Registry tags
+	if rbase := bldr.reg.ImageName(base); rbase != base {
+		out = append(out, rbase, rbase+":"+comp.Version)
+	}
+
+	return out
 }
 
 func (bldr *stackBuilder) makeBuildRequest(comp *thrapb.Component, output io.Writer) *crt.BuildRequest {
@@ -179,7 +215,7 @@ func (bldr *stackBuilder) makeBuildRequest(comp *thrapb.Component, output io.Wri
 		Output:     output,
 		ContextDir: comp.Build.Context,
 		BuildOpts: &types.ImageBuildOptions{
-			Tags: getBuildImageTags(bldr.stack.ID, comp, bldr.conf),
+			Tags: bldr.getBuildTags(comp),
 			// ID to use in order to cancel the build
 			// BuildID:     comp.ID,
 			Dockerfile:  comp.Build.Dockerfile,

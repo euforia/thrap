@@ -160,7 +160,11 @@ func DefaultThrapConfig() *ThrapConfig {
 		Orchestrator: map[string]*OrchestratorConfig{
 			"docker": &OrchestratorConfig{},
 		},
-		Registry: make(map[string]*RegistryConfig),
+		Registry: map[string]*RegistryConfig{
+			"docker": &RegistryConfig{
+				Provider: "docker",
+			},
+		},
 		Secrets: map[string]*SecretsConfig{
 			"file": &SecretsConfig{},
 		},
@@ -210,19 +214,3 @@ func ReadProjectConfig(projPath string) (*ThrapConfig, error) {
 	filename := filepath.Join(projPath, consts.WorkDir, consts.ConfigFile)
 	return ReadThrapConfig(filename)
 }
-
-// func ReadGlobalConfig() (*ThrapConfig, error) {
-// 	filename, err := homedir.Expand("~/" + consts.WorkDir + "/" + consts.ConfigFile)
-// 	if err == nil {
-// 		return ReadThrapConfig(filename)
-// 	}
-// 	return nil, err
-// }
-
-// func ReadGlobalCreds() (*CredsConfig, error) {
-// 	filename, err := homedir.Expand("~/" + consts.WorkDir + "/" + consts.CredsFile)
-// 	if err == nil {
-// 		return ReadCredsConfig(filename)
-// 	}
-// 	return nil, err
-// }

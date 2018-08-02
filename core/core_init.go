@@ -125,18 +125,19 @@ func (core *Core) initSecrets() (err error) {
 // load all configured registries
 func (core *Core) initRegistries() error {
 	core.regs = make(map[string]registry.Registry)
-	for k, rc := range core.conf.Registry {
-		rconf := registry.DefaultConfig()
-		rconf.Provider = rc.ID
-		for k, v := range rc.Config {
-			rconf.Conf[k] = v
-		}
 
-		reg, err := registry.New(rconf)
+	for k, rc := range core.conf.Registry {
+		// rconf := config.RegistryConfig{Config: make(map[string]interface{})}
+		// rconf.Provider = rc.ID
+		// for k, v := range rc.Config {
+		// 	rconf.Conf[k] = v
+		// }
+		// reg, err := registry.New(rconf)
+		reg, err := registry.New(rc)
 		if err != nil {
 			return err
 		}
-
+		core.log.Println("Registry loaded:", k)
 		core.regs[k] = reg
 	}
 

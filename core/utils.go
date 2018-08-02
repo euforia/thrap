@@ -3,8 +3,9 @@ package core
 import (
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
-	"strings"
+	"sort"
 	"text/tabwriter"
 	"time"
 
@@ -22,20 +23,24 @@ func printScopeVars(scopeVars scope.Variables) {
 	fmt.Println()
 }
 
-// getBuildImageTags returns tags that should be applied to a given image build
+// getBuildImageTags returns tags that should be applied to a given image build. If a
+// registry config is provided, names are generated accordingly
 func getBuildImageTags(sid string, comp *thrapb.Component, rconf *config.RegistryConfig) []string {
 	base := filepath.Join(sid, comp.ID)
-	out := []string{base}
-	if len(comp.Version) > 0 {
-		out = append(out, base+":"+comp.Version)
-	}
 
-	// rconf := bldr.conf //.GetDefaultRegistry()
+	out := []string{}
 	if rconf != nil && len(rconf.Addr) > 0 {
+		// remote
 		rbase := filepath.Join(rconf.Addr, base)
 		out = append(out, rbase)
 		if len(comp.Version) > 0 {
 			out = append(out, rbase+":"+comp.Version)
+		}
+	} else {
+		// local
+		out = []string{base}
+		if len(comp.Version) > 0 {
+			out = append(out, base+":"+comp.Version)
 		}
 	}
 	return out
@@ -43,51 +48,77 @@ func getBuildImageTags(sid string, comp *thrapb.Component, rconf *config.Registr
 func printBuildResults(stack *thrapb.Stack, results map[string]*CompBuildResult, w io.Writer) {
 	w.Write([]byte("\n"))
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', tabwriter.StripEscape)
-	fmt.Fprintf(tw, "Component\tArtifact\tStatus\tDetails\n")
-	fmt.Fprintf(tw, "---------\t--------\t------\t-------\n")
+	fmt.Fprintf(tw, " \tComponent\tArtifact\tStatus\tDetails\n")
+	fmt.Fprintf(tw, " \t---------\t--------\t------\t-------\n")
 	for k, r := range results {
 		var (
 			status string
 			msg    string
 			art    string
 		)
+
 		if r.Error == nil {
-			comp := stack.Components[k]
-			status = "success"
-			art = comp.Name + ":" + comp.Version
+			status = "succeeded"
+			art = stack.ArtifactName(k) + ":" + stack.Components[k].Version
 		} else {
-			status = "fail"
+			status = "failed"
 			msg = r.Error.Error()
 		}
-		fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", k, art, status, msg)
+
+		fmt.Fprintf(tw, " \t%s\t%s\t%s\t%s\n", k, art, status, msg)
 	}
 	tw.Flush()
 	w.Write([]byte("\n"))
 }
 
-func printArtifacts(stack *thrapb.Stack, rconf *config.RegistryConfig) {
-	fmt.Printf("\nArtifacts:\n\n")
-	for _, comp := range stack.Components {
-		if !comp.IsBuildable() {
-			continue
-		}
+// func printArtifacts(stack *thrapb.Stack, reg registry.Registry, printBase bool) {
+// 	fmt.Printf("\nArtifacts:\n\n")
+// 	for k, comp := range stack.Components {
+// 		if !comp.IsBuildable() {
+// 			continue
+// 		}
 
-		names := getBuildImageTags(stack.ID, comp, rconf)
-		fmt.Println(strings.Join(names, "\n"))
-		fmt.Println()
-	}
-}
+// 		fmt.Printf("  %s:\n\n", comp.ID)
+// 		name := stack.ArtifactName(k)
+// 		if reg != nil {
+// 			name = reg.ImageName(name)
+// 		}
+
+// 		if printBase {
+// 			fmt.Printf("    %s\n", name)
+// 		}
+// 		fmt.Printf("    %s:%s\n\n", name, comp.Version)
+
+// 	}
+// }
 
 func printBuildStats(bld *stackBuilder, total, pub *metrics.Runtime) {
 	s := bld.ServiceTime()
 	b := bld.BuildTime()
 	results := bld.Results()
 
-	fmt.Printf("Timing:\n\n  Service:\t%v\n", s.Duration(time.Millisecond))
-	fmt.Printf("  Build:\t%v\n", b.Duration(time.Millisecond))
+	fmt.Printf("  Timing:\n\n   Service:\t%v\n", s.Duration(time.Millisecond))
+	fmt.Printf("   Build:\t%v\n", b.Duration(time.Millisecond))
 	for k, v := range results {
-		fmt.Printf("    %s:\t%v\n", k, v.Runtime.Duration(time.Millisecond))
+		fmt.Printf("     %s:\t%v\n", k, v.Runtime.Duration(time.Millisecond))
 	}
-	fmt.Printf("  Publish:\t%v\n\n", pub.Duration(time.Millisecond))
-	fmt.Printf("  Total:\t%v\n", total.Duration(time.Millisecond))
+	fmt.Printf("   Publish:\t%v\n\n", pub.Duration(time.Millisecond))
+	fmt.Printf("   Total:\t%v\n", total.Duration(time.Millisecond))
+}
+
+func printScopeVarsWithVals(svars scope.Variables) {
+
+	s := make([]string, 0, len(svars))
+	for k := range svars {
+		s = append(s, k)
+	}
+	sort.Strings(s)
+
+	fmt.Printf("\nScope:\n\n")
+	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)
+	for _, k := range s {
+		v := svars[k]
+		fmt.Fprintf(tw, " \t%s\t%v\n", k, v.Value)
+	}
+	tw.Flush()
 }

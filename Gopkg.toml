@@ -79,7 +79,7 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/heroku/docker-registry-client"
+  name = "github.com/euforia/docker-registry-client"
 
 [[constraint]]
   branch = "master"

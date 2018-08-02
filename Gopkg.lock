@@ -74,7 +74,7 @@
   branch = "master"
   name = "github.com/containerd/continuity"
   packages = ["pathdriver"]
-  revision = "246e49050efdf45e8f17fbbcf1547ee376f9939e"
+  revision = "0377f7d767206f3a9e8881d0f02267b0d89c7a62"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -102,6 +102,7 @@
   revision = "2de33835d10275975374b37b2dcfd22c9020a1f5"
 
 [[projects]]
+  branch = "master"
   name = "github.com/docker/distribution"
   packages = [
     ".",
@@ -111,7 +112,7 @@
     "manifest/schema2",
     "reference"
   ]
-  revision = "7484e51bf6af0d3b1a849644cdaced3cfcf13617"
+  revision = "0dae0957e5fe3156c265d22bef4cba9efbf388e2"
 
 [[projects]]
   branch = "master"
@@ -134,6 +135,7 @@
     "api/types/versions",
     "api/types/volume",
     "client",
+    "errdefs",
     "pkg/archive",
     "pkg/fileutils",
     "pkg/idtools",
@@ -147,7 +149,7 @@
     "pkg/term",
     "pkg/term/windows"
   ]
-  revision = "af626ba08a4e11b0e140e7512ac2740b09833c29"
+  revision = "75fe41444009947d319f76e68b5e1f2124c79b4d"
 
 [[projects]]
   name = "github.com/docker/go-connections"
@@ -188,6 +190,12 @@
   name = "github.com/euforia/base58"
   packages = ["."]
   revision = "b32ada3d71073409c0169d6d988ad3d49f8eae1a"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/euforia/docker-registry-client"
+  packages = ["registry"]
+  revision = "484541ad93e721e647e8104b702222f574119e48"
 
 [[projects]]
   branch = "master"
@@ -389,12 +397,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/heroku/docker-registry-client"
-  packages = ["registry"]
-  revision = "fd2fe803496897db70c236ee244f41487ea92ec2"
-
-[[projects]]
-  branch = "master"
   name = "github.com/jbenet/go-context"
   packages = ["io"]
   revision = "d14ea06fba99483203c19d92cfcd13ebe73135f4"
@@ -496,7 +498,8 @@
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "3d4380f53a34dcdc95f0c1db702615992b38d9a4"
+  revision = "3e01752db0189b9157070a0e1668a620f9a85da2"
+  version = "v1.0.6"
 
 [[projects]]
   name = "github.com/src-d/gcfg"
@@ -546,7 +549,8 @@
     "poly1305",
     "ssh",
     "ssh/agent",
-    "ssh/knownhosts"
+    "ssh/knownhosts",
+    "ssh/terminal"
   ]
   revision = "7f39a6fea4fe9364fb61e1def6a268a51b4f3a06"
 
@@ -743,6 +747,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fd1f1429f1906e221c35ec63f9f4dd644816691eaae1f4f925e42c8994ae723d"
+  inputs-digest = "edeab87e32aead1c8dc60d59ce06414809e3ba8d6f92a13995b965ef242f9e9f"
   solver-name = "gps-cdcl"
   solver-version = 1

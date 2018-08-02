@@ -15,6 +15,20 @@ var (
 	errDepCannotBuild = errors.New("dependencies cannot be built")
 )
 
+// ArtifactName retunrs the component artifact name based on whether
+// the component was built
+func (stack *Stack) ArtifactName(id string) string {
+	comp := stack.Components[id]
+
+	var name string
+	if comp.IsBuildable() {
+		name = stack.ID + "/"
+	}
+	name += comp.ID
+
+	return name
+}
+
 // ScopeVars returns the scoped variables usable for interpolation
 func (stack *Stack) ScopeVars() scope.Variables {
 	svars := scope.Variables{

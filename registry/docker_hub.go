@@ -2,29 +2,34 @@ package registry
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/docker/distribution/manifest"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/libtrust"
-	"github.com/heroku/docker-registry-client/registry"
+
+	"github.com/euforia/docker-registry-client/registry"
+
+	"github.com/euforia/thrap/config"
 )
 
 const defaultDockerRegAddr = "https://registry.hub.docker.com"
 
 type dockerHub struct {
+	id  string
 	url string
 	reg *registry.Registry
 }
 
 func (hub *dockerHub) ID() string {
-	return "docker"
+	return hub.id
 }
 
 // Initialize the registry provider
-func (hub *dockerHub) Init(config Config) error {
+func (hub *dockerHub) Init(rconf *config.RegistryConfig) error {
 	hub.url = defaultDockerRegAddr
 
-	conf := config.Conf
+	conf := rconf.Config
 
 	if val, ok := conf["url"]; ok {
 		v, ok := val.(string)
@@ -34,33 +39,27 @@ func (hub *dockerHub) Init(config Config) error {
 		hub.url = v
 	}
 
-	var user string
+	dockerHubConf := &registry.Config{}
+
 	if val, ok := conf["user"]; ok {
-		user, ok = val.(string)
+		dockerHubConf.Username, ok = val.(string)
 		if !ok {
 			return errors.New("registry user invalid")
 		}
 	}
 
-	var passwd string
 	if val, ok := conf["password"]; ok {
-		passwd, ok = val.(string)
+		dockerHubConf.Password, ok = val.(string)
 		if !ok {
 			return errors.New("registry password invalid")
 		}
 	}
 
-	dreg, err := registry.New(hub.url, user, passwd)
+	dreg, err := registry.New(hub.url, dockerHubConf)
 	if err == nil {
 		hub.reg = dreg
 	}
-
 	return err
-}
-
-// Type of registry. container/deployment
-func (hub *dockerHub) Type() Type {
-	return TypeContainer
 }
 
 // Create a new repository
@@ -69,7 +68,6 @@ func (hub *dockerHub) Create(name string) (interface{}, error) {
 	mfest := schema1.Manifest{
 		Versioned: manifest.Versioned{SchemaVersion: 2},
 	}
-
 	// smf, err := schema2.FromStruct(mfest)
 	key, err := libtrust.GenerateECP256PrivateKey()
 	if err != nil {
@@ -85,10 +83,21 @@ func (hub *dockerHub) Create(name string) (interface{}, error) {
 	return signedManifest, err
 }
 
-// Get a repository manifest
-// func (hub *dockerHub) GetManifest(name, tag string) (interface{}, error) {
-// 	mf,err:= hub.reg.ManifestV2(name, tag)
-// 	if err!=nil {
-// 		return
-// 	}
+func (hub *dockerHub) ImageName(name string) string {
+	return name
+}
+
+// get repo info
+func (hub *dockerHub) Get(name string) (interface{}, error) {
+	return nil, fmt.Errorf("TBI")
+}
+
+// // Type of registry. container/deployment
+// func (hub *dockerHub) Type() Type {
+// 	return TypeContainer
 // }
+
+// Get a repository manifest
+func (hub *dockerHub) GetManifest(name, tag string) (interface{}, error) {
+	return hub.reg.ManifestV2(name, tag)
+}

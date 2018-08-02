@@ -62,6 +62,10 @@ func (orch *nomadOrchestrator) Deploy(ctx context.Context, st *thrapb.Stack, opt
 	return
 }
 
+func (orch *nomadOrchestrator) Status(ctx context.Context, stack *thrapb.Stack) []*thrapb.CompStatus {
+	return nil
+}
+
 func (orch *nomadOrchestrator) Destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionReport {
 	jobs := orch.client.Jobs()
 	q := &nomad.WriteOptions{}

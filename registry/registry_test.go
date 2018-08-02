@@ -9,12 +9,16 @@ import (
 )
 
 func Test_NewContainerRegistry(t *testing.T) {
-	conf := &Config{TypeContainer, "ecr", nil}
+	conf := &config.RegistryConfig{
+		ID:       "ecr",
+		Provider: "ecr",
+	}
+	// conf := &Config{TypeContainer, "ecr", nil}
 	reg, err := New(conf)
 	assert.Nil(t, err)
-	assert.Equal(t, TypeContainer, reg.Type())
+	// assert.Equal(t, TypeContainer, reg.Type())
 
-	conf.Conf = map[string]interface{}{"region": "us-west-2"}
+	conf.Config = map[string]interface{}{"region": "us-west-2"}
 	reg, err = New(conf)
 	assert.Nil(t, err)
 	r := reg.(*awsContainerRegistry)
@@ -32,28 +36,26 @@ func fatal(t *testing.T, err error) {
 }
 
 func Test_ECR(t *testing.T) {
-	// credsfile, _ := homedir.Expand("~/.thrap/creds.hcl")
 	credsfile := "../.thrap/creds.hcl"
 	cc, err := config.ReadCredsConfig(credsfile)
 	fatal(t, err)
 
+	// Add creds
 	ecrCreds := cc.GetRegistryCreds("ecr")
-
-	conf := &Config{
-		Type:     TypeContainer,
+	conf := &config.RegistryConfig{
 		Provider: "ecr",
-		Conf: map[string]interface{}{
+		Config: map[string]interface{}{
 			"region": "us-west-2",
 		},
 	}
-
 	for k, v := range ecrCreds {
-		conf.Conf[k] = v
+		conf.Config[k] = v
 	}
 
 	treg, _ := New(conf)
 	reg := treg.(*awsContainerRegistry)
-	err = reg.Init(*conf)
+	err = reg.Init(conf)
+
 	assert.Nil(t, err)
 	assert.NotEmpty(t, os.Getenv("AWS_ACCESS_KEY_ID"))
 	assert.NotEmpty(t, os.Getenv("AWS_SECRET_ACCESS_KEY"))

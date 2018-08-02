@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/euforia/thrap/crt"
 	"github.com/euforia/thrap/thrapb"
 )
@@ -50,6 +51,7 @@ func (orch *DockerOrchestrator) Deploy(ctx context.Context, stack *thrapb.Stack,
 	if err != nil {
 		return
 	}
+	fmt.Printf("\nApplication:\n\n")
 
 	// Deploy non-head containers
 	for _, comp := range stack.Components {
@@ -66,7 +68,7 @@ func (orch *DockerOrchestrator) Deploy(ctx context.Context, stack *thrapb.Stack,
 			return
 		}
 
-		fmt.Println(comp.ID)
+		fmt.Printf(" - %s:%s\n", comp.ID, comp.Version)
 	}
 
 	// Start head containers
@@ -83,10 +85,49 @@ func (orch *DockerOrchestrator) Deploy(ctx context.Context, stack *thrapb.Stack,
 			break
 		}
 
-		fmt.Println(comp.ID)
+		fmt.Printf(" - %s:%s\n", comp.ID, comp.Version)
 	}
+	fmt.Println()
 
 	return
+}
+
+// Status returns a CompStatus slice containing the status of each component
+// in the stack
+func (orch *DockerOrchestrator) Status(ctx context.Context, stack *thrapb.Stack) []*thrapb.CompStatus {
+	out := make([]*thrapb.CompStatus, 0, len(stack.Components))
+	for _, comp := range stack.Components {
+		id := comp.ID + "." + stack.ID
+		ss := orch.getCompStatus(ctx, id)
+		ss.ID = comp.ID
+
+		out = append(out, ss)
+	}
+
+	return out
+}
+
+func (orch *DockerOrchestrator) getCompStatus(ctx context.Context, id string) *thrapb.CompStatus {
+
+	ss := &thrapb.CompStatus{}
+	ss.Details, ss.Error = orch.crt.Inspect(ctx, id)
+
+	if ss.Error == nil {
+		if ss.Details.State.Status == "exited" {
+			s := ss.Details.State
+			ss.Error = fmt.Errorf("code=%d", s.ExitCode)
+		}
+
+	} else {
+		ss.Details = types.ContainerJSON{
+			ContainerJSONBase: &types.ContainerJSONBase{
+				State: &types.ContainerState{Status: "failed"},
+			},
+			Config: &container.Config{},
+		}
+	}
+
+	return ss
 }
 
 // Destroy removes call components of the stack from the container runtime
@@ -179,8 +220,7 @@ func (orch *DockerOrchestrator) startServices(ctx context.Context, stack *thrapb
 			break
 		}
 
-		fmt.Println(comp.ID)
-
+		fmt.Printf(" - %s:%s\n", comp.ID, comp.Version)
 	}
 
 	return err

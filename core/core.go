@@ -24,7 +24,8 @@ var (
 	errProviderNotConfigured = errors.New("provider not configured")
 	errPacksDirMissing       = errors.New("packs directory missing")
 	errDataDirMissing        = errors.New("data directory missing")
-	errOrchNotLoaded         = errors.New("orchestrator profile not loaded")
+	errOrchNotLoaded         = errors.New("orchestrator not loaded")
+	errRegNotLoaded          = errors.New("registry not loaded")
 )
 
 const (
@@ -117,18 +118,26 @@ func (core *Core) Stack(profile *thrapb.Profile) (*Stack, error) {
 		return nil, errors.Wrap(errOrchNotLoaded, profile.Orchestrator)
 	}
 
-	return &Stack{
-		// profile: profile.ID,
-		regs: core.regs,
-		crt:  core.crt,
-		// run:   &bdCommon{core.crt},
+	stack := &Stack{
+		crt:   core.crt,
 		orch:  orch,
 		conf:  core.conf.Clone(),
 		vcs:   core.vcs,
 		packs: core.packs,
 		sst:   core.sst,
 		log:   core.log,
-	}, nil
+	}
+
+	// The registry may be empty for local builds
+	if profile.Registry != "" {
+		reg, ok := core.regs[profile.Registry]
+		if !ok {
+			return nil, errors.Wrap(errRegNotLoaded, profile.Registry)
+		}
+		stack.reg = reg
+	}
+
+	return stack, nil
 }
 
 // Identity returns an Identity instance to perform operations against

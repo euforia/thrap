@@ -10,6 +10,7 @@ import (
 
 	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/manifest"
+	"github.com/euforia/thrap/store"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
 	"gopkg.in/urfave/cli.v2"
@@ -57,9 +58,14 @@ func commandStackBuild() *cli.Command {
 		Usage: "Build stack components",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
-				Name:    "pub",
+				Name:  "pub",
+				Usage: "publish artifacts",
+			},
+			&cli.StringFlag{
+				Name:    "profile",
 				Aliases: []string{"p"},
-				Usage:   "publish artifacts",
+				Usage:   "build `profile`",
+				Value:   "default",
 			},
 		},
 		Action: func(ctx *cli.Context) error {
@@ -69,12 +75,30 @@ func commandStackBuild() *cli.Command {
 				return err
 			}
 
+			lpath, err := utils.GetLocalPath("")
+			if err != nil {
+				return err
+			}
+
+			// Load profiles
+			profs, err := store.LoadHCLFileProfileStorage(lpath)
+			if err != nil {
+				return err
+			}
+
+			// Load request profile
+			profName := ctx.String("profile")
+			prof := profs.Get(profName)
+			if prof == nil {
+				return fmt.Errorf("profile not found: %s", profName)
+			}
+
 			cr, err := loadCore(ctx)
 			if err != nil {
 				return err
 			}
 
-			stm, err := cr.Stack(thrapb.DefaultProfile())
+			stm, err := cr.Stack(prof)
 			if err != nil {
 				return err
 			}

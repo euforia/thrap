@@ -135,9 +135,10 @@ message Artifact {
 }
 
 message Profile {
-    string ID = 1;
-    string Orchestrator = 2;
-    string Secrets = 3;
+    string ID           = 1 [(gogoproto.moretags) = "hcle:\"omit\" yaml:\"-\""];
+    string Orchestrator = 2 [(gogoproto.moretags) = "hcl:\"orchestrator\""];
+    string Secrets      = 3 [(gogoproto.moretags) = "hcl:\"secrets\" hcle:\"omitempty\" yaml:\",omitempty\""];
+    string Registry     = 4 [(gogoproto.moretags) = "hcl:\"registry\" hcle:\"omitempty\" yaml:\",omitempty\""];
 }
 
 message IterOptions {

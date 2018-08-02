@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/docker/docker/api/types"
 	"github.com/euforia/pseudo/scope"
 	"github.com/euforia/thrap/consts"
 	version "github.com/hashicorp/go-version"
@@ -230,4 +231,11 @@ func (comp *Component) Hash(h hash.Hash) {
 	h.Write([]byte(comp.Cmd))
 	h.Write([]byte(strings.Join(comp.Args, "")))
 
+}
+
+// CompStatus holds the overall component status
+type CompStatus struct {
+	ID      string
+	Details types.ContainerJSON
+	Error   error
 }
