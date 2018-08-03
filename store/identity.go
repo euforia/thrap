@@ -23,6 +23,7 @@ type BadgerIdentityStorage struct {
 	db *badger.DB
 }
 
+// NewBadgerIdentityStorage returns a new BadgerIdentityStorage
 func NewBadgerIdentityStorage(db *badger.DB) *BadgerIdentityStorage {
 	return &BadgerIdentityStorage{db: db}
 }
@@ -31,6 +32,7 @@ func (store *BadgerIdentityStorage) getOpaqueKey(k string) []byte {
 	return []byte(defaultIdentityPrefix + k)
 }
 
+// Get returns an identity by the id
 func (store *BadgerIdentityStorage) Get(id string) (*thrapb.Identity, error) {
 	var (
 		key   = store.getOpaqueKey(id)
@@ -46,6 +48,7 @@ func (store *BadgerIdentityStorage) Get(id string) (*thrapb.Identity, error) {
 	return ident, err
 }
 
+// Create creates a new identity. It returns an error if it exists
 func (store *BadgerIdentityStorage) Create(ident *thrapb.Identity) (*thrapb.Identity, error) {
 	key := store.getOpaqueKey(ident.ID)
 	val, err := proto.Marshal(ident)
@@ -64,6 +67,7 @@ func (store *BadgerIdentityStorage) Create(ident *thrapb.Identity) (*thrapb.Iden
 	return ident, err
 }
 
+// Update an identity.  It returns an ErrIdentityNotFound
 func (store *BadgerIdentityStorage) Update(ident *thrapb.Identity) (*thrapb.Identity, error) {
 	key := store.getOpaqueKey(ident.ID)
 	val, err := proto.Marshal(ident)
@@ -106,6 +110,7 @@ func (store *BadgerIdentityStorage) Iter(start string, callback func(*thrapb.Ide
 	})
 }
 
+// Delete deletes an identity by the id. It returns an ErrIdentityNotFound
 func (store *BadgerIdentityStorage) Delete(id string) (*thrapb.Identity, error) {
 	var (
 		key   = store.getOpaqueKey(id)

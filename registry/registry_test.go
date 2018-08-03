@@ -66,6 +66,10 @@ func Test_ECR(t *testing.T) {
 	repoName := "test-thrap/test-comp"
 	_, err = reg.Create(repoName)
 	assert.Nil(t, err)
+
+	_, err = reg.GetManifest("test-comp", "notfound")
+	assert.NotNil(t, err)
+
 	_, err = reg.Get(repoName)
 	assert.Nil(t, err)
 	_, err = reg.Delete(repoName)

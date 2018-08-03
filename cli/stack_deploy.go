@@ -3,6 +3,8 @@ package cli
 import (
 	"fmt"
 
+	"github.com/euforia/thrap/orchestrator"
+
 	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/store"
 	"github.com/euforia/thrap/utils"
@@ -60,12 +62,13 @@ func commandStackDeploy() *cli.Command {
 				return err
 			}
 
+			opt := orchestrator.RequestOptions{Dryrun: ctx.Bool("dryrun")}
 			st, err := cr.Stack(prof)
 			if err != nil {
 				return err
 			}
 
-			return st.Deploy(stack)
+			return st.Deploy(stack, opt)
 		},
 	}
 }

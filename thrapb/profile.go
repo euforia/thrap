@@ -3,7 +3,7 @@ package thrapb
 // DefaultProfile returns the default local profile
 func DefaultProfile() *Profile {
 	return &Profile{
-		ID:           "default",
+		ID:           "local",
 		Orchestrator: "docker",
 		Registry:     "docker",
 	}

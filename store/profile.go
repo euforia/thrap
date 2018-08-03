@@ -1,6 +1,7 @@
 package store
 
 import (
+	"errors"
 	"io/ioutil"
 	"path/filepath"
 
@@ -10,15 +11,52 @@ import (
 	"github.com/hashicorp/hcl"
 )
 
-type HCLFileProfileStorage struct {
-	file string
-	m    map[string]*thrapb.Profile
+var (
+	ErrProfileNotFound = errors.New("profile not found")
+)
+
+type profilesDB struct {
+	Default  string
+	Profiles map[string]*thrapb.Profile
 }
 
+// Get returns the profile by id.  It returns nil if it is not found
+func (db *profilesDB) Get(id string) *thrapb.Profile {
+	return db.Profiles[id]
+}
+
+// Default returns the default profile.  It returns nil if one has not been previously
+// declared
+func (db *profilesDB) GetDefault() *thrapb.Profile {
+	return db.Profiles[db.Default]
+}
+
+// SetDefault sets the id to the default profile.  It returns an errProfileNotFound
+// error if the profile does not exist
+func (db *profilesDB) SetDefault(id string) error {
+	if _, ok := db.Profiles[id]; !ok {
+		return ErrProfileNotFound
+	}
+	db.Default = id
+	return nil
+}
+
+// HCLFileProfileStorage is a hcl file backed profile store
+type HCLFileProfileStorage struct {
+	file string
+	*profilesDB
+}
+
+// NewHCLFileProfileStorage returns a new store with the default profile loaded
 func NewHCLFileProfileStorage(fpath string) *HCLFileProfileStorage {
+	def := thrapb.DefaultProfile()
+
 	return &HCLFileProfileStorage{
-		m: map[string]*thrapb.Profile{
-			"default": thrapb.DefaultProfile(),
+		profilesDB: &profilesDB{
+			Default: def.ID,
+			Profiles: map[string]*thrapb.Profile{
+				def.ID: def,
+			},
 		},
 		file: fpath,
 	}
@@ -27,27 +65,16 @@ func NewHCLFileProfileStorage(fpath string) *HCLFileProfileStorage {
 // LoadHCLFileProfileStorage loads all profiles in a directory containing .thrap dir
 func LoadHCLFileProfileStorage(dir string) (*HCLFileProfileStorage, error) {
 	fpath := filepath.Join(dir, consts.WorkDir, consts.ProfilesFile)
-	m, err := parseProfiles(fpath)
+	db, err := parseProfiles(fpath)
 	if err == nil {
-		return &HCLFileProfileStorage{m: m, file: fpath}, nil
+		return &HCLFileProfileStorage{profilesDB: db, file: fpath}, nil
 	}
 	return nil, err
 }
 
-func (st *HCLFileProfileStorage) Get(id string) *thrapb.Profile {
-	return st.m[id]
-}
-
-func (st *HCLFileProfileStorage) Default() *thrapb.Profile {
-	return st.m["default"]
-}
-
+// Sync writes the db to disk
 func (st *HCLFileProfileStorage) Sync() error {
-	profs := map[string]map[string]*thrapb.Profile{
-		"profiles": st.m,
-	}
-
-	b, err := hclencoder.Encode(profs)
+	b, err := hclencoder.Encode(st.profilesDB)
 	if err != nil {
 		return err
 	}
@@ -56,21 +83,21 @@ func (st *HCLFileProfileStorage) Sync() error {
 }
 
 // ParseProfiles parses profiles at the given path
-func parseProfiles(profPath string) (map[string]*thrapb.Profile, error) {
-	wprofs := make(map[string]map[string]*thrapb.Profile)
+func parseProfiles(profPath string) (*profilesDB, error) {
+	var db profilesDB
 	b, err := ioutil.ReadFile(profPath)
 	if err != nil {
 		return nil, err
 	}
 
-	err = hcl.Unmarshal(b, &wprofs)
+	err = hcl.Unmarshal(b, &db)
 	if err != nil {
 		return nil, err
 	}
 
-	profs := wprofs["profiles"]
-	for k, v := range profs {
+	for k, v := range db.Profiles {
 		v.ID = k
 	}
-	return profs, err
+
+	return &db, err
 }

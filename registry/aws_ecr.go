@@ -81,10 +81,16 @@ func (ar *awsContainerRegistry) GetManifest(name, tag string) (interface{}, erro
 	}
 	getImgReq.SetRepositoryName(name)
 	getImgReq.SetImageIds([]*ecr.ImageIdentifier{imageID})
+
 	resp, err := ar.ecr.BatchGetImage(getImgReq)
 	if err != nil {
 		return nil, err
 	}
+
+	if len(resp.Failures) > 0 {
+		return nil, errors.New(*resp.Failures[0].FailureCode)
+	}
+
 	return resp.Images[0], nil
 }
 

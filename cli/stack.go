@@ -33,6 +33,7 @@ func commandStack() *cli.Command {
 			commandStackStop(),
 			commandStackDestroy(),
 			commandStackVersion(),
+			commandProfile(),
 		},
 	}
 }

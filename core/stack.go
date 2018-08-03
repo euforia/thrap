@@ -29,6 +29,10 @@ import (
 	"github.com/euforia/thrap/vcs"
 )
 
+// type DeployOptions struct{
+// 	Dryrun bool
+// }
+
 var (
 	// ErrStackAlreadyRegistered is used when a stack is already registered
 	ErrStackAlreadyRegistered = errors.New("stack already registered")
@@ -315,7 +319,7 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack, opt BuildOption
 }
 
 // Deploy deploys all components of the stack.
-func (st *Stack) Deploy(stack *thrapb.Stack) error {
+func (st *Stack) Deploy(stack *thrapb.Stack, opts orchestrator.RequestOptions) error {
 	if errs := stack.Validate(); len(errs) > 0 {
 		return utils.FlattenErrors(errs)
 	}
@@ -339,7 +343,6 @@ func (st *Stack) Deploy(stack *thrapb.Stack) error {
 
 	ctx := context.Background()
 
-	opts := orchestrator.RequestOptions{}
 	_, _, err = st.orch.Deploy(ctx, stack, opts)
 	if err != nil {
 		st.orch.Destroy(ctx, stack)
