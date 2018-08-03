@@ -42,6 +42,7 @@ func (pub *artifactPublisher) Publish(ctx context.Context, stack *thrapb.Stack,
 
 	for image, req := range reqs {
 		fmt.Printf("Publishing %s:\n\n", image)
+
 		// Check repo exists
 		_, err := pub.reg.Get(req.Image)
 		if err == nil {
@@ -50,7 +51,7 @@ func (pub *artifactPublisher) Publish(ctx context.Context, stack *thrapb.Stack,
 			err = pub.crt.ImagePush(ctx, req)
 			fmt.Println()
 		}
-		resps[image] = err
+		resps[pub.reg.ImageName(image)] = err
 	}
 
 	runtime.End()

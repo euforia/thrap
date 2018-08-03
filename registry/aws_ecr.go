@@ -127,10 +127,9 @@ func (ar *awsContainerRegistry) GetAuthConfig() (types.AuthConfig, error) {
 
 	// object to pass to template
 	auth = types.AuthConfig{
-		Auth:     *authData.AuthorizationToken,
-		Username: token[0],
-		Password: token[1],
-		// Email:    "none",
+		Auth:          *authData.AuthorizationToken,
+		Username:      token[0],
+		Password:      token[1],
 		ServerAddress: *authData.ProxyEndpoint,
 	}
 
