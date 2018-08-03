@@ -127,12 +127,14 @@ func (core *Core) initRegistries() error {
 	core.regs = make(map[string]registry.Registry)
 
 	for k, rc := range core.conf.Registry {
-		// rconf := config.RegistryConfig{Config: make(map[string]interface{})}
-		// rconf.Provider = rc.ID
-		// for k, v := range rc.Config {
-		// 	rconf.Conf[k] = v
-		// }
-		// reg, err := registry.New(rconf)
+		conf := core.creds.GetRegistryCreds(k)
+		if rc.Config == nil {
+			rc.Config = make(map[string]interface{})
+		}
+		for k, v := range conf {
+			rc.Config[k] = v
+		}
+
 		reg, err := registry.New(rc)
 		if err != nil {
 			return err

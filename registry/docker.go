@@ -3,6 +3,7 @@ package registry
 import (
 	"errors"
 
+	"github.com/docker/docker/api/types"
 	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/crt"
 )
@@ -28,9 +29,15 @@ func (reg *localDocker) Init(conf *config.RegistryConfig) (err error) {
 	return
 }
 
+func (reg *localDocker) GetAuthConfig() (types.AuthConfig, error) {
+	var auth types.AuthConfig
+	return auth, errors.New("local docker does not require auth")
+}
+
 // Create a new repository
 func (reg *localDocker) Create(string) (interface{}, error) {
-	return nil, errNotImplemented
+	// return nil, errNotImplemented
+	return nil, nil
 }
 
 // Get repo info

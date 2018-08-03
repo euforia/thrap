@@ -78,11 +78,11 @@ func Test_VCS(t *testing.T) {
 		assert.Nil(t, err)
 	}
 
-	_, err = v.Create(&Repository{Name: "fail"}, Option{})
+	_, _, err = v.Create(&Repository{Name: "fail"}, Option{})
 	assert.NotNil(t, err)
 
 	defer os.RemoveAll("/tmp/remote-test")
-	_, err = v.Create(&Repository{Name: "fail"}, Option{Path: "/tmp/remote-test", Remote: "git://foo"})
+	_, _, err = v.Create(&Repository{Name: "fail"}, Option{Path: "/tmp/remote-test", Remote: "git://foo"})
 	assert.Contains(t, err.Error(), "unsupported URL scheme")
 
 	_, ok := v.(*GitVCS)
@@ -99,7 +99,7 @@ func Test_git(t *testing.T) {
 	rmt := "ssh://git@github.com" + testdir
 	opt := Option{Path: testdir, Remote: rmt}
 	cr := &Repository{Name: testdir[1:]}
-	r, err := vcs.Create(cr, opt)
+	r, _, err := vcs.Create(cr, opt)
 	assert.Nil(t, err)
 
 	repo := r.(*git.Repository)
@@ -115,7 +115,7 @@ func Test_git(t *testing.T) {
 	assert.True(t, stat.IsDir())
 
 	// Check exists error
-	_, err = vcs.Create(&Repository{Name: testdir[1:]}, opt)
+	_, _, err = vcs.Create(&Repository{Name: testdir[1:]}, opt)
 	// assert.Equal(t, git.ErrRemoteExists, err)
 	assert.Nil(t, err)
 }
@@ -142,17 +142,17 @@ func Test_git_remote(t *testing.T) {
 
 	// No remote
 	opt := Option{Path: testdir}
-	_, err := vcs.Create(&Repository{Name: testdir[1:]}, opt)
+	_, _, err := vcs.Create(&Repository{Name: testdir[1:]}, opt)
 	assert.Nil(t, err)
 
 	// Open
 	opt.Remote = "ssh://git@github.com" + testdir
-	_, err = vcs.Create(&Repository{Name: testdir[1:]}, opt)
+	_, _, err = vcs.Create(&Repository{Name: testdir[1:]}, opt)
 	assert.Nil(t, err)
 
 	// Parse error
 	opt.Remote = "git@github.com:" + testdir[1:]
-	_, err = vcs.Create(&Repository{Name: testdir[1:]}, opt)
+	_, _, err = vcs.Create(&Repository{Name: testdir[1:]}, opt)
 	assert.NotNil(t, err)
 
 }

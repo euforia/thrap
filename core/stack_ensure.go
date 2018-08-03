@@ -1,53 +1,67 @@
 package core
 
 import (
+	"path/filepath"
+
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/vcs"
 	"github.com/pkg/errors"
 )
 
-func (st *Stack) ensureStackResources(stack *thrapb.Stack) []*thrapb.ActionReport {
-	report := st.createVcsRepo(stack)
-
+// EnsureResources ensures that all stack resources exist or creates them as
+// necessary
+func (st *Stack) EnsureResources(stack *thrapb.Stack) thrapb.ActionsResults {
+	results := make(map[string][]*thrapb.ActionResult, 3)
+	// Source repo
+	results["vcs"] = []*thrapb.ActionResult{st.createVcsRepo(stack)}
 	// Registries
-	reports := st.ensureRegistryRepos(stack)
+	results["registry"] = st.ensureRegistryRepos(stack)
 	// Secrets
-	reports = append(reports, st.ensureSecrets(stack)...)
+	results["secrets"] = st.ensureSecrets(stack)
 
-	// Concat results from both of the above
-	return append([]*thrapb.ActionReport{report}, reports...)
+	return results
 }
 
-func (st *Stack) ensureRegistryRepos(stack *thrapb.Stack) []*thrapb.ActionReport {
-	reports := make([]*thrapb.ActionReport, 0, len(stack.Components))
+func (st *Stack) ensureRegistryRepos(stack *thrapb.Stack) []*thrapb.ActionResult {
+	reports := make([]*thrapb.ActionResult, 0, len(stack.Components))
 	for id, comp := range stack.Components {
 		if !comp.IsBuildable() {
 			continue
 		}
 
-		report := &thrapb.ActionReport{
-			Action: thrapb.NewAction("create", "registry.repo", id),
+		repoName := stack.ArtifactName(id)
+
+		report := &thrapb.ActionResult{
+			Action:   "create",
+			Resource: st.reg.ImageName(repoName),
 		}
 
-		// Create registry repo
-		repoName := stack.ArtifactName(id)
-		report.Data, report.Error = st.reg.Create(repoName)
+		// Exists
+		if _, err := st.reg.Get(repoName); err != nil {
+			// Create registry repo
+			_, report.Error = st.reg.Create(repoName)
+			report.Data = "created"
+		} else {
+			report.Data = "exists"
+		}
+
 		reports = append(reports, report)
 	}
 
 	return reports
 }
 
-func (st *Stack) ensureSecrets(stack *thrapb.Stack) []*thrapb.ActionReport {
-	reports := make([]*thrapb.ActionReport, 0, len(stack.Components))
+func (st *Stack) ensureSecrets(stack *thrapb.Stack) []*thrapb.ActionResult {
+	reports := make([]*thrapb.ActionResult, 0, len(stack.Components))
 	for id, comp := range stack.Components {
 		if !comp.HasSecrets() {
 			continue
 		}
 
-		report := &thrapb.ActionReport{
-			Action: thrapb.NewAction("create", "secrets", id),
-			Error:  errors.New("to be implemented"),
+		report := &thrapb.ActionResult{
+			Action:   "create",
+			Resource: filepath.Join(stack.ID, id),
+			Error:    errors.New("to be implemented"),
 		}
 
 		reports = append(reports, report)
@@ -56,10 +70,11 @@ func (st *Stack) ensureSecrets(stack *thrapb.Stack) []*thrapb.ActionReport {
 	return reports
 }
 
-func (st *Stack) createVcsRepo(stack *thrapb.Stack) *thrapb.ActionReport {
+func (st *Stack) createVcsRepo(stack *thrapb.Stack) *thrapb.ActionResult {
 
-	er := &thrapb.ActionReport{
-		Action: thrapb.NewAction("create", "vcs.repo."+st.vcs.ID(), stack.ID),
+	er := &thrapb.ActionResult{
+		Action:   "create",
+		Resource: st.vcs.ID(),
 	}
 
 	if st.vcs == nil {
@@ -78,7 +93,14 @@ func (st *Stack) createVcsRepo(stack *thrapb.Stack) *thrapb.ActionReport {
 	}
 
 	var vcsOpt vcs.Option
-	er.Data, er.Error = st.vcs.Create(repo, vcsOpt)
+	_, created, err := st.vcs.Create(repo, vcsOpt)
+	if err == nil {
+		if created {
+			er.Data = "created"
+		} else {
+			er.Data = "exists"
+		}
+	}
 
 	return er
 }

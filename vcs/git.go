@@ -41,7 +41,7 @@ func SetupLocalGitRepo(projName, repoOwner, projPath, remoteAddr string) (VCS, *
 		Remote: DefaultGitRemoteURL(remoteAddr, repoOwner, projName),
 	}
 
-	resp, err := vcsp.Create(rr, opt)
+	resp, _, err := vcsp.Create(rr, opt)
 	if err != nil {
 		return vcsp, nil, err
 	}
@@ -118,16 +118,16 @@ func (g *GitVCS) IgnoresFile() string {
 	return gitIgnoresFile
 }
 
-// Create creates a new Repository returning a repo of the vcs' type. Each call
-// only fills in missing pieces so multiple calls will not corrupt
-func (g *GitVCS) Create(repo *Repository, opt Option) (interface{}, error) {
+// Create creates a new Repository. Each call is idempotent.  It returns
+// the object, whether it was created or an error
+func (g *GitVCS) Create(repo *Repository, opt Option) (interface{}, bool, error) {
 	var (
 		gitRepo *git.Repository
 		err     error
 	)
 
 	if len(opt.Path) == 0 {
-		return nil, errPathNotSpecified
+		return nil, false, errPathNotSpecified
 	}
 
 	gitRepo, err = git.PlainInit(opt.Path, false)
@@ -135,20 +135,20 @@ func (g *GitVCS) Create(repo *Repository, opt Option) (interface{}, error) {
 	// We still check remote
 	if err != nil {
 		if err != git.ErrRepositoryAlreadyExists {
-			return nil, err
+			return nil, false, err
 		}
 
 		// Open so we can set remote
 		gitRepo, err = git.PlainOpen(opt.Path)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 	}
 
 	err = g.setupRemote(gitRepo, opt.Remote)
 
-	return gitRepo, err
+	return gitRepo, true, err
 }
 
 // Open opens a local repo
@@ -159,6 +159,7 @@ func (g *GitVCS) Open(repo *Repository, opt Option) (interface{}, error) {
 	return git.PlainOpen(opt.Path)
 }
 
+// Status returns the repo status
 func (g *GitVCS) Status(opt Option) (git.Status, error) {
 	repo, err := git.PlainOpen(opt.Path)
 	if err != nil {

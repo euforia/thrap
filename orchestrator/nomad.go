@@ -66,15 +66,14 @@ func (orch *nomadOrchestrator) Status(ctx context.Context, stack *thrapb.Stack) 
 	return nil
 }
 
-func (orch *nomadOrchestrator) Destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionReport {
+func (orch *nomadOrchestrator) Destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionResult {
 	jobs := orch.client.Jobs()
 	q := &nomad.WriteOptions{}
 	_, _, err := jobs.Deregister(stack.ID, true, q)
 
-	ar := make([]*thrapb.ActionReport, 0, len(stack.Components))
+	ar := make([]*thrapb.ActionResult, 0, len(stack.Components))
 	for _, c := range stack.Components {
-		r := &thrapb.ActionReport{Action: thrapb.NewAction("destroy", "comp", c.ID)}
-		r.Error = err
+		r := &thrapb.ActionResult{Resource: c.ID, Action: "destroy", Error: err}
 		ar = append(ar, r)
 	}
 

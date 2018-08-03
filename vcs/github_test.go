@@ -39,7 +39,7 @@ func Test_Github_calls(t *testing.T) {
 
 	var opt Option
 	repo := &Repository{Name: "api-test"}
-	_, err = g.Create(repo, opt)
+	_, _, err = g.Create(repo, opt)
 	assert.Nil(t, err)
 
 	repo.Owner = "euforia"

@@ -45,6 +45,32 @@ func getBuildImageTags(sid string, comp *thrapb.Component, rconf *config.Registr
 	}
 	return out
 }
+
+func mapHasErrors(m map[string]error) bool {
+	for _, v := range m {
+		if v != nil {
+			return true
+		}
+	}
+	return false
+}
+
+func printPublishResults(results map[string]error) {
+	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)
+	fmt.Fprintf(tw, " \tArtifact\tStatus\tDetails\n")
+	fmt.Fprintf(tw, " \t--------\t------\t-------\n")
+	for image, err := range results {
+		if err != nil {
+			fmt.Fprintf(tw, " \t%s\tfailed\t%v\n", image, err)
+		} else {
+			fmt.Fprintf(tw, " \t%s\tsucceeded\t\n", image)
+		}
+
+	}
+	tw.Flush()
+	fmt.Println()
+}
+
 func printBuildResults(stack *thrapb.Stack, results map[string]*CompBuildResult, w io.Writer) {
 	w.Write([]byte("\n"))
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', tabwriter.StripEscape)
@@ -71,33 +97,12 @@ func printBuildResults(stack *thrapb.Stack, results map[string]*CompBuildResult,
 	w.Write([]byte("\n"))
 }
 
-// func printArtifacts(stack *thrapb.Stack, reg registry.Registry, printBase bool) {
-// 	fmt.Printf("\nArtifacts:\n\n")
-// 	for k, comp := range stack.Components {
-// 		if !comp.IsBuildable() {
-// 			continue
-// 		}
-
-// 		fmt.Printf("  %s:\n\n", comp.ID)
-// 		name := stack.ArtifactName(k)
-// 		if reg != nil {
-// 			name = reg.ImageName(name)
-// 		}
-
-// 		if printBase {
-// 			fmt.Printf("    %s\n", name)
-// 		}
-// 		fmt.Printf("    %s:%s\n\n", name, comp.Version)
-
-// 	}
-// }
-
 func printBuildStats(bld *stackBuilder, total, pub *metrics.Runtime) {
 	s := bld.ServiceTime()
 	b := bld.BuildTime()
 	results := bld.Results()
 
-	fmt.Printf("  Timing:\n\n   Service:\t%v\n", s.Duration(time.Millisecond))
+	fmt.Printf("\n  Timing:\n\n   Service:\t%v\n", s.Duration(time.Millisecond))
 	fmt.Printf("   Build:\t%v\n", b.Duration(time.Millisecond))
 	for k, v := range results {
 		fmt.Printf("     %s:\t%v\n", k, v.Runtime.Duration(time.Millisecond))

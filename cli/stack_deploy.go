@@ -23,12 +23,6 @@ func commandStackDeploy() *cli.Command {
 				Usage:   "perform a dry run",
 				Value:   false,
 			},
-			&cli.StringFlag{
-				Name:    "profile",
-				Aliases: []string{"p"},
-				Usage:   "deployment `profile`",
-				Value:   "default",
-			},
 		},
 		Action: func(ctx *cli.Context) error {
 			stack, err := manifest.LoadManifest("")

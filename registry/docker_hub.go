@@ -2,10 +2,10 @@ package registry
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/docker/distribution/manifest"
 	"github.com/docker/distribution/manifest/schema1"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/libtrust"
 
 	"github.com/euforia/docker-registry-client/registry"
@@ -83,19 +83,20 @@ func (hub *dockerHub) Create(name string) (interface{}, error) {
 	return signedManifest, err
 }
 
+func (hub *dockerHub) GetAuthConfig() (types.AuthConfig, error) {
+	var auth types.AuthConfig
+	return auth, errors.New("TBI")
+}
+
 func (hub *dockerHub) ImageName(name string) string {
 	return name
 }
 
 // get repo info
 func (hub *dockerHub) Get(name string) (interface{}, error) {
-	return nil, fmt.Errorf("TBI")
+	// Temporary
+	return hub.reg.Tags(name)
 }
-
-// // Type of registry. container/deployment
-// func (hub *dockerHub) Type() Type {
-// 	return TypeContainer
-// }
 
 // Get a repository manifest
 func (hub *dockerHub) GetManifest(name, tag string) (interface{}, error) {

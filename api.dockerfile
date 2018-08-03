@@ -14,7 +14,7 @@ ENV VAULT_ADDR=${VAULT_ADDR}
 
 COPY  . .
 RUN make test
-RUN make dist
+RUN make dist/thrap-linux
 
 # Publishable artifact
 FROM alpine
@@ -22,6 +22,6 @@ RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 VOLUME /secrets.hcl
 WORKDIR /
 EXPOSE 10000
-COPY --from=build /go/src/github.com/euforia/thrap/dist/thrap /usr/bin/thrap
+COPY --from=build /go/src/github.com/euforia/thrap/dist/thrap-linux /usr/bin/thrap
 RUN thrap configure --no-prompt
 CMD ["thrap", "agent"]

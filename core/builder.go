@@ -345,13 +345,17 @@ func (c *bdCommon) startContainer(ctx context.Context, sid string, comp *thrapb.
 }
 
 // Destroy removes call components of the stack from the container runtime
-func (c *bdCommon) destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionReport {
-	ar := make([]*thrapb.ActionReport, 0, len(stack.Components))
+func (c *bdCommon) destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionResult {
+	ar := make([]*thrapb.ActionResult, 0, len(stack.Components))
 
 	for _, comp := range stack.Components {
-		r := &thrapb.ActionReport{Action: thrapb.NewAction("destroy", "comp", comp.ID)}
-		r.Error = c.crt.Remove(ctx, comp.ID+"."+stack.ID)
+		r := &thrapb.ActionResult{
+			Action:   "destroy",
+			Resource: comp.ID,
+			Error:    c.crt.Remove(ctx, comp.ID+"."+stack.ID),
+		}
 		ar = append(ar, r)
 	}
+
 	return ar
 }

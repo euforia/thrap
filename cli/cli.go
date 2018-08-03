@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/euforia/thrap/consts"
+	"github.com/euforia/thrap/store"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vars"
 
@@ -148,4 +149,27 @@ func loadCore(ctx *cli.Context) (*core.Core, error) {
 	}
 
 	return core.NewCore(conf)
+}
+
+func loadProfile(ctx *cli.Context) (*store.HCLFileProfileStorage, *thrapb.Profile, error) {
+	lpath, err := utils.GetLocalPath("")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Load profiles
+	profs, err := store.LoadHCLFileProfileStorage(lpath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Load request profile
+	profName := ctx.String("profile")
+	prof := profs.Get(profName)
+	if prof == nil {
+		return profs, nil, fmt.Errorf("profile not found: %s", profName)
+	}
+
+	fmt.Printf("Profile: %s\n\n", profName)
+	return profs, prof, nil
 }

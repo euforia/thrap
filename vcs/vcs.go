@@ -38,8 +38,8 @@ type Option struct {
 type VCS interface {
 	// Initialize the VCS interface
 	Init(conf map[string]interface{}) error
-	// Create version control repository
-	Create(*Repository, Option) (interface{}, error)
+	// Create version control repository. Returns true if created
+	Create(*Repository, Option) (interface{}, bool, error)
 	// Open an existing repo
 	Open(*Repository, Option) (interface{}, error)
 	// Status of a repot

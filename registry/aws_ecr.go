@@ -1,13 +1,18 @@
 package registry
 
 import (
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/docker/docker/api/types"
 	"github.com/euforia/thrap/config"
 )
 
@@ -67,10 +72,6 @@ func (ar *awsContainerRegistry) ID() string {
 	return ar.conf.ID
 }
 
-// func (ar *awsContainerRegistry) Type() Type {
-// 	return TypeContainer
-// }
-
 func (ar *awsContainerRegistry) GetManifest(name, tag string) (interface{}, error) {
 	imageID := &ecr.ImageIdentifier{}
 	imageID.SetImageTag(tag)
@@ -99,6 +100,43 @@ func (ar *awsContainerRegistry) ImageName(name string) string {
 	return filepath.Join(ar.conf.Addr, name)
 }
 
+func (ar *awsContainerRegistry) GetAuthConfig() (types.AuthConfig, error) {
+	var auth types.AuthConfig
+
+	i := strings.Index(ar.conf.Addr, ".")
+	if i < 1 {
+		return auth, errors.New("could not get registry ID from ECR address")
+	}
+
+	in := &ecr.GetAuthorizationTokenInput{
+		RegistryIds: []*string{aws.String(ar.conf.Addr[:i])},
+	}
+	resp, err := ar.ecr.GetAuthorizationToken(in)
+	if err != nil {
+		return auth, err
+	}
+
+	authData := resp.AuthorizationData[0]
+
+	data, err := base64.StdEncoding.DecodeString(*authData.AuthorizationToken)
+	if err != nil {
+		return auth, err
+	}
+	// extract username and password
+	token := strings.SplitN(string(data), ":", 2)
+
+	// object to pass to template
+	auth = types.AuthConfig{
+		Auth:     *authData.AuthorizationToken,
+		Username: token[0],
+		Password: token[1],
+		// Email:    "none",
+		ServerAddress: *authData.ProxyEndpoint,
+	}
+
+	return auth, nil
+}
+
 func (ar *awsContainerRegistry) Get(name string) (interface{}, error) {
 	input := &ecr.DescribeRepositoriesInput{
 		RepositoryNames: []*string{&name},
@@ -108,7 +146,9 @@ func (ar *awsContainerRegistry) Get(name string) (interface{}, error) {
 	if err == nil {
 		return resp.Repositories[0], nil
 	}
-	return nil, err
+
+	awsErr := err.(awserr.Error)
+	return nil, errors.New(awsErr.Code())
 }
 
 func (ar *awsContainerRegistry) Delete(name string) (interface{}, error) {
@@ -123,9 +163,10 @@ func (ar *awsContainerRegistry) Delete(name string) (interface{}, error) {
 }
 
 func (ar *awsContainerRegistry) Create(name string) (interface{}, error) {
-	in := new(ecr.CreateRepositoryInput)
-	in.SetRepositoryName(name)
-
+	in := &ecr.CreateRepositoryInput{
+		RepositoryName: aws.String(name),
+	}
+	fmt.Println(name)
 	var (
 		out, err = ar.ecr.CreateRepository(in)
 		repo     *ecr.Repository

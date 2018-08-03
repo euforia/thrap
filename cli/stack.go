@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"text/tabwriter"
-	"time"
 
 	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/manifest"
@@ -20,10 +19,19 @@ func commandStack() *cli.Command {
 	return &cli.Command{
 		Name:  "stack",
 		Usage: "Stack operations",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "profile",
+				Aliases: []string{"p"},
+				Usage:   "`profile` to use",
+				Value:   "local",
+			},
+		},
 		Subcommands: []*cli.Command{
 			commandStackList(),
 			commandStackInit(),
 			commandStackRegister(),
+			commandStackEnsure(),
 			commandStackCommit(),
 			commandStackBuild(),
 			commandStackArtifacts(),
@@ -62,12 +70,6 @@ func commandStackBuild() *cli.Command {
 				Name:  "pub",
 				Usage: "publish artifacts",
 			},
-			&cli.StringFlag{
-				Name:    "profile",
-				Aliases: []string{"p"},
-				Usage:   "build `profile`",
-				Value:   "default",
-			},
 		},
 		Action: func(ctx *cli.Context) error {
 
@@ -104,192 +106,15 @@ func commandStackBuild() *cli.Command {
 				return err
 			}
 
-			dd, _ := utils.GetLocalPath("")
+			// lpath, _ := utils.GetLocalPath("")
 			opt := core.BuildOptions{
-				Workdir: dd,
+				Workdir: lpath,
 				Publish: ctx.Bool("pub"),
 			}
 
 			return stm.Build(context.Background(), stack, opt)
 		},
 	}
-}
-
-func commandStackStop() *cli.Command {
-	return &cli.Command{
-		Name:  "stop",
-		Usage: "Stop stack components",
-		Action: func(ctx *cli.Context) error {
-
-			stack, err := manifest.LoadManifest("")
-			if err != nil {
-				return err
-			}
-			if errs := stack.Validate(); len(errs) > 0 {
-				return utils.FlattenErrors(errs)
-			}
-
-			cr, err := loadCore(ctx)
-			if err != nil {
-				return err
-			}
-
-			stm, err := cr.Stack(thrapb.DefaultProfile())
-			if err != nil {
-				return err
-			}
-
-			report := stm.Stop(context.Background(), stack)
-			for _, r := range report {
-				if r.Error == nil {
-					fmt.Println(r.Action.String())
-				} else {
-					fmt.Println(r.Action.String(), r.Error)
-				}
-			}
-
-			return nil
-		},
-	}
-}
-
-func commandStackDestroy() *cli.Command {
-	return &cli.Command{
-		Name:  "destroy",
-		Usage: "Destroy stack components",
-		Action: func(ctx *cli.Context) error {
-
-			stack, err := manifest.LoadManifest("")
-			if err != nil {
-				return err
-			}
-			if errs := stack.Validate(); len(errs) > 0 {
-				return utils.FlattenErrors(errs)
-			}
-
-			cr, err := loadCore(ctx)
-			if err != nil {
-				return err
-			}
-
-			stm, err := cr.Stack(thrapb.DefaultProfile())
-			if err != nil {
-				return err
-			}
-
-			report := stm.Destroy(context.Background(), stack)
-			for _, r := range report {
-				if r.Error != nil {
-					fmt.Println(r.Error)
-				}
-			}
-
-			return nil
-		},
-	}
-}
-
-func commandStackStatus() *cli.Command {
-	return &cli.Command{
-		Name:  "status",
-		Usage: "Show status",
-		Action: func(ctx *cli.Context) error {
-
-			stack, err := manifest.LoadManifest("")
-			if err != nil {
-				return err
-			}
-			if errs := stack.Validate(); len(errs) > 0 {
-				return utils.FlattenErrors(errs)
-			}
-
-			cr, err := loadCore(ctx)
-			if err != nil {
-				return err
-			}
-
-			stm, err := cr.Stack(thrapb.DefaultProfile())
-			if err != nil {
-				return err
-			}
-
-			fmt.Println()
-			printStackStatus(stm, stack)
-			fmt.Println()
-
-			return nil
-		},
-	}
-}
-
-func commandStackArtifacts() *cli.Command {
-	return &cli.Command{
-		Name:    "artifacts",
-		Aliases: []string{"art"},
-		Usage:   "List stack artifacts",
-		Action: func(ctx *cli.Context) error {
-
-			stack, err := manifest.LoadManifest("")
-			if err != nil {
-				return err
-			}
-			if errs := stack.Validate(); len(errs) > 0 {
-				return utils.FlattenErrors(errs)
-			}
-
-			cr, err := loadCore(ctx)
-			if err != nil {
-				return err
-			}
-
-			stm, err := cr.Stack(thrapb.DefaultProfile())
-			if err != nil {
-				return err
-			}
-
-			fmt.Println()
-			printStackArtifacts(stm, stack)
-			fmt.Println()
-
-			return nil
-		},
-	}
-}
-
-func printStackArtifacts(stm *core.Stack, stack *thrapb.Stack) {
-	imgs := stm.Artifacts(stack)
-	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)
-	fmt.Fprintf(tw, "Name\tID\tCreated\tSize\n")
-	fmt.Fprintf(tw, "----\t--\t-------\t----\n")
-	for _, img := range imgs {
-		for _, tag := range img.Tags {
-			d := time.Now().Sub(time.Unix(img.Created, 0)).Round(time.Second)
-			smb := img.DataSize / (1024 * 1024)
-			fmt.Fprintf(tw, "%s\t%s\t%s ago\t%d MB\n", tag, img.ID.Hex()[:12], d, smb)
-		}
-
-	}
-	tw.Flush()
-}
-
-func printStackStatus(stm *core.Stack, stack *thrapb.Stack) {
-	resp := stm.Status(context.Background(), stack)
-	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)
-	fmt.Fprintf(tw, "Component\tImage\tStatus\tDetails\n")
-	fmt.Fprintf(tw, "---------\t-----\t------\t-------\n")
-	for _, s := range resp {
-
-		d := s.Details
-		st := d.State
-
-		if s.Error != nil {
-			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", s.ID, d.Config.Image, st.Status, s.Error)
-		} else {
-			fmt.Fprintf(tw, "%s\t%s\t%s\t%v\n", s.ID, d.Config.Image, st.Status, d.NetworkSettings.Ports)
-		}
-
-	}
-	tw.Flush()
 }
 
 func commandStackLogs() *cli.Command {
@@ -354,7 +179,7 @@ func commandStackList() *cli.Command {
 				return err
 			}
 
-			tw := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.StripEscape)
+			tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)
 			fmt.Fprintf(tw, "ID\tVERSION\n")
 			for {
 				stack, err := stream.Recv()
@@ -370,4 +195,57 @@ func commandStackList() *cli.Command {
 			}
 		},
 	}
+}
+
+func commandStackEnsure() *cli.Command {
+	return &cli.Command{
+		Name:  "ensure",
+		Usage: "Ensure resources exist",
+		Action: func(ctx *cli.Context) error {
+			stack, err := manifest.LoadManifest("")
+			if err != nil {
+				return err
+			}
+
+			if errs := stack.Validate(); len(errs) > 0 {
+				return utils.FlattenErrors(errs)
+			}
+
+			_, prof, err := loadProfile(ctx)
+			if err != nil {
+				return err
+			}
+
+			cr, err := loadCore(ctx)
+			if err != nil {
+				return err
+			}
+
+			st, err := cr.Stack(prof)
+			if err != nil {
+				return err
+			}
+
+			results := st.EnsureResources(stack)
+			results.Print(os.Stdout)
+
+			return nil
+		},
+	}
+}
+
+func defaultPrintStackResults(results []*thrapb.ActionResult) {
+	fmt.Println()
+	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)
+	fmt.Fprintf(tw, " \tComponent\tStatus\tDetails\n")
+	fmt.Fprintf(tw, " \t---------\t------\t-------\n")
+	for _, r := range results {
+		if r.Error == nil {
+			fmt.Fprintf(tw, " \t%s\tsucceeded\t \n", r.Resource)
+		} else {
+			fmt.Fprintf(tw, " \t%s\tfailed\t%v\n", r.Resource, r.Error)
+		}
+	}
+	tw.Flush()
+	fmt.Println()
 }

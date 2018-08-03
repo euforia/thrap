@@ -44,7 +44,7 @@ var (
 type StackStore interface {
 	Get(id string) (*thrapb.Stack, error)
 	Iter(prefix string, f func(*thrapb.Stack) error) error
-	Register(stack *thrapb.Stack) (*thrapb.Stack, []*thrapb.ActionReport, error)
+	Register(stack *thrapb.Stack) (*thrapb.Stack, []*thrapb.ActionResult, error)
 }
 
 // Stack provides various stack based operations. It is initialized based
@@ -82,7 +82,7 @@ func (st *Stack) Assembler(cwd string, stack *thrapb.Stack) (*asm.StackAsm, erro
 
 // Register registers a new stack. It returns an error if the stack is
 // already registered or fails to register
-func (st *Stack) Register(stack *thrapb.Stack) (*thrapb.Stack, []*thrapb.ActionReport, error) {
+func (st *Stack) Register(stack *thrapb.Stack) (*thrapb.Stack, thrapb.ActionsResults, error) {
 	errs := stack.Validate()
 	if len(errs) > 0 {
 		return nil, nil, utils.FlattenErrors(errs)
@@ -96,13 +96,7 @@ func (st *Stack) Register(stack *thrapb.Stack) (*thrapb.Stack, []*thrapb.ActionR
 		return nil, nil, err
 	}
 
-	reports := st.ensureStackResources(stack)
-
-	// Temp
-	for _, r := range reports {
-		fmt.Printf("%v '%v'\n", r.Action, r.Error)
-	}
-
+	reports := st.EnsureResources(stack)
 	return stack, reports, err
 }
 
@@ -246,7 +240,6 @@ func (st *Stack) Iter(prefix string, f func(*thrapb.Stack) error) error {
 
 // Build starts all require services, then starts all the builds
 func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack, opt BuildOptions) error {
-
 	if errs := stack.Validate(); len(errs) > 0 {
 		return utils.FlattenErrors(errs)
 	}
@@ -255,8 +248,7 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack, opt BuildOption
 		totalTime = (&metrics.Runtime{}).Start()
 		pubTime   = &metrics.Runtime{}
 		scopeVars = st.scopeVars(stack)
-		// rconf     = st.conf.DefaultRegistry()
-		err error
+		err       error
 	)
 
 	printScopeVars(scopeVars)
@@ -274,36 +266,46 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack, opt BuildOption
 		return err
 	}
 
-	results := bldr.Results()
-
 	// Write timings at the end
 	defer func() {
 		totalTime.End()
 		printBuildStats(bldr, totalTime, pubTime)
-
-		var status string
-		if bldr.Succeeded() {
-			status = "SUCCEEDED"
-		} else {
-			status = "FAILED"
-		}
-
-		fmt.Printf("\n%s\n", status)
+		fmt.Println()
 	}()
 
+	var (
+		bldResults = bldr.Results()
+		pubResults map[string]error
+		canPublish bool
+	)
+
 	defer func() {
-		fmt.Printf("SUMMARY\n\n  Build:\n")
-		printBuildResults(stack, results, os.Stdout)
+		fmt.Printf("\nSUMMARY\n\n")
+
+		if !bldr.Succeeded() {
+			fmt.Printf("  Build [failed]\n")
+		} else {
+			fmt.Printf("  Build [succeeded]\n")
+		}
+		printBuildResults(stack, bldResults, os.Stdout)
+
+		if canPublish && err == nil {
+			if mapHasErrors(pubResults) {
+				fmt.Printf("  Publish  [failed]\n\n")
+			} else {
+				fmt.Printf("  Publish  [succeeded]\n\n")
+			}
+			printPublishResults(pubResults)
+		}
+
 	}()
 
 	if !bldr.Succeeded() {
 		return err
 	}
 
-	//
-	// Publish
-	//
-	canPublish, err := st.checkWorktree(opt)
+	// We can publish if the worktree is clean
+	canPublish, err = st.checkWorktree(opt)
 	if err != nil {
 		return err
 	}
@@ -312,10 +314,12 @@ func (st *Stack) Build(ctx context.Context, stack *thrapb.Stack, opt BuildOption
 	st.printArtifacts(stack, true)
 
 	if canPublish {
-		pubTime = st.publishArtifacts(stack)
+		publisher := &artifactPublisher{crt: st.crt, reg: st.reg}
+		pubResults, pubTime, err = publisher.Publish(ctx, stack, PublishOptions{})
+		// pubResults, pubTime = st.publishArtifacts(stack)
 	}
 
-	return nil
+	return err
 }
 
 // Deploy deploys all components of the stack.
@@ -394,53 +398,23 @@ func (st *Stack) checkArtifactsExist(stack *thrapb.Stack) error {
 }
 
 // Destroy removes call components of the stack from the container runtime
-func (st *Stack) Destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionReport {
+func (st *Stack) Destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionResult {
 	return st.orch.Destroy(ctx, stack)
 }
 
 // Stop shutsdown any running containers in the stack.
-func (st *Stack) Stop(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionReport {
-	ar := make([]*thrapb.ActionReport, 0, len(stack.Components))
+func (st *Stack) Stop(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionResult {
+	ar := make([]*thrapb.ActionResult, 0, len(stack.Components))
 
 	for _, c := range stack.Components {
-		r := &thrapb.ActionReport{Action: thrapb.NewAction("stop", "comp", c.ID)}
+		r := &thrapb.ActionResult{
+			Action:   "stop",
+			Resource: c.ID,
+		}
 		r.Error = st.crt.Stop(ctx, c.ID+"."+stack.ID)
 		ar = append(ar, r)
 	}
 	return ar
-}
-
-// publish checks if artifacts are publishable and only then will publish them
-func (st *Stack) publish(rconf *config.RegistryConfig, stack *thrapb.Stack, opt BuildOptions) (*metrics.Runtime, error) {
-	// runtime := &metrics.Runtime{}
-
-	// // Check if we can publish artifacts after the build completes
-	// status, err := st.vcs.Status(vcs.Option{Path: opt.Workdir})
-	// if err != nil {
-	// 	return runtime, err
-	// }
-	// // We only auto-publish if the working tree is clean
-	// if !status.IsClean() {
-	// 	fmt.Printf("\nUncommitted code:\n\n")
-	// 	fmt.Println(status)
-
-	// 	if !opt.Publish {
-	// 		fmt.Println("Artifacts will not be published!")
-	// 		return runtime, nil
-	// 	}
-
-	// 	fmt.Println("** Explicit artifact publish requested (source code & artifacts may be out of sync) **")
-	// }
-	canPublish, err := st.checkWorktree(opt)
-	if err != nil {
-		return &metrics.Runtime{}, err
-	}
-
-	if canPublish {
-		return st.publishArtifacts(stack), nil
-	}
-
-	return &metrics.Runtime{}, nil
 }
 
 // returns true if we can publish
@@ -466,28 +440,40 @@ func (st *Stack) checkWorktree(opt BuildOptions) (bool, error) {
 	return true, nil
 }
 
-func (st *Stack) publishArtifacts(stack *thrapb.Stack) *metrics.Runtime {
-	runtime := &metrics.Runtime{}
-	runtime.Start()
-	fmt.Printf(" Publishing:\n\n")
-	for id, comp := range stack.Components {
-		if !comp.IsBuildable() {
-			continue
-		}
+// func (st *Stack) publishArtifacts(stack *thrapb.Stack) (map[string]error, *metrics.Runtime) {
+// 	runtime := &metrics.Runtime{}
+// 	ctx := context.Background()
+// 	// reports := make([]*thrapb.ActionResult, 0, len(stack.Components))
+// 	results := make(map[string]error)
 
-		fmt.Printf("  %s:\n\n", id)
+// 	runtime.Start()
+// 	fmt.Printf(" Publishing:\n\n")
+// 	for id, comp := range stack.Components {
+// 		if !comp.IsBuildable() {
+// 			continue
+// 		}
 
-		name := stack.ArtifactName(id)
-		name = st.reg.ImageName(name)
-		fmt.Printf("   %s\n", name)
-		fmt.Printf("   %s:%s\n\n", name, comp.Version)
-	}
-	runtime.End()
-	return runtime
-}
+// 		fmt.Printf("  %s:\n\n", id)
+
+// 		name := stack.ArtifactName(id)
+// 		name = st.reg.ImageName(name)
+// 		fmt.Printf("   %s\n", name)
+// 		fmt.Printf("   %s:%s\n\n", name, comp.Version)
+
+// 		req := &crt.PushRequest{
+// 			Image:  name,
+// 			Tag:    comp.Version,
+// 			Output: os.Stdout,
+// 		}
+
+// 		results[name+":"+comp.Version] = st.crt.ImagePush(ctx, req)
+// 	}
+// 	runtime.End()
+
+// 	return results, runtime
+// }
 
 func (st *Stack) printArtifacts(stack *thrapb.Stack, printBase bool) {
-	// fmt.Printf("\nArtifacts:\n\n")
 	for k, comp := range stack.Components {
 		if !comp.IsBuildable() {
 			continue

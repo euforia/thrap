@@ -47,6 +47,7 @@ func NewDocker() (*Docker, error) {
 	if err == nil {
 		return &Docker{cli}, nil
 	}
+
 	return nil, err
 }
 
@@ -180,7 +181,14 @@ func (orch *Docker) ImageConfig(name string) (*container.Config, error) {
 	return inf.Config, nil
 }
 
-// ImagePush pushes an image using the local docker engine to the remote registry
+// RegistryLogin logins into a registry.  Only auth or user/pass can be used
+func (orch *Docker) RegistryLogin(ctx context.Context, authConf types.AuthConfig) error {
+	_, err := orch.cli.RegistryLogin(ctx, authConf)
+	return err
+}
+
+// ImagePush pushes an image using the local docker engine to the remote registry.
+// It logins into the registry before attempting the push
 func (orch *Docker) ImagePush(ctx context.Context, req *PushRequest) error {
 	rc, err := orch.cli.ImagePush(ctx, req.Image+":"+req.Tag, req.Options)
 	if err != nil {

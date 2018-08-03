@@ -93,7 +93,7 @@ func (gh *githubVCS) RemoveHook(repo *Repository) (interface{}, error) {
 
 // Create creates a new repo. Each call only fills in missing pieces so multiple
 // calls will not corrupt
-func (gh *githubVCS) Create(repo *Repository, opt Option) (interface{}, error) {
+func (gh *githubVCS) Create(repo *Repository, opt Option) (interface{}, bool, error) {
 	ctx := context.Background()
 
 	// TODO: handle user vs org
@@ -101,7 +101,7 @@ func (gh *githubVCS) Create(repo *Repository, opt Option) (interface{}, error) {
 	// Create only if it does not exist
 	ghRepo, _, err := gh.client.Repositories.Get(ctx, repo.Owner, repo.Name)
 	if err == nil {
-		return ghRepo, nil
+		return ghRepo, false, nil
 	}
 
 	newRepo := &github.Repository{
@@ -112,7 +112,7 @@ func (gh *githubVCS) Create(repo *Repository, opt Option) (interface{}, error) {
 
 	// Owner defaults to the user if not specified
 	ghrepo, _, err := gh.client.Repositories.Create(ctx, repo.Owner, newRepo)
-	return ghrepo, err
+	return ghrepo, true, err
 }
 
 func (gh *githubVCS) Open(repo *Repository, opt Option) (interface{}, error) {

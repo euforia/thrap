@@ -3,52 +3,9 @@ package registry
 import (
 	"fmt"
 
+	"github.com/docker/docker/api/types"
 	"github.com/euforia/thrap/config"
 )
-
-// // Type is the registry type
-// type Type uint8
-
-// func (t Type) String() string {
-// 	var s string
-
-// 	switch t {
-
-// 	case TypeContainer:
-// 		s = "Container"
-
-// 	case TypeDeployment:
-// 		s = "Deployment"
-
-// 	default:
-// 		s = "Unknown"
-
-// 	}
-
-// 	return s
-// }
-
-// const (
-// 	// TypeContainer is a container registry
-// 	TypeContainer Type = iota + 1
-// 	// TypeDeployment is a deployment registry
-// 	TypeDeployment
-// )
-
-// // Config holds the registry config
-// type Config struct {
-// 	Type     Type
-// 	Provider string
-// 	Conf     map[string]interface{}
-// }
-
-// // DefaultConfig returns a default registry config
-// func DefaultConfig() *Config {
-// 	return &Config{
-// 		Type: TypeContainer,
-// 		Conf: make(map[string]interface{}),
-// 	}
-// }
 
 // Registry implements a registry interface
 type Registry interface {
@@ -63,6 +20,8 @@ type Registry interface {
 	GetManifest(name, tag string) (interface{}, error)
 	// Name of the image with the registry. Needed for deployments
 	ImageName(string) string
+	// Returns a docker AuthConfig
+	GetAuthConfig() (types.AuthConfig, error)
 }
 
 // New returns a new registry based on the config.
@@ -73,12 +32,6 @@ func New(conf *config.RegistryConfig) (Registry, error) {
 		reg Registry
 		err error
 	)
-
-	// switch conf.Type {
-	// case TypeContainer:
-	// default:
-	// 	return nil, fmt.Errorf("unsupported registry type: '%v'", conf.Type)
-	// }
 
 	switch conf.Provider {
 	case "ecr":

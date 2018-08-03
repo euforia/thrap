@@ -29,6 +29,9 @@ test:
 $(NAME):
 	$(BUILD_CMD) -o $(NAME) $(SOURCE_FILES)
 
+dist/$(NAME)-linux:
+	GOOS=linux $(BUILD_CMD) $(DIST_OPTS) -o dist/$(NAME)-linux $(SOURCE_FILES)
+
 # linux is always done last as it is used in the container build
 dist:
 	mkdir dist

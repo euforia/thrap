@@ -131,12 +131,15 @@ func (orch *DockerOrchestrator) getCompStatus(ctx context.Context, id string) *t
 }
 
 // Destroy removes call components of the stack from the container runtime
-func (orch *DockerOrchestrator) Destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionReport {
-	ar := make([]*thrapb.ActionReport, 0, len(stack.Components))
+func (orch *DockerOrchestrator) Destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionResult {
+	ar := make([]*thrapb.ActionResult, 0, len(stack.Components))
 
 	for _, c := range stack.Components {
-		r := &thrapb.ActionReport{Action: thrapb.NewAction("destroy", "comp", c.ID)}
-		r.Error = orch.crt.Remove(ctx, c.ID+"."+stack.ID)
+		r := &thrapb.ActionResult{
+			Action:   "destroy",
+			Resource: c.ID,
+			Error:    orch.crt.Remove(ctx, c.ID+"."+stack.ID),
+		}
 		ar = append(ar, r)
 	}
 	return ar

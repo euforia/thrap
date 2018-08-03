@@ -36,7 +36,7 @@ type Orchestrator interface {
 	Deploy(ctx context.Context, stack *thrapb.Stack, opts RequestOptions) (resp interface{}, def interface{}, err error)
 
 	// Destroy the stack returning results for each component
-	Destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionReport
+	Destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionResult
 	// Status of all comps
 	Status(ctx context.Context, stack *thrapb.Stack) []*thrapb.CompStatus
 }
