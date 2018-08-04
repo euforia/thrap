@@ -3,13 +3,12 @@ package registry
 import (
 	"encoding/base64"
 	"errors"
-	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/docker/docker/api/types"
@@ -37,6 +36,8 @@ func (ar *awsContainerRegistry) Init(rconf *config.RegistryConfig) error {
 	conf := aws.NewConfig()
 
 	c := rconf.Config
+
+	var awsCreds credentials.Value
 	// Override region if supplied
 	if val, ok := c["region"]; ok {
 		region, ok := val.(string)
@@ -48,16 +49,19 @@ func (ar *awsContainerRegistry) Init(rconf *config.RegistryConfig) error {
 	if val, ok := c["key"]; ok {
 		id, ok := val.(string)
 		if ok {
-			os.Setenv("AWS_ACCESS_KEY_ID", id)
+			awsCreds.AccessKeyID = id
 		}
 	}
 
 	if val, ok := c["secret"]; ok {
 		id, ok := val.(string)
 		if ok {
-			os.Setenv("AWS_SECRET_ACCESS_KEY", id)
+			awsCreds.SecretAccessKey = id
 		}
 	}
+
+	creds := credentials.NewStaticCredentialsFromCreds(awsCreds)
+	conf = conf.WithCredentials(creds)
 
 	sess, err := session.NewSession(conf)
 	if err == nil {
@@ -165,7 +169,6 @@ func (ar *awsContainerRegistry) Create(name string) (interface{}, error) {
 	in := &ecr.CreateRepositoryInput{
 		RepositoryName: aws.String(name),
 	}
-	fmt.Println(name)
 	var (
 		out, err = ar.ecr.CreateRepository(in)
 		repo     *ecr.Repository

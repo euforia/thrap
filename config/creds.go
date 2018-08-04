@@ -2,8 +2,10 @@ package config
 
 import (
 	"io/ioutil"
+	"path/filepath"
 
 	"github.com/euforia/hclencoder"
+	"github.com/euforia/thrap/consts"
 	"github.com/hashicorp/hcl"
 )
 
@@ -51,7 +53,7 @@ func merge(curr, newm map[string]map[string]string) map[string]map[string]string
 		return curr
 	}
 
-	out := make(map[string]map[string]string, len(curr)+len(newm))
+	out := make(map[string]map[string]string)
 	for k, v := range curr {
 		out[k] = v
 	}
@@ -72,6 +74,11 @@ func merge(curr, newm map[string]map[string]string) map[string]map[string]string
 	}
 
 	return out
+}
+
+func ReadProjectCredsConfig(dir string) (*CredsConfig, error) {
+	filename := filepath.Join(dir, consts.WorkDir, consts.CredsFile)
+	return ReadCredsConfig(filename)
 }
 
 // ReadCredsConfig reads a creds conf from the given file

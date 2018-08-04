@@ -48,7 +48,8 @@ func (core *Core) loadConfigs(conf *Config) error {
 	if err != nil {
 		return err
 	}
-	creds.Merge(creds)
+
+	creds.Merge(conf.Creds)
 	core.creds = creds
 
 	return nil
@@ -128,11 +129,16 @@ func (core *Core) initRegistries() error {
 
 	for k, rc := range core.conf.Registry {
 		conf := core.creds.GetRegistryCreds(k)
-		if rc.Config == nil {
-			rc.Config = make(map[string]interface{})
-		}
-		for k, v := range conf {
-			rc.Config[k] = v
+		if conf != nil {
+			if rc.Config == nil {
+				rc.Config = make(map[string]interface{})
+			}
+
+			for k, v := range conf {
+				rc.Config[k] = v
+			}
+		} else {
+			core.log.Printf("Credentials not found for registry: %s", k)
 		}
 
 		reg, err := registry.New(rc)

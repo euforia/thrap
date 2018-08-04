@@ -183,6 +183,7 @@ func Test_Core_Assembler(t *testing.T) {
 	conf := &Config{
 		DataDir:     tmpdir,
 		ThrapConfig: lconf,
+		Logger:      DefaultLogger(os.Stdout),
 	}
 
 	c, err := NewCore(conf)

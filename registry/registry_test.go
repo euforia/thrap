@@ -1,7 +1,6 @@
 package registry
 
 import (
-	"os"
 	"testing"
 
 	"github.com/euforia/thrap/config"
@@ -41,7 +40,7 @@ func Test_ECR(t *testing.T) {
 	fatal(t, err)
 
 	// Add creds
-	ecrCreds := cc.GetRegistryCreds("ecr")
+	ecrCreds := cc.GetRegistryCreds("sandbox")
 	conf := &config.RegistryConfig{
 		Provider: "ecr",
 		Config: map[string]interface{}{
@@ -57,8 +56,8 @@ func Test_ECR(t *testing.T) {
 	err = reg.Init(conf)
 
 	assert.Nil(t, err)
-	assert.NotEmpty(t, os.Getenv("AWS_ACCESS_KEY_ID"))
-	assert.NotEmpty(t, os.Getenv("AWS_SECRET_ACCESS_KEY"))
+	// assert.NotEmpty(t, os.Getenv("AWS_ACCESS_KEY_ID"))
+	// assert.NotEmpty(t, os.Getenv("AWS_SECRET_ACCESS_KEY"))
 
 	_, err = reg.Get("keycloak")
 	assert.Nil(t, err)

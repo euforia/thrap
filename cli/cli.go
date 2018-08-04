@@ -143,7 +143,14 @@ func loadCore(ctx *cli.Context) (*core.Core, error) {
 	if ctx.Bool("debug") {
 		conf.Logger = core.DefaultLogger(os.Stdout)
 	}
+
+	// Load project configs
 	conf.ThrapConfig, err = config.ReadProjectConfig(lpath)
+	if err != nil {
+		return nil, err
+	}
+
+	conf.Creds, err = config.ReadProjectCredsConfig(lpath)
 	if err != nil {
 		return nil, err
 	}

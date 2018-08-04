@@ -377,7 +377,7 @@ func (st *Stack) checkArtifactsExist(stack *thrapb.Stack) error {
 		}
 
 		comp.Name = st.reg.ImageName(name)
-		reports[st.reg.ImageName(comp.Name+":"+comp.Version)] = err
+		reports[comp.Name+":"+comp.Version] = err
 	}
 
 	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)

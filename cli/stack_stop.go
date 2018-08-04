@@ -2,6 +2,8 @@ package cli
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/thrapb"
@@ -33,8 +35,23 @@ func commandStackStop() *cli.Command {
 				return err
 			}
 
-			report := stm.Stop(context.Background(), stack)
-			defaultPrintStackResults(report)
+			var stop bool
+			utils.PromptUntilNoError("Are you sure you want to stop "+stack.ID+" [y/N] ? ",
+				os.Stdout, os.Stdin, func(in []byte) error {
+					s := string(in)
+					switch s {
+					case "y", "Y", "yes", "Yes":
+						stop = true
+					}
+					return nil
+				})
+
+			if stop {
+				report := stm.Stop(context.Background(), stack)
+				defaultPrintStackResults(report)
+			} else {
+				fmt.Println("Exiting!")
+			}
 
 			return nil
 		},
@@ -55,18 +72,38 @@ func commandStackDestroy() *cli.Command {
 				return utils.FlattenErrors(errs)
 			}
 
+			_, prof, err := loadProfile(ctx)
+			if err != nil {
+				return err
+			}
+
 			cr, err := loadCore(ctx)
 			if err != nil {
 				return err
 			}
 
-			stm, err := cr.Stack(thrapb.DefaultProfile())
+			stm, err := cr.Stack(prof)
 			if err != nil {
 				return err
 			}
 
-			report := stm.Destroy(context.Background(), stack)
-			defaultPrintStackResults(report)
+			var destroy bool
+			utils.PromptUntilNoError("Are you sure you want to destroy "+stack.ID+" [y/N] ? ",
+				os.Stdout, os.Stdin, func(in []byte) error {
+					s := string(in)
+					switch s {
+					case "y", "Y", "yes", "Yes":
+						destroy = true
+					}
+					return nil
+				})
+
+			if destroy {
+				report := stm.Destroy(context.Background(), stack)
+				defaultPrintStackResults(report)
+			} else {
+				fmt.Println("Exiting!")
+			}
 
 			return nil
 		},
