@@ -352,6 +352,8 @@ func (st *Stack) Deploy(stack *thrapb.Stack, opts orchestrator.RequestOptions) e
 		st.orch.Destroy(ctx, stack)
 	}
 
+	// fmt.Printf("%+v\n", resp)
+	// fmt.Printf("%+v\n", obj)
 	return err
 }
 
@@ -373,7 +375,9 @@ func (st *Stack) checkArtifactsExist(stack *thrapb.Stack) error {
 		if err != nil {
 			failed = true
 		}
-		reports[st.reg.ImageName(name+":"+comp.Version)] = err
+
+		comp.Name = st.reg.ImageName(name)
+		reports[st.reg.ImageName(comp.Name+":"+comp.Version)] = err
 	}
 
 	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.StripEscape)
@@ -439,39 +443,6 @@ func (st *Stack) checkWorktree(opt BuildOptions) (bool, error) {
 
 	return true, nil
 }
-
-// func (st *Stack) publishArtifacts(stack *thrapb.Stack) (map[string]error, *metrics.Runtime) {
-// 	runtime := &metrics.Runtime{}
-// 	ctx := context.Background()
-// 	// reports := make([]*thrapb.ActionResult, 0, len(stack.Components))
-// 	results := make(map[string]error)
-
-// 	runtime.Start()
-// 	fmt.Printf(" Publishing:\n\n")
-// 	for id, comp := range stack.Components {
-// 		if !comp.IsBuildable() {
-// 			continue
-// 		}
-
-// 		fmt.Printf("  %s:\n\n", id)
-
-// 		name := stack.ArtifactName(id)
-// 		name = st.reg.ImageName(name)
-// 		fmt.Printf("   %s\n", name)
-// 		fmt.Printf("   %s:%s\n\n", name, comp.Version)
-
-// 		req := &crt.PushRequest{
-// 			Image:  name,
-// 			Tag:    comp.Version,
-// 			Output: os.Stdout,
-// 		}
-
-// 		results[name+":"+comp.Version] = st.crt.ImagePush(ctx, req)
-// 	}
-// 	runtime.End()
-
-// 	return results, runtime
-// }
 
 func (st *Stack) printArtifacts(stack *thrapb.Stack, printBase bool) {
 	for k, comp := range stack.Components {

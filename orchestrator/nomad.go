@@ -59,6 +59,7 @@ func (orch *nomadOrchestrator) Deploy(ctx context.Context, st *thrapb.Stack, opt
 
 	regOpts := &nomad.RegisterOptions{}
 	resp, _, err = jobs.RegisterOpts(njob, regOpts, q)
+
 	return
 }
 

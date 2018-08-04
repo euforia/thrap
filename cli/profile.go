@@ -36,10 +36,7 @@ func commandProfile() *cli.Command {
 			)
 
 			if profIn == "" {
-				display = map[string]interface{}{
-					"default":  profs.Default,
-					"profiles": profs.Profiles,
-				}
+				display = profs.Profiles
 				os.Stdout.Write([]byte("\n"))
 			} else {
 				kv := strings.Split(profIn, "=")
@@ -53,10 +50,11 @@ func commandProfile() *cli.Command {
 					return store.ErrProfileNotFound
 				}
 				display = map[string]*thrapb.Profile{id: prof}
+				fmt.Println()
 			}
 
 			b, _ := hclencoder.Encode(&display)
-			fmt.Printf("%s", b)
+			fmt.Printf("%s\n", b)
 
 			return nil
 		},
