@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/euforia/hclencoder"
@@ -11,7 +12,7 @@ import (
 const (
 	defaultPriority   = 50
 	defaultRegion     = "us-west-2"
-	defaultGroupCount = 3
+	defaultGroupCount = 1
 	defaultNetMbits   = 1
 	defaultCPUMHz     = 200 //mhz
 	defaultMemMB      = 256 //mb
@@ -42,14 +43,40 @@ func MakeNomadJob(stack *thrapb.Stack) (*api.Job, error) {
 	// grp.ReschedulePolicy.Merge(reschedPolicy)
 
 	for _, comp := range stack.Components {
-		task := makeNomadTaskDocker(id, gid, comp)
+		switch comp.Type {
 
-		grp = grp.AddTask(task)
+		case thrapb.CompTypeDatastore:
+			// Datastore
+			dsGroup := makeNomadDatastoreGroup(id, comp)
+			job = job.AddTaskGroup(dsGroup)
+
+		case thrapb.CompTypeAPI:
+			// Api's
+			task := makeNomadTaskDocker(id, gid, comp)
+			grp = grp.AddTask(task)
+
+		default:
+			return nil, fmt.Errorf("component type not supported: %v", comp.Type)
+
+		}
 
 	}
-
+	// Add 0 group
 	job = job.AddTaskGroup(grp)
 	return job, nil
+}
+
+func makeNomadDatastoreGroup(id string, comp *thrapb.Component) *api.TaskGroup {
+	group := api.NewTaskGroup(id+".db", defaultGroupCount)
+
+	group.Update = api.DefaultUpdateStrategy()
+	//group.Update.Merge(other)
+
+	group.ReschedulePolicy = api.NewDefaultReschedulePolicy(api.JobTypeService)
+
+	task := makeNomadTaskDocker(id, "db", comp)
+
+	return group.AddTask(task)
 }
 
 func makeNomadTaskDocker(sid, gid string, comp *thrapb.Component) *api.Task {
@@ -82,20 +109,24 @@ func makeNomadTaskDocker(sid, gid string, comp *thrapb.Component) *api.Task {
 	for k, v := range comp.Ports {
 		portmap[k] = v
 
-		task.Services = append(task.Services, &api.Service{
+		service := &api.Service{
 			Id:        sid + "." + k,
 			Name:      sid,
 			Tags:      []string{k + "." + comp.ID},
 			PortLabel: k,
-			// Checks: []api.ServiceCheck{
-			// 	api.ServiceCheck{
-			// 		Path:     "/",
-			// 		Method:   "GET",
-			// 		Interval: 25e9,
-			// 		Timeout:  3e9,
-			// 	},
-			// },
-		})
+			Checks:    make([]api.ServiceCheck, 0, 1),
+		}
+
+		switch comp.Type {
+		case thrapb.CompTypeAPI:
+			service.Checks = []api.ServiceCheck{defaultHTTPServiceCheck(k)}
+
+		case thrapb.CompTypeDatastore:
+			service.Checks = []api.ServiceCheck{defaultTCPServiceCheck(k)}
+
+		}
+
+		task.Services = append(task.Services, service)
 
 		netPorts = append(netPorts, api.Port{Label: k})
 	}
@@ -109,13 +140,23 @@ func makeNomadTaskDocker(sid, gid string, comp *thrapb.Component) *api.Task {
 	return task
 }
 
-func defaultServiceCheck() api.ServiceCheck {
+func defaultHTTPServiceCheck(portLabel string) api.ServiceCheck {
 	return api.ServiceCheck{
-		Type:     "http",
-		Path:     "/",
-		Method:   "GET",
-		Timeout:  3e9,  // 3s
-		Interval: 20e9, // 20s
+		Type:      "http",
+		Path:      "/",
+		Method:    "GET",
+		Timeout:   3e9,  // 3s
+		Interval:  20e9, // 20s
+		PortLabel: portLabel,
+	}
+}
+
+func defaultTCPServiceCheck(portLabel string) api.ServiceCheck {
+	return api.ServiceCheck{
+		Type:      "tcp",
+		Timeout:   3e9,  // 3s
+		Interval:  30e9, // 30s
+		PortLabel: portLabel,
 	}
 }
 

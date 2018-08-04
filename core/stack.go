@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -347,14 +348,20 @@ func (st *Stack) Deploy(stack *thrapb.Stack, opts orchestrator.RequestOptions) e
 
 	ctx := context.Background()
 
-	_, _, err = st.orch.Deploy(ctx, stack, opts)
+	_, j, err := st.orch.Deploy(ctx, stack, opts)
 	if err != nil {
 		st.orch.Destroy(ctx, stack)
+		return err
 	}
 
+	if opts.Dryrun {
+		b, _ := json.MarshalIndent(j, "", "  ")
+		fmt.Printf("%s\n", b)
+	}
 	// fmt.Printf("%+v\n", resp)
 	// fmt.Printf("%+v\n", obj)
-	return err
+	// return err
+	return nil
 }
 
 func (st *Stack) checkArtifactsExist(stack *thrapb.Stack) error {

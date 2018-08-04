@@ -5,21 +5,18 @@ manifest "thrap" {
     nomad {
       // Image name
       name = "nomad"
-
       // Image version
       version = "0.8.4"
-
       // Type of component used for automation
       type = "api"
-
       // Ports the components listens on
       ports {
         http     = 4646
         port4647 = 4647
         port4648 = 4648
       }
-
-      // Env. vars. needed by the component
+      // Env. vars. needed by the component.  These are auto-inject as build-args by which
+      // they are made available
       env {
         vars {
           CONSUL_ADDR      = "http://${comp.consul.container.addr.http}"
@@ -27,7 +24,6 @@ manifest "thrap" {
           BOOTSTRAP_EXPECT = "1"
         }
       }
-
       // Data needed to build the component
       build {
         dockerfile = "nomad.dockerfile"
@@ -127,7 +123,7 @@ EOF
     ecr {
       external = true
     }
-
+    // These are deps within a given platform
     vault {
       name    = "vault"
       version = "0.10.3"
