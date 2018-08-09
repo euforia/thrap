@@ -28,6 +28,7 @@ type StackAsm struct {
 	// available packs
 	packs *packs.Packs
 
+	// source code
 	vcs      vcs.VCS
 	gitrepo  *git.Repository
 	worktree *git.Worktree
@@ -37,7 +38,7 @@ type StackAsm struct {
 
 	stack *thrapb.Stack
 
-	// casms map[string]*DevCompAsm
+	// assemblers for each component
 	casms map[string]ComponentAssembler
 }
 
@@ -54,8 +55,7 @@ func NewStackAsm(stack *thrapb.Stack,
 		vars:    globalVars,
 		stack:   stack,
 		cwd:     cwd,
-		// casms:   make(map[string]*DevCompAsm),
-		casms: make(map[string]ComponentAssembler),
+		casms:   make(map[string]ComponentAssembler),
 	}
 
 	// Add stack scope vars
@@ -72,6 +72,8 @@ func NewStackAsm(stack *thrapb.Stack,
 	return asm, nil
 }
 
+// AssembleMaterialize is helper function to assemble and materialize in
+// a single call
 func (asm *StackAsm) AssembleMaterialize() error {
 	err := asm.Assemble()
 	if err == nil {
@@ -80,7 +82,7 @@ func (asm *StackAsm) AssembleMaterialize() error {
 	return err
 }
 
-// func (asm *StackAsm) ComponentAsm(id string) *DevCompAsm {
+// ComponentAsm returns an assembler for a component for the given id
 func (asm *StackAsm) ComponentAsm(id string) ComponentAssembler {
 	casm, _ := asm.casms[id]
 	return casm
@@ -121,6 +123,7 @@ func (asm *StackAsm) Assemble() error {
 	return nil
 }
 
+// Materialize materialized all files and resources
 func (asm *StackAsm) Materialize() (err error) {
 	for _, casm := range asm.casms {
 		if dcasm, ok := casm.(*DevCompAsm); ok {
@@ -134,8 +137,8 @@ func (asm *StackAsm) Materialize() (err error) {
 }
 
 // Commit writes out the manifest locally and commits all changes with the VCS
-func (asm *StackAsm) Commit() error {
-	return asm.vcsCommit()
+func (asm *StackAsm) Commit(msg string) error {
+	return asm.vcsCommit(msg)
 }
 
 func (asm *StackAsm) assembleBuildComponent(cmpt *thrapb.Component) (*BuildCompAsm, error) {
@@ -184,18 +187,15 @@ func (asm *StackAsm) writeFiles(filemaps ...map[string][]byte) error {
 	var err error
 
 	for _, files := range filemaps {
-
 		for k, v := range files {
 			err = asm.writeFile(k, v, false)
 			if err != nil {
 				break
 			}
 		}
-
 		if err != nil {
 			break
 		}
-
 	}
 
 	return err
@@ -216,7 +216,6 @@ func (asm *StackAsm) writeFile(basename string, contents []byte, force bool) err
 			fs.MkdirAll(filepath.Dir(basename), 0755)
 		}
 
-		// fmt.Println("~ Writing:", basename)
 		err = ioutil.WriteFile(path, contents, 0644)
 		if err == nil {
 			_, err = asm.worktree.Add(basename)
@@ -242,12 +241,6 @@ func (asm *StackAsm) readmeFile() []byte {
 // WriteManifest writes the manifest file in the project dir
 func (asm *StackAsm) WriteManifest() error {
 	b, err := yaml.Marshal(asm.stack)
-	// key := `manifest "` + asm.stack.ID + `"`
-	// out := map[string]interface{}{
-	// 	key: asm.stack,
-	// }
-
-	// b, err := hclencoder.Encode(&out)
 	if err == nil {
 		b = append(append([]byte("\n"), b...), []byte("\n")...)
 		err = asm.writeFile(consts.DefaultManifestFile, b, false)
@@ -256,7 +249,7 @@ func (asm *StackAsm) WriteManifest() error {
 	return err
 }
 
-func (asm *StackAsm) vcsCommit() error {
+func (asm *StackAsm) vcsCommit(msg string) error {
 	// we set the signature to thrap as it performed the init
 	commitOpt := &git.CommitOptions{
 		Author: &object.Signature{
@@ -265,6 +258,6 @@ func (asm *StackAsm) vcsCommit() error {
 			When:  time.Now(),
 		},
 	}
-	_, err := asm.worktree.Commit("Initial commit", commitOpt)
+	_, err := asm.worktree.Commit(msg, commitOpt)
 	return err
 }

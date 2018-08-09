@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/euforia/hclencoder"
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
@@ -20,9 +19,10 @@ func LoadManifest(mfile string) (*thrapb.Stack, error) {
 
 	if mfile == "" {
 		if utils.FileExists(consts.DefaultManifestFile) {
+			mfile = consts.DefaultManifestFile
+		} else if utils.FileExists("thrap.hcl") {
+			// This is deprecated
 			mfile = "thrap.hcl"
-		} else if utils.FileExists("thrap.yml") {
-			mfile = "thrap.yml"
 		} else {
 			return nil, errors.New("no manifest found")
 		}
@@ -45,22 +45,6 @@ func LoadManifest(mfile string) (*thrapb.Stack, error) {
 	}
 
 	return st, err
-}
-
-// WriteHCLManifest writes a manifest as hcl to the Writer
-func WriteHCLManifest(st *thrapb.Stack, w io.Writer) error {
-	key := `manifest "` + st.ID + `"`
-	out := map[string]interface{}{
-		key: st,
-	}
-
-	b, err := hclencoder.Encode(&out)
-	if err == nil {
-		b = append(append([]byte("\n"), b...), []byte("\n")...)
-		_, err = w.Write(b)
-	}
-
-	return err
 }
 
 // WriteYAMLManifest writes a manifest as yaml to the Writer

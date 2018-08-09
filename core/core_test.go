@@ -80,7 +80,6 @@ func Test_Core_Build(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// tmpdir = filepath.Join(tmpdir, "packs")
 	conf := &Config{DataDir: tmpdir, ThrapConfig: &config.ThrapConfig{
 		Registry: map[string]*config.RegistryConfig{
 			"ecr": &config.RegistryConfig{
