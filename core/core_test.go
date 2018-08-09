@@ -191,7 +191,10 @@ func Test_Core_Assembler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stack, _ := manifest.LoadManifest("../thrap.hcl")
+	stack, err := manifest.LoadManifest("../thrap.yml")
+	if err != nil {
+		t.Fatal(err)
+	}
 	stack.Validate()
 
 	st, err := c.Stack(thrapb.DefaultProfile())

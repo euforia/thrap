@@ -28,7 +28,10 @@ func Test_nomad_dryrun(t *testing.T) {
 	orch, err := New(conf)
 	assert.Nil(t, err)
 
-	st, _ := manifest.LoadManifest("../thrap.hcl")
+	st, err := manifest.LoadManifest("../thrap.yml")
+	if err != nil {
+		t.Fatal(err)
+	}
 	st.Validate()
 
 	ctx := context.Background()

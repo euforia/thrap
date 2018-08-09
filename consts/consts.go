@@ -22,7 +22,7 @@ const (
 
 const (
 	// DefaultManifestFile is the default manifest filename
-	DefaultManifestFile = "thrap.hcl"
+	DefaultManifestFile = "thrap.yml"
 	// DefaultWorkDir is the default container working directory set if not
 	// provided
 	DefaultWorkDir = "/"

@@ -2,21 +2,22 @@ package manifest
 
 import (
 	"fmt"
-	"io"
+	"time"
 
-	"github.com/euforia/hclencoder"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/hashicorp/nomad/api"
 )
 
 const (
-	defaultPriority   = 50
-	defaultRegion     = "us-west-2"
-	defaultGroupCount = 1
-	defaultNetMbits   = 1
-	defaultCPUMHz     = 200 //mhz
-	defaultMemMB      = 256 //mb
-	defaultPortLabel  = "default"
+	defaultPriority      = 50
+	defaultRegion        = "us-west-2"
+	defaultGroupCount    = 1
+	defaultNetMbits      = 1
+	defaultCPUMHz        = 200 //mhz
+	defaultMemMB         = 256 //mb
+	defaultPortLabel     = "default"
+	defaultCheckTimeout  = 3e9
+	defaultCheckInterval = 20e9
 )
 
 // MakeNomadJob returns a nomad job from the stack
@@ -50,7 +51,7 @@ func MakeNomadJob(stack *thrapb.Stack) (*api.Job, error) {
 			dsGroup := makeNomadDatastoreGroup(id, comp)
 			job = job.AddTaskGroup(dsGroup)
 
-		case thrapb.CompTypeAPI:
+		case thrapb.CompTypeAPI, thrapb.CompTypeWeb:
 			// Api's
 			task := makeNomadTaskDocker(id, gid, comp)
 			grp = grp.AddTask(task)
@@ -102,6 +103,12 @@ func makeNomadTaskDocker(sid, gid string, comp *thrapb.Component) *api.Task {
 	// 		},
 	// 	},
 	// })
+	if comp.Env != nil && len(comp.Env.Vars) > 0 {
+		task.Env = make(map[string]string)
+		for k, v := range comp.Env.Vars {
+			task.Env[k] = v
+		}
+	}
 
 	task.Services = make([]*api.Service, 0, len(comp.Ports))
 	portmap := make(map[string]interface{}, len(comp.Ports))
@@ -117,13 +124,28 @@ func makeNomadTaskDocker(sid, gid string, comp *thrapb.Component) *api.Task {
 			Checks:    make([]api.ServiceCheck, 0, 1),
 		}
 
-		switch comp.Type {
-		case thrapb.CompTypeAPI:
-			service.Checks = []api.ServiceCheck{defaultHTTPServiceCheck(k)}
+		if len(comp.HealthChecks) > 0 {
+			// Add defined health checks
+			for _, hc := range comp.HealthChecks {
+				if k != hc.PortLabel {
+					continue
+				}
+				service.Checks = append(service.Checks, makeServiceCheck(hc))
+			}
+		} else {
+			// Set default checks
+			switch comp.Type {
 
-		case thrapb.CompTypeDatastore:
-			service.Checks = []api.ServiceCheck{defaultTCPServiceCheck(k)}
+			case thrapb.CompTypeWeb:
+				service.Checks = []api.ServiceCheck{defaultHTTPServiceCheck(k)}
 
+			case thrapb.CompTypeAPI:
+				service.Checks = []api.ServiceCheck{defaultHTTPServiceCheck(k)}
+
+			case thrapb.CompTypeDatastore:
+				service.Checks = []api.ServiceCheck{defaultTCPServiceCheck(k)}
+
+			}
 		}
 
 		task.Services = append(task.Services, service)
@@ -140,13 +162,31 @@ func makeNomadTaskDocker(sid, gid string, comp *thrapb.Component) *api.Task {
 	return task
 }
 
+func makeServiceCheck(hc *thrapb.HealthCheck) api.ServiceCheck {
+	chk := api.ServiceCheck{
+		Type:      hc.Protocol,
+		Path:      hc.Path,
+		Method:    hc.Method,
+		Timeout:   time.Duration(hc.Timeout),
+		Interval:  time.Duration(hc.Interval),
+		PortLabel: hc.PortLabel,
+	}
+	if chk.Timeout < 1e9 {
+		chk.Timeout = defaultCheckTimeout
+	}
+	if chk.Interval < 5e9 {
+		chk.Interval = defaultCheckInterval
+	}
+	return chk
+}
+
 func defaultHTTPServiceCheck(portLabel string) api.ServiceCheck {
 	return api.ServiceCheck{
 		Type:      "http",
 		Path:      "/",
 		Method:    "GET",
-		Timeout:   3e9,  // 3s
-		Interval:  20e9, // 20s
+		Timeout:   defaultCheckTimeout,
+		Interval:  defaultCheckInterval,
 		PortLabel: portLabel,
 	}
 }
@@ -154,8 +194,8 @@ func defaultHTTPServiceCheck(portLabel string) api.ServiceCheck {
 func defaultTCPServiceCheck(portLabel string) api.ServiceCheck {
 	return api.ServiceCheck{
 		Type:      "tcp",
-		Timeout:   3e9,  // 3s
-		Interval:  30e9, // 30s
+		Timeout:   defaultCheckTimeout,
+		Interval:  defaultCheckInterval,
 		PortLabel: portLabel,
 	}
 }
@@ -178,19 +218,19 @@ func makeResources(icpu, imem, imbits int) *api.Resources {
 
 }
 
-// WriteNomadJob write writes the nomad job in hcl format to the writer w
-func WriteNomadJob(job *api.Job, w io.Writer) error {
-	wrappedJob := hclWrapNomadJob(job)
-	b, err := hclencoder.Encode(wrappedJob)
-	if err == nil {
-		_, err = w.Write(append(b, []byte("\n")...))
-	}
-	return err
-}
+// // WriteNomadJob write writes the nomad job in hcl format to the writer w
+// func WriteNomadJob(job *api.Job, w io.Writer) error {
+// 	wrappedJob := hclWrapNomadJob(job)
+// 	b, err := hclencoder.Encode(wrappedJob)
+// 	if err == nil {
+// 		_, err = w.Write(append(b, []byte("\n")...))
+// 	}
+// 	return err
+// }
 
-func hclWrapNomadJob(job *api.Job) map[string]interface{} {
-	key := `job "` + *job.ID + `"`
-	return map[string]interface{}{
-		key: job,
-	}
-}
+// func hclWrapNomadJob(job *api.Job) map[string]interface{} {
+// 	key := `job "` + *job.ID + `"`
+// 	return map[string]interface{}{
+// 		key: job,
+// 	}
+// }

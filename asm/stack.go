@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/euforia/hclencoder"
 	"github.com/euforia/pseudo/scope"
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/dockerfile"
@@ -18,6 +17,7 @@ import (
 	"github.com/pkg/errors"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
+	"gopkg.in/yaml.v2"
 )
 
 // StackAsm is the stack assembler.  It performs all local stack operations for the 'init'
@@ -241,13 +241,13 @@ func (asm *StackAsm) readmeFile() []byte {
 
 // WriteManifest writes the manifest file in the project dir
 func (asm *StackAsm) WriteManifest() error {
+	b, err := yaml.Marshal(asm.stack)
+	// key := `manifest "` + asm.stack.ID + `"`
+	// out := map[string]interface{}{
+	// 	key: asm.stack,
+	// }
 
-	key := `manifest "` + asm.stack.ID + `"`
-	out := map[string]interface{}{
-		key: asm.stack,
-	}
-
-	b, err := hclencoder.Encode(&out)
+	// b, err := hclencoder.Encode(&out)
 	if err == nil {
 		b = append(append([]byte("\n"), b...), []byte("\n")...)
 		err = asm.writeFile(consts.DefaultManifestFile, b, false)

@@ -38,6 +38,7 @@ func ParseHCL(file string) (mf *pb.Stack, err error) {
 	return
 }
 
+// ParseHCLBytes parse a byte slice to a Stack struct
 func ParseHCLBytes(in []byte) (*pb.Stack, error) {
 	// wrapper map
 	var ms map[string]map[string]*pb.Stack

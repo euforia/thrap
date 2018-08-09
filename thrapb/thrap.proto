@@ -30,6 +30,16 @@ message Envionment {
     map<string, string> Vars = 2 [(gogoproto.moretags) = "hcl:\"vars\""];
 }
 
+message HealthCheck {
+    // udp, tcp, http, https
+    string Protocol  = 1;
+    string Path      = 2;
+    string Method    = 3;
+    int64  Timeout   = 4;
+    int64  Interval  = 5;
+    string PortLabel = 6;
+}
+
 message Component {
     string              ID        = 1 [(gogoproto.moretags) = "hcle:\"omit\" yaml:\"-\""];
     string              Name      = 2 [(gogoproto.moretags) = "hcl:\"name\""];
@@ -50,7 +60,7 @@ message Component {
     // to the internet
     bool External = 9 [(gogoproto.moretags) = "hcl:\"external\" hcle:\"omitempty\" yaml:\",omitempty\""];
 
-    // True if this is the head of the stack i.e. consumable api.
+    // True if this is the head of the stack i.e. consumable api or ui
     bool Head = 10 [(gogoproto.moretags) = "hcl:\"head\" hcle:\"omitempty\" yaml:\",omitempty\""];
 
     // Envionment variables
@@ -67,6 +77,9 @@ message Component {
 
     // Args to command
     repeated string Args = 15 [(gogoproto.moretags) = "hcl:\"args\" hcle:\"omitempty\" yaml:\",omitempty\""];
+
+    // All healthchecks
+    repeated HealthCheck HealthChecks = 16;
 }
 
 message PackManifest {

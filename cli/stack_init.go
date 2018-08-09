@@ -125,7 +125,7 @@ func commandStackInit() *cli.Command {
 				return err
 			}
 
-			return manifest.WriteManifest(stack, os.Stdout)
+			return manifest.WriteYAMLManifest(stack, os.Stdout)
 		},
 	}
 }

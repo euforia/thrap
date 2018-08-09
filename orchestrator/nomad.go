@@ -44,7 +44,7 @@ func (orch *nomadOrchestrator) Deploy(ctx context.Context, st *thrapb.Stack, opt
 	}
 	njob.Canonicalize()
 
-	job = njob
+	job = map[string]interface{}{"Job": njob}
 
 	jobs := orch.client.Jobs()
 	q := &nomad.WriteOptions{

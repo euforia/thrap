@@ -1,0 +1,100 @@
+name: thrap
+
+# Components of the stack
+components:
+  consul:
+    name: consul
+    version: 1.2.0
+    type: api
+    ports:
+      http: 8500
+
+  nomad:
+    # Image name
+    name: nomad
+    version: 0.8.4
+    type: api
+    build:
+      dockerfile: nomad.dockerfile
+    ports:
+      http: 4646
+      port4647: 4647
+      port4648: 4648
+    env:
+      vars:
+        BOOTSTRAP_EXPECT: "1"
+        CONSUL_ADDR: http://${comp.consul.container.addr.http}
+        VAULT_ADDR: http://${comp.vault.container.addr.default}
+
+  registry:
+    # Image name will be ${stack.name}/${component.name}
+    name: registry
+    # Version is calculated
+    # version: 
+    type: api
+    
+    language: go
+    build:
+      dockerfile: api.dockerfile
+      # context: ""
+    
+    secrets:
+      destination: .thrap/creds.hcl
+      template: |
+        registry {
+          ecr {
+            key    = "${aws_access_key_id}"
+            secret = "${aws_secret_access_key}"
+          }
+        }
+
+        vcs {
+          github {
+            token = "${github_token}"
+          }
+        }
+    ports:
+      http: 10000
+    head: true
+    env:
+      file: .env
+      vars:
+        NOMAD_ADDR: http://${comp.nomad.container.addr.http}
+        STACK_VERSION: ${stack.version}
+        VAULT_ADDR: http://${comp.vault.container.addr.default}
+    cmd: thrap
+    args:
+    - agent
+
+  vault:
+    name: vault
+    version: 0.10.3
+    type: api
+    ports:
+      default: 8200
+    env:
+      vars:
+        VAULT_DEV_ROOT_TOKEN_ID: myroot
+
+# Other dependent services
+dependencies:
+  consul:
+    name: consul
+    version: 1.2.0
+  docker:
+    name: docker
+    version: 1.37
+  ecr:
+    name: "ecr"
+    external: true
+  github:
+    name: github
+    version: v3
+    external: true
+  nomad:
+    name: nomad
+    version: 0.8.4
+  vault:
+    name: vault
+    version: 0.10.3
+    type: ""

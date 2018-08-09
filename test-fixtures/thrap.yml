@@ -28,7 +28,10 @@ components:
         destination: secrets.hcl
         # Format in which the secrets should be written out
         format: hcl
-
+    
+    ports:
+      http: 80
+    
     # Environment variables
     # env:
         # Read variables in from this file path. Anything without an '=' sign

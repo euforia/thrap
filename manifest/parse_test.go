@@ -44,20 +44,26 @@ manifest "foo" {
 
 func Test_ParseBytes(t *testing.T) {
 	mf, err := ParseYAML("../test-fixtures/thrap.yml")
-	fatal(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	assert.Equal(t, 2, len(mf.Components))
 	errs := mf.Validate()
 	assert.Nil(t, errs)
 
 	b, err := hclencoder.Encode(mf)
-	fatal(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	fmt.Printf("\n%s\n", b)
 }
 
 func Test_parse_HCL(t *testing.T) {
 	o, err := ParseHCLBytes([]byte(testHCLManifest))
-	fatal(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	assert.Equal(t, "api.dockerfile", o.Components["api"].Build.Dockerfile)
 }
