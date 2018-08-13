@@ -53,13 +53,15 @@ func printStackStatus(stm *core.Stack, stack *thrapb.Stack) {
 	fmt.Fprintf(tw, "---------\t-----\t------\t-------\n")
 	for _, s := range resp {
 
-		d := s.Details
-		st := d.State
+		// d := s.Details
+		// st := d.State
 
 		if s.Error != nil {
-			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", s.ID, d.Config.Image, st.Status, s.Error)
+			// fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", s.ID, d.Config.Image, s.Status, s.Error)
+			fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", s.ID, "", s.Status, s.Error)
 		} else {
-			fmt.Fprintf(tw, "%s\t%s\t%s\t%v\n", s.ID, d.Config.Image, st.Status, d.NetworkSettings.Ports)
+			// fmt.Fprintf(tw, "%s\t%s\t%s\t%v\n", s.ID, d.Config.Image, s.Status, s.Details)
+			fmt.Fprintf(tw, "%s\t%s\t%s\t%v\n", s.ID, "", s.Status, s.Details)
 		}
 
 	}

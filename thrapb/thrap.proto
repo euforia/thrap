@@ -32,12 +32,12 @@ message Envionment {
 
 message HealthCheck {
     // udp, tcp, http, https
-    string Protocol  = 1;
-    string Path      = 2;
-    string Method    = 3;
-    int64  Timeout   = 4;
-    int64  Interval  = 5;
-    string PortLabel = 6;
+    string Protocol  = 1 [(gogoproto.moretags) = "yaml:\",omitempty\""];
+    string Path      = 2 [(gogoproto.moretags) = "yaml:\",omitempty\""];
+    string Method    = 3 [(gogoproto.moretags) = "yaml:\",omitempty\""];
+    int64  Timeout   = 4 [(gogoproto.moretags) = "yaml:\",omitempty\""];
+    int64  Interval  = 5 [(gogoproto.moretags) = "yaml:\",omitempty\""];
+    string PortLabel = 6 [(gogoproto.moretags) = "yaml:\",omitempty\""];
 }
 
 message Component {
@@ -79,7 +79,7 @@ message Component {
     repeated string Args = 15 [(gogoproto.moretags) = "hcl:\"args\" hcle:\"omitempty\" yaml:\",omitempty\""];
 
     // All healthchecks
-    repeated HealthCheck HealthChecks = 16;
+    repeated HealthCheck HealthChecks = 16 [(gogoproto.moretags) = "yaml:\",omitempty\""];
 }
 
 message PackManifest {
@@ -136,7 +136,7 @@ message Identity {
     uint64 Nonce     = 4 [(gogoproto.moretags) = "hcl:\"nonce\""];
     bytes  Signature = 5 [(gogoproto.moretags) = "hcl:\"signature\"" "hcle:\"omit\""];
     // Meta identities e.g. github user, ldap user etc.
-    map<string, string> Meta      = 6 [(gogoproto.moretags) = "hcl:\"meta\""];
+    map<string, string> Meta = 6 [(gogoproto.moretags) = "hcl:\"meta\""];
 }
 
 message Artifact {

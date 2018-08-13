@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
 	"github.com/euforia/thrap/crt"
 	"github.com/euforia/thrap/thrapb"
 )
@@ -110,21 +109,25 @@ func (orch *DockerOrchestrator) Status(ctx context.Context, stack *thrapb.Stack)
 func (orch *DockerOrchestrator) getCompStatus(ctx context.Context, id string) *thrapb.CompStatus {
 
 	ss := &thrapb.CompStatus{}
-	ss.Details, ss.Error = orch.crt.Inspect(ctx, id)
+
+	var details types.ContainerJSON
+	details, ss.Error = orch.crt.Inspect(ctx, id)
 
 	if ss.Error == nil {
-		if ss.Details.State.Status == "exited" {
-			s := ss.Details.State
-			ss.Error = fmt.Errorf("code=%d", s.ExitCode)
+		ss.Status = details.State.Status
+		if ss.Status == "exited" {
+			ss.Error = fmt.Errorf("code=%d", details.State.ExitCode)
+		} else {
+			ss.Details = details.NetworkSettings.Ports
 		}
-
 	} else {
-		ss.Details = types.ContainerJSON{
-			ContainerJSONBase: &types.ContainerJSONBase{
-				State: &types.ContainerState{Status: "failed"},
-			},
-			Config: &container.Config{},
-		}
+		ss.Status = "failed"
+		// ss.Details = types.ContainerJSON{
+		// 	ContainerJSONBase: &types.ContainerJSONBase{
+		// 		State: &types.ContainerState{Status: "failed"},
+		// 	},
+		// 	Config: &container.Config{},
+		// }
 	}
 
 	return ss

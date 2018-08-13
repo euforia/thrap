@@ -2,6 +2,8 @@ package orchestrator
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/thrapb"
@@ -64,6 +66,48 @@ func (orch *nomadOrchestrator) Deploy(ctx context.Context, st *thrapb.Stack, opt
 }
 
 func (orch *nomadOrchestrator) Status(ctx context.Context, stack *thrapb.Stack) []*thrapb.CompStatus {
+	nomadJobs := orch.client.Jobs()
+	qopts := &nomad.QueryOptions{AllowStale: false}
+
+	// summary, _, err := nomadJobs.Summary(stack.ID, qopts)
+	// summary.Summary
+	taskGroups, _, err := nomadJobs.Allocations(stack.ID, true, qopts)
+	if err != nil {
+
+	}
+
+	groups := make(map[string][]*thrapb.CompStatus)
+
+	for _, group := range taskGroups {
+		// thrapb.CompStatus{
+		// 	ID:
+		// }
+		i := strings.LastIndex(group.Name, "[")
+		key := group.Name[i+1 : len(group.Name)-1]
+
+		if _, ok := groups[key]; !ok {
+			groups[key] = make([]*thrapb.CompStatus, 0)
+		}
+
+		fmt.Println(group.TaskGroup, group.Name)
+		for k, v := range group.TaskStates {
+			// fmt.Println(" ", k, v.State)
+			status := &thrapb.CompStatus{
+				ID:     k,
+				Status: v.State,
+			}
+			groups[key] = append(groups[key], status)
+		}
+	}
+
+	for k, stati := range groups {
+		fmt.Println(k)
+		for _, s := range stati {
+			fmt.Println(" ", s)
+		}
+		fmt.Println()
+	}
+
 	return nil
 }
 
