@@ -61,6 +61,9 @@ func (pub *artifactPublisher) Publish(ctx context.Context, stack *thrapb.Stack,
 func (pub *artifactPublisher) login(ctx context.Context) error {
 	authConfig, err := pub.reg.GetAuthConfig()
 	if err != nil {
+		if err == registry.ErrAuthNotRequired {
+			return nil
+		}
 		return err
 	}
 

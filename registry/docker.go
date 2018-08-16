@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	errNotImplemented = errors.New("not implemented")
+	errNotImplemented  = errors.New("not implemented")
+	ErrAuthNotRequired = errors.New("registry auth not required")
 )
 
 // localDocker implements the registry interface for a local docker runtime
@@ -31,7 +32,7 @@ func (reg *localDocker) Init(conf *config.RegistryConfig) (err error) {
 
 func (reg *localDocker) GetAuthConfig() (types.AuthConfig, error) {
 	var auth types.AuthConfig
-	return auth, errors.New("local docker does not require auth")
+	return auth, ErrAuthNotRequired
 }
 
 // Create a new repository
