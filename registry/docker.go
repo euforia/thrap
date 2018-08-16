@@ -43,7 +43,7 @@ func (reg *localDocker) Create(string) (interface{}, error) {
 
 // Get repo info
 func (reg *localDocker) Get(string) (interface{}, error) {
-	return nil, errNotImplemented
+	return nil, nil
 }
 
 // Get image manifest

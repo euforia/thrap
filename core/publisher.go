@@ -31,27 +31,40 @@ func (pub *artifactPublisher) Publish(ctx context.Context, stack *thrapb.Stack,
 	runtime := (&metrics.Runtime{}).Start()
 	defer runtime.End()
 
+	// local publish
+	var local bool
+
 	err := pub.login(ctx)
 	if err != nil {
-		fmt.Println(err)
-		return nil, runtime, err
+		if err != registry.ErrAuthNotRequired {
+			return nil, runtime, err
+		}
+		local = true
 	}
 
 	reqs := pub.buildPushRequests(stack, opts.TagLatest)
 	resps := make(map[string]error, len(reqs))
 
-	for image, req := range reqs {
-		fmt.Printf("Publishing %s:\n\n", image)
-
-		// Check repo exists
-		_, err := pub.reg.Get(req.Image)
-		if err == nil {
-			// Publish
-			req.Image = pub.reg.ImageName(req.Image)
-			err = pub.crt.ImagePush(ctx, req)
-			fmt.Println()
+	if local {
+		// Nothing to do for local
+		for image := range reqs {
+			resps[pub.reg.ImageName(image)] = nil
 		}
-		resps[pub.reg.ImageName(image)] = err
+	} else {
+
+		for image, req := range reqs {
+			fmt.Printf("Publishing %s:\n\n", image)
+
+			// Check repo exists
+			_, err := pub.reg.Get(req.Image)
+			if err == nil {
+				// Publish
+				req.Image = pub.reg.ImageName(req.Image)
+				err = pub.crt.ImagePush(ctx, req)
+				fmt.Println()
+			}
+			resps[pub.reg.ImageName(image)] = err
+		}
 	}
 
 	runtime.End()
@@ -61,9 +74,6 @@ func (pub *artifactPublisher) Publish(ctx context.Context, stack *thrapb.Stack,
 func (pub *artifactPublisher) login(ctx context.Context) error {
 	authConfig, err := pub.reg.GetAuthConfig()
 	if err != nil {
-		if err == registry.ErrAuthNotRequired {
-			return nil
-		}
 		return err
 	}
 
