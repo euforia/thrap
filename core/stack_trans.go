@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// StackTransport implements a stack transport interface
+// StackTransport implements a stack transport interface lining up with the stack store
 type StackTransport interface {
 	Get(addr, id string) (*thrapb.Stack, error)
 	Iter(addr, prefix string, f func(*thrapb.Stack) error) error

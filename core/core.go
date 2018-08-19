@@ -35,7 +35,7 @@ const (
 
 // Core is the thrap core
 type Core struct {
-	conf  *config.ThrapConfig
+	conf  *config.Config
 	creds *config.CredsConfig
 
 	// Remote VCS github etc.
@@ -100,13 +100,18 @@ func NewCore(conf *Config) (*Core, error) {
 
 // Config returns the currently loaded config.  This is the merged global and
 // local config
-func (core *Core) Config() *config.ThrapConfig {
+func (core *Core) Config() *config.Config {
 	return core.conf
 }
 
 // Packs returns a pack instance containing the currently loaded packs
 func (core *Core) Packs() *packs.Packs {
 	return core.packs
+}
+
+// StackStorage returns the underlying persistent store
+func (core *Core) StackStorage() StackStorage {
+	return core.sst
 }
 
 // Stack returns a Stack instance that can be used to perform operations

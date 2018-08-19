@@ -5,37 +5,12 @@ import (
 	"github.com/hashicorp/hil/ast"
 )
 
-// RegistryRepoConfig is the configuration for a container registry repo
-type RegistryRepoConfig struct {
-	Name string `hcl:"name"`
-}
-
-// Clone returns a copy of the config
-func (conf *RegistryRepoConfig) Clone() *RegistryRepoConfig {
-	if conf == nil {
-		return nil
-	}
-	return &RegistryRepoConfig{
-		Name: conf.Name,
-	}
-}
-
-// Merge merges the other config into the one. Only non-empty fields are
-// considered
-func (conf *RegistryRepoConfig) Merge(other *RegistryRepoConfig) {
-	if other != nil {
-		if other.Name != "" {
-			conf.Name = other.Name
-		}
-	}
-}
-
 // RegistryConfig holds configurations for a registry
 type RegistryConfig struct {
 	ID       string                 `hcl:"id"     hcle:"omit"`
 	Provider string                 `hcl:"provider"`
 	Addr     string                 `hcl:"addr"   hcle:"omitempty"`
-	Repo     *RegistryRepoConfig    `hcl:"repo"   hcle:"omitempty"`
+	Repo     *RepoConfig            `hcl:"repo"   hcle:"omitempty"`
 	Config   map[string]interface{} `hcl:"config" hcle:"omitempty"`
 }
 

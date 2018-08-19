@@ -44,7 +44,7 @@ vcs github {
 `
 
 func Test_CredsConfig_Merge(t *testing.T) {
-	var c1, c2 CredsConfig
+	var c1, c2 Credentials
 	err := hcl.Decode(&c1, testCreds1)
 	assert.Nil(t, err)
 	err = hcl.Decode(&c2, testCreds2)
@@ -58,7 +58,7 @@ func Test_CredsConfig_Merge(t *testing.T) {
 
 func Test_CredsConfig(t *testing.T) {
 
-	var cconf CredsConfig
+	var cconf Credentials
 	err := hcl.Decode(&cconf, testCreds1)
 	assert.Nil(t, err)
 	assert.Equal(t, "token", cconf.Registry["ecr"]["token"])
@@ -128,9 +128,9 @@ vcs {
 }
 `
 
-func Test_ThrapConfig(t *testing.T) {
+func Test_Config(t *testing.T) {
 
-	var conf ThrapConfig
+	var conf Config
 	err := hcl.Decode(&conf, testConfig1)
 	assert.Nil(t, err)
 	assert.Equal(t, "thrap", conf.VCS["github"].Repo.Name)
@@ -138,7 +138,7 @@ func Test_ThrapConfig(t *testing.T) {
 }
 
 func Test_Config_Merge(t *testing.T) {
-	var c1, c2 ThrapConfig
+	var c1, c2 Config
 
 	err := hcl.Decode(&c1, testConfig1)
 	assert.Nil(t, err)
@@ -159,8 +159,8 @@ func Test_Config_Merge(t *testing.T) {
 	assert.NotNil(t, c1.Orchestrator["docker"])
 }
 
-func Test_ThrapConfig_Encode(t *testing.T) {
-	conf := DefaultThrapConfig()
+func Test_Config_Encode(t *testing.T) {
+	conf := DefaultConfig()
 	b, _ := hclencoder.Encode(conf)
 	t.Logf("%s", b)
 }

@@ -37,9 +37,9 @@ func (st *Stack) ensureRegistryRepos(stack *thrapb.Stack) []*thrapb.ActionResult
 		}
 
 		// Exists
-		if _, err := st.reg.Get(repoName); err != nil {
+		if _, err := st.reg.GetRepo(repoName); err != nil {
 			// Create registry repo
-			_, report.Error = st.reg.Create(repoName)
+			_, report.Error = st.reg.CreateRepo(repoName)
 			report.Data = "created"
 		} else {
 			report.Data = "exists"

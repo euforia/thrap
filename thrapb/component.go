@@ -230,6 +230,10 @@ func (comp *Component) Hash(h hash.Hash) {
 	h.Write([]byte(comp.Cmd))
 	h.Write([]byte(strings.Join(comp.Args, "")))
 
+	for _, hc := range comp.HealthChecks {
+		hc.Hash(h)
+	}
+
 }
 
 // CompStatus holds the overall component status

@@ -79,8 +79,11 @@ func (gh *githubVCS) AddHook(repo *Repository) (interface{}, error) {
 	ctx := context.Background()
 
 	hookName := defaultHookName
+	hookURL := ""
 	hook := &github.Hook{
-		Name: &hookName,
+		Name:   &hookName,
+		Events: []string{"push"},
+		URL:    &hookURL,
 	}
 
 	rhook, _, err := rs.CreateHook(ctx, repo.Owner, repo.Name, hook)

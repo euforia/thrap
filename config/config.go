@@ -10,8 +10,8 @@ import (
 	"github.com/hashicorp/hcl"
 )
 
-// ThrapConfig holds configs for all providers
-type ThrapConfig struct {
+// Config holds configs for all providers
+type Config struct {
 	VCS          map[string]*VCSConfig          `hcl:"vcs"`
 	Orchestrator map[string]*OrchestratorConfig `hcl:"orchestrator"`
 	Registry     map[string]*RegistryConfig     `hcl:"registry"`
@@ -19,12 +19,12 @@ type ThrapConfig struct {
 }
 
 // Clone returns a copy of the config
-func (conf *ThrapConfig) Clone() *ThrapConfig {
+func (conf *Config) Clone() *Config {
 	if conf == nil {
 		return nil
 	}
 
-	c := &ThrapConfig{
+	c := &Config{
 		VCS:          make(map[string]*VCSConfig, len(conf.VCS)),
 		Orchestrator: make(map[string]*OrchestratorConfig, len(conf.Orchestrator)),
 		Registry:     make(map[string]*RegistryConfig, len(conf.Registry)),
@@ -49,7 +49,7 @@ func (conf *ThrapConfig) Clone() *ThrapConfig {
 
 // Merge merges the other config into the one. Only non-empty fields are
 // considered
-func (conf *ThrapConfig) Merge(other *ThrapConfig) {
+func (conf *Config) Merge(other *Config) {
 	if other == nil {
 		return
 	}
@@ -97,7 +97,7 @@ func (conf *ThrapConfig) Merge(other *ThrapConfig) {
 }
 
 // DefaultVCS returns the first available vcs
-func (conf *ThrapConfig) DefaultVCS() *VCSConfig {
+func (conf *Config) DefaultVCS() *VCSConfig {
 	for _, v := range conf.VCS {
 		return v
 	}
@@ -105,7 +105,7 @@ func (conf *ThrapConfig) DefaultVCS() *VCSConfig {
 }
 
 // DefaultOrchestrator returns the first available orchestrator
-func (conf *ThrapConfig) DefaultOrchestrator() *OrchestratorConfig {
+func (conf *Config) DefaultOrchestrator() *OrchestratorConfig {
 	for _, v := range conf.Orchestrator {
 		return v
 	}
@@ -113,7 +113,7 @@ func (conf *ThrapConfig) DefaultOrchestrator() *OrchestratorConfig {
 }
 
 // DefaultRegistry returns the first registry from the map
-func (conf *ThrapConfig) DefaultRegistry() *RegistryConfig {
+func (conf *Config) DefaultRegistry() *RegistryConfig {
 	for _, v := range conf.Registry {
 		return v
 	}
@@ -121,7 +121,7 @@ func (conf *ThrapConfig) DefaultRegistry() *RegistryConfig {
 }
 
 // DefaultSecrets returns the first secrets provider
-func (conf *ThrapConfig) DefaultSecrets() *SecretsConfig {
+func (conf *Config) DefaultSecrets() *SecretsConfig {
 	for _, v := range conf.Secrets {
 		return v
 	}
@@ -129,7 +129,7 @@ func (conf *ThrapConfig) DefaultSecrets() *SecretsConfig {
 }
 
 // ScopeVars returns the scoped variables usable for interpolation
-func (conf *ThrapConfig) ScopeVars() scope.Variables {
+func (conf *Config) ScopeVars() scope.Variables {
 	svars := make(scope.Variables)
 	for k, v := range conf.VCS {
 		vars := v.ScopeVars("vcs." + k + ".")
@@ -148,9 +148,9 @@ func (conf *ThrapConfig) ScopeVars() scope.Variables {
 	return svars
 }
 
-// DefaultThrapConfig returns a minimal config
-func DefaultThrapConfig() *ThrapConfig {
-	return &ThrapConfig{
+// DefaultConfig returns a minimal config
+func DefaultConfig() *Config {
+	return &Config{
 		VCS: map[string]*VCSConfig{
 			"github": &VCSConfig{
 				ID:   "github",
@@ -171,8 +171,8 @@ func DefaultThrapConfig() *ThrapConfig {
 	}
 }
 
-// WriteThrapConfig write the given config to the specified file path
-func WriteThrapConfig(conf *ThrapConfig, filename string) error {
+// WriteConfig write the given config to the specified file path
+func WriteConfig(conf *Config, filename string) error {
 	b, err := hclencoder.Encode(conf)
 	if err == nil {
 		err = ioutil.WriteFile(filename, b, 0644)
@@ -180,13 +180,13 @@ func WriteThrapConfig(conf *ThrapConfig, filename string) error {
 	return err
 }
 
-// ReadThrapConfig reads an hcl thrap config from filename
-func ReadThrapConfig(filename string) (*ThrapConfig, error) {
+// ReadConfig reads an hcl thrap config from filename
+func ReadConfig(filename string) (*Config, error) {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	var conf ThrapConfig
+	var conf Config
 	err = hcl.Unmarshal(b, &conf)
 	if err != nil {
 		return nil, err
@@ -210,7 +210,7 @@ func ReadThrapConfig(filename string) (*ThrapConfig, error) {
 
 // ReadProjectConfig reads the configs from the project config directory under a given
 // path
-func ReadProjectConfig(projPath string) (*ThrapConfig, error) {
+func ReadProjectConfig(projPath string) (*Config, error) {
 	filename := filepath.Join(projPath, consts.WorkDir, consts.ConfigFile)
-	return ReadThrapConfig(filename)
+	return ReadConfig(filename)
 }

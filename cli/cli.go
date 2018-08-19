@@ -145,7 +145,7 @@ func loadCore(ctx *cli.Context) (*core.Core, error) {
 	}
 
 	// Load project configs
-	conf.ThrapConfig, err = config.ReadProjectConfig(lpath)
+	conf.Config, err = config.ReadProjectConfig(lpath)
 	if err != nil {
 		return nil, err
 	}

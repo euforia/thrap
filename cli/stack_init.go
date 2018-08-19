@@ -83,6 +83,7 @@ func commandStackInit() *cli.Command {
 			}
 
 			pks := cr.Packs()
+
 			// Set language from input or otherwise and other related params
 			_, err = setLanguage(ctx, pks.Dev(), projPath)
 			if err != nil {
@@ -206,11 +207,13 @@ func promptComps(name, lang string, pks *packs.Packs) (*asm.BasicStackConfig, er
 	}
 
 	var err error
-	c.WebServer, err = promptPack(pks.Web(), "Web Server")
+	c.Proxy, err = promptPack(pks.Web(), "Web Server")
 	if err != nil {
 		return nil, err
 	}
-	c.DataStore, err = promptPack(pks.Datastore(), "Data Store")
+
+	c.DataStores = make([]string, 1)
+	c.DataStores[0], err = promptPack(pks.Datastore(), "Data Store")
 	if err != nil {
 		return nil, err
 	}

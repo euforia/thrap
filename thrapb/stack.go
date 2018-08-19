@@ -5,6 +5,8 @@ import (
 	"hash"
 	"sort"
 
+	"github.com/euforia/kvdb"
+
 	"github.com/euforia/pseudo/scope"
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/vars"
@@ -14,6 +16,11 @@ import (
 var (
 	errDepCannotBuild = errors.New("dependencies cannot be built")
 )
+
+// New satisfies the DatastoreObject interface{}
+func (stack *Stack) New() kvdb.Object {
+	return &Stack{}
+}
 
 // ArtifactName retunrs the component artifact name based on whether
 // the component was built

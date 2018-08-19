@@ -41,7 +41,7 @@ var (
 	errArtifactsMissing       = errors.New("one or more artifacts missing")
 )
 
-// StackStore implements a thrap stack store
+// StackStore implements a thrap stack store lining up with the transport
 type StackStore interface {
 	Get(id string) (*thrapb.Stack, error)
 	Iter(prefix string, f func(*thrapb.Stack) error) error
@@ -55,7 +55,7 @@ type Stack struct {
 	crt *crt.Docker
 
 	// config to use for this instance
-	conf *config.ThrapConfig
+	conf *config.Config
 
 	// code version control provider
 	vcs vcs.VCS
@@ -358,9 +358,7 @@ func (st *Stack) Deploy(stack *thrapb.Stack, opts orchestrator.RequestOptions) e
 		b, _ := json.MarshalIndent(j, "", "  ")
 		fmt.Printf("%s\n", b)
 	}
-	// fmt.Printf("%+v\n", resp)
-	// fmt.Printf("%+v\n", obj)
-	// return err
+
 	return nil
 }
 
@@ -378,7 +376,7 @@ func (st *Stack) checkArtifactsExist(stack *thrapb.Stack) error {
 		}
 
 		name := stack.ArtifactName(comp.ID)
-		_, err := reg.GetManifest(name, comp.Version)
+		_, err := reg.GetImageManifest(name, comp.Version)
 		if err != nil {
 			failed = true
 		}

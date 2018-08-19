@@ -80,7 +80,7 @@ func Test_Core_Build(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	conf := &Config{DataDir: tmpdir, ThrapConfig: &config.ThrapConfig{
+	conf := &Config{DataDir: tmpdir, Config: &config.Config{
 		Registry: map[string]*config.RegistryConfig{
 			"ecr": &config.RegistryConfig{
 				ID:   "ecr",
@@ -133,7 +133,7 @@ func Test_Core_populateFromImageConf(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	conf := &Config{DataDir: tmpdir, ThrapConfig: &config.ThrapConfig{
+	conf := &Config{DataDir: tmpdir, Config: &config.Config{
 		Registry: map[string]*config.RegistryConfig{
 			"ecr": &config.RegistryConfig{
 				ID:   "ecr",
@@ -180,9 +180,9 @@ func Test_Core_Assembler(t *testing.T) {
 	lconf, err := config.ReadProjectConfig("../")
 	fatal(t, err)
 	conf := &Config{
-		DataDir:     tmpdir,
-		ThrapConfig: lconf,
-		Logger:      DefaultLogger(os.Stdout),
+		DataDir: tmpdir,
+		Config:  lconf,
+		Logger:  DefaultLogger(os.Stdout),
 	}
 
 	c, err := NewCore(conf)

@@ -30,9 +30,13 @@ func VerifySignature(pubkey, data, signature []byte) bool {
 	return ecdsa.Verify(rawPubKey, data, &r, &s)
 }
 
+func GenerateECDSAKeyPair() (*ecdsa.PrivateKey, error) {
+	return ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+}
+
 // GenerateECDSAKeyPair generates a keypair writing the private key at filename
 // and a file with .pub appended with the public key
-func GenerateECDSAKeyPair(filename string, curve elliptic.Curve) (*ecdsa.PrivateKey, error) {
+func GenerateECDSAKeyPairFile(filename string, curve elliptic.Curve) (*ecdsa.PrivateKey, error) {
 	// c := elliptic.P256()
 	kp, err := ecdsa.GenerateKey(curve, rand.Reader)
 	if err != nil {

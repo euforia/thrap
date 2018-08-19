@@ -6,6 +6,7 @@ import (
 	"text/tabwriter"
 )
 
+// ActionResult holds the result of a given action
 type ActionResult struct {
 	Action   string
 	Resource string
@@ -13,8 +14,10 @@ type ActionResult struct {
 	Error    error
 }
 
+// ActionsResults is a collection of printable results
 type ActionsResults map[string][]*ActionResult
 
+// Print prints the formatted results
 func (results ActionsResults) Print(w io.Writer) {
 
 	for k, slice := range results {
@@ -34,38 +37,3 @@ func (results ActionsResults) Print(w io.Writer) {
 	}
 
 }
-
-// // Action represents any noteworthy command, transaction etc.
-// type Action struct {
-// 	// Name of the action
-// 	Name string
-// 	// Type of resource
-// 	Resource string
-// 	// Resource identifier
-// 	Identifier string
-// }
-
-// // NewAction returns an action with the given parameters
-// func NewAction(name, rsrc, id string) *Action {
-// 	return &Action{
-// 		Name:       name,
-// 		Resource:   rsrc,
-// 		Identifier: id,
-// 	}
-// }
-
-// func (a *Action) String() string {
-// 	return a.Resource + " " + a.Identifier + " " + a.Name
-// }
-
-// // ActionReport holds an execution report for a given action
-// type ActionReport struct {
-// 	Action *Action
-// 	Data   interface{}
-// 	Error  error
-// }
-
-// // HasError returns true if the ActionReport contains an error
-// func (ar *ActionReport) HasError() bool {
-// 	return ar.Error != nil
-// }

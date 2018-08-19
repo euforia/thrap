@@ -5,46 +5,12 @@ import (
 	"github.com/hashicorp/hil/ast"
 )
 
-// VCSRepoConfig holds vcs repo configurations
-type VCSRepoConfig struct {
-	Name  string `hcl:"name"`
-	Owner string `hcl:"owner"`
-}
-
-// Clone returns a copy of the config
-func (conf *VCSRepoConfig) Clone() *VCSRepoConfig {
-	if conf == nil {
-		return nil
-	}
-
-	return &VCSRepoConfig{
-		Name:  conf.Name,
-		Owner: conf.Owner,
-	}
-}
-
-// Merge merges the other config into the one. Only non-empty fields are
-// considered
-func (conf *VCSRepoConfig) Merge(other *VCSRepoConfig) {
-	if other == nil {
-		return
-	}
-
-	if other.Name != "" {
-		conf.Name = other.Name
-	}
-	if other.Owner != "" {
-		conf.Owner = other.Owner
-	}
-
-}
-
 // VCSConfig holds vcs configurations
 type VCSConfig struct {
-	ID       string         `hcl:"id" hcle:"omit"`
-	Addr     string         `hcl:"addr" hcle:"omitempty"`
-	Username string         `hcl:"username"`
-	Repo     *VCSRepoConfig `hcl:"repo" hcle:"omitempty"`
+	ID       string      `hcl:"id" hcle:"omit"`
+	Addr     string      `hcl:"addr" hcle:"omitempty"`
+	Username string      `hcl:"username"`
+	Repo     *RepoConfig `hcl:"repo" hcle:"omitempty"`
 }
 
 // Clone returns a copy of the config
@@ -80,7 +46,7 @@ func (conf *VCSConfig) Merge(other *VCSConfig) {
 	}
 
 	if conf.Repo == nil {
-		conf.Repo = &VCSRepoConfig{}
+		conf.Repo = &RepoConfig{}
 	}
 	conf.Repo.Merge(other.Repo)
 }

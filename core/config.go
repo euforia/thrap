@@ -13,7 +13,7 @@ import (
 type Config struct {
 	// This is the local project config merged with the global user config for the
 	// instance
-	*config.ThrapConfig
+	*config.Config
 	// Load creds
 	Creds *config.CredsConfig
 	// Overall logger

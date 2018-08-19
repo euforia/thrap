@@ -34,12 +34,12 @@ func (core *Core) loadConfigs(conf *Config) error {
 	}
 
 	cfile := filepath.Join(conf.DataDir, consts.ConfigFile)
-	gconf, err := config.ReadThrapConfig(cfile)
+	gconf, err := config.ReadConfig(cfile)
 	if err != nil {
 		return err
 	}
 	// Merge user supplied with global for this core instance
-	gconf.Merge(conf.ThrapConfig)
+	gconf.Merge(conf.Config)
 	core.conf = gconf
 
 	// Creds
@@ -101,7 +101,7 @@ func (core *Core) initVCS() (err error) {
 	}
 
 	core.vcs, err = vcs.New(vconf)
-
+	core.log.Printf("VCS loaded: id=%s user=%s", core.vcs.ID(), vc.Username)
 	return err
 }
 

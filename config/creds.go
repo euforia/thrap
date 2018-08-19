@@ -9,36 +9,36 @@ import (
 	"github.com/hashicorp/hcl"
 )
 
-// CredsConfig holds creds
-type CredsConfig struct {
+// Credentials holds creds
+type Credentials struct {
 	Registry     map[string]map[string]string `hcl:"registry"`
 	VCS          map[string]map[string]string `hcl:"vcs"`
 	Secrets      map[string]map[string]string `hcl:"secrets"`
 	Orchestrator map[string]map[string]string `hcl:"orchestrator"`
 }
 
-// GetRegistryCreds returns creds for the registry by the id
-func (cc *CredsConfig) GetRegistryCreds(id string) map[string]string {
+// RegistryCreds returns creds for the registry by the id
+func (cc *Credentials) RegistryCreds(id string) map[string]string {
 	return cc.Registry[id]
 }
 
-// GetVCSCreds returns creds for the vcs by the id
-func (cc *CredsConfig) GetVCSCreds(id string) map[string]string {
+// VCSCreds returns creds for the vcs by the id
+func (cc *Credentials) VCSCreds(id string) map[string]string {
 	return cc.VCS[id]
 }
 
-// GetSecretsCreds returns creds for the secrets provider by the id
-func (cc *CredsConfig) GetSecretsCreds(id string) map[string]string {
+// SecretsCreds returns creds for the secrets provider by the id
+func (cc *Credentials) SecretsCreds(id string) map[string]string {
 	return cc.Secrets[id]
 }
 
-// GetOrchestratorCreds returns creds for the orchestrator by the id
-func (cc *CredsConfig) GetOrchestratorCreds(id string) map[string]string {
+// OrchestratorCreds returns creds for the orchestrator by the id
+func (cc *Credentials) OrchestratorCreds(id string) map[string]string {
 	return cc.Orchestrator[id]
 }
 
 // Merge merges other to this config.  Other takes precedence
-func (cc *CredsConfig) Merge(other *CredsConfig) {
+func (cc *Credentials) Merge(other *Credentials) {
 	if other == nil {
 		return
 	}
@@ -76,26 +76,27 @@ func merge(curr, newm map[string]map[string]string) map[string]map[string]string
 	return out
 }
 
-func ReadProjectCredsConfig(dir string) (*CredsConfig, error) {
+// ReadProjectCredentials reads the creds file from the directory
+func ReadProjectCredentials(dir string) (*Credentials, error) {
 	filename := filepath.Join(dir, consts.WorkDir, consts.CredsFile)
-	return ReadCredsConfig(filename)
+	return ReadCredentials(filename)
 }
 
-// ReadCredsConfig reads a creds conf from the given file
-func ReadCredsConfig(fpath string) (*CredsConfig, error) {
+// ReadCredentials reads a creds conf from the given file
+func ReadCredentials(fpath string) (*Credentials, error) {
 	b, err := ioutil.ReadFile(fpath)
 	if err != nil {
 		return nil, err
 	}
 
-	var cc CredsConfig
+	var cc Credentials
 	err = hcl.Unmarshal(b, &cc)
 
 	return &cc, err
 }
 
-// WriteCredsConfig writes the creds to the given file
-func WriteCredsConfig(cc *CredsConfig, fpath string) error {
+// WriteCredentials writes the creds to the given file
+func WriteCredentials(cc *Credentials, fpath string) error {
 	b, err := hclencoder.Encode(cc)
 	if err == nil {
 		err = ioutil.WriteFile(fpath, b, 0644)
@@ -103,9 +104,9 @@ func WriteCredsConfig(cc *CredsConfig, fpath string) error {
 	return err
 }
 
-// DefaultCredsConfig returns minimal credential config
-func DefaultCredsConfig() *CredsConfig {
-	return &CredsConfig{
+// DefaultCredentials returns minimal credential config
+func DefaultCredentials() *Credentials {
+	return &Credentials{
 		Registry: make(map[string]map[string]string),
 		VCS: map[string]map[string]string{
 			"github": map[string]string{"token": ""},

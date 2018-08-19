@@ -72,7 +72,7 @@ func Test_Packs_Load(t *testing.T) {
 	assert.Nil(t, err)
 
 	list, _ := dps.List()
-	assert.Equal(t, 2, len(list))
+	assert.Equal(t, 3, len(list))
 	assert.Equal(t, "dev", dps.Type())
 
 	err = p.Update()

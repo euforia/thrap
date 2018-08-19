@@ -148,10 +148,40 @@ message Artifact {
 }
 
 message Profile {
-    string ID           = 1 [(gogoproto.moretags) = "hcle:\"omit\" yaml:\"-\""];
-    string Orchestrator = 2 [(gogoproto.moretags) = "hcl:\"orchestrator\""];
-    string Secrets      = 3 [(gogoproto.moretags) = "hcl:\"secrets\""];
-    string Registry     = 4 [(gogoproto.moretags) = "hcl:\"registry\""];
+    string ID                    = 1 [(gogoproto.moretags) = "hcle:\"omit\" yaml:\"-\""];
+    string Orchestrator          = 2 [(gogoproto.moretags) = "hcl:\"orchestrator\""];
+    string Secrets               = 3 [(gogoproto.moretags) = "hcl:\"secrets\""];
+    string Registry              = 4 [(gogoproto.moretags) = "hcl:\"registry\""];
+    string VCS                   = 5 [(gogoproto.moretags) = "hcl:\"vcs\""];
+    map<string,string> Meta      = 6 [(gogoproto.moretags) = "hcl:\"meta\""];
+    map<string,string> Variables = 7 [(gogoproto.moretags) = "hcl:\"variables\""];
+}
+
+message Project {
+    string ID                  = 1;
+    string Name                = 2;
+    string Description         = 3;
+    string Source              = 4;
+    string Owner               = 5;
+    string Maintainer          = 6;
+    repeated string Developers = 7;
+}
+
+message Deployment {
+    // Unique deployment instance name
+    string Name = 1; 
+    // Incremented on each deploy 
+    uint64 Version = 2;
+    // Marshalled & normalized deploy job
+    bytes Spec = 3; 
+    // Profile for this deployment
+    Profile Profile  = 4;
+}
+
+message DeploymentDescriptor {
+    // Spec template deploy job. This is the spec used to generate the actual
+    // runtime Spec in the Deployment object
+    bytes Spec = 2; 
 }
 
 message IterOptions {

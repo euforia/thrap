@@ -63,11 +63,11 @@ func (hub *dockerHub) Init(rconf *config.RegistryConfig) error {
 }
 
 // Create a new repository
-func (hub *dockerHub) Create(name string) (interface{}, error) {
-
+func (hub *dockerHub) CreateRepo(name string) (interface{}, error) {
 	mfest := schema1.Manifest{
 		Versioned: manifest.Versioned{SchemaVersion: 2},
 	}
+
 	// smf, err := schema2.FromStruct(mfest)
 	key, err := libtrust.GenerateECP256PrivateKey()
 	if err != nil {
@@ -93,12 +93,12 @@ func (hub *dockerHub) ImageName(name string) string {
 }
 
 // get repo info
-func (hub *dockerHub) Get(name string) (interface{}, error) {
+func (hub *dockerHub) GetRepo(name string) (interface{}, error) {
 	// Temporary
 	return hub.reg.Tags(name)
 }
 
 // Get a repository manifest
-func (hub *dockerHub) GetManifest(name, tag string) (interface{}, error) {
+func (hub *dockerHub) GetImageManifest(name, tag string) (interface{}, error) {
 	return hub.reg.ManifestV2(name, tag)
 }

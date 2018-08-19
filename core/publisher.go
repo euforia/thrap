@@ -14,6 +14,7 @@ import (
 	"github.com/euforia/thrap/thrapb"
 )
 
+// PublishOptions hold options to publishing an artifact
 type PublishOptions struct {
 	TagLatest bool
 }
@@ -56,7 +57,7 @@ func (pub *artifactPublisher) Publish(ctx context.Context, stack *thrapb.Stack,
 			fmt.Printf("Publishing %s:\n\n", image)
 
 			// Check repo exists
-			_, err := pub.reg.Get(req.Image)
+			_, err := pub.reg.GetRepo(req.Image)
 			if err == nil {
 				// Publish
 				req.Image = pub.reg.ImageName(req.Image)

@@ -46,7 +46,7 @@ func commandIdentityRegister() *cli.Command {
 			if err != nil {
 				return err
 			}
-			conf, err := config.ReadThrapConfig(cfile)
+			conf, err := config.ReadConfig(cfile)
 			if err != nil {
 				return err
 			}

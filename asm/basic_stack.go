@@ -1,6 +1,7 @@
 package asm
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/euforia/thrap/consts"
@@ -9,19 +10,26 @@ import (
 	"github.com/euforia/thrap/vars"
 )
 
+var (
+	errLanguageRequired = errors.New("language required")
+)
+
 // BasicStackConfig holds a configurations to build canned stacks.  Currently
 // supports a dev, datastore and web component
 type BasicStackConfig struct {
-	Name      string
-	Language  thrapb.LanguageID
-	DataStore string
-	WebServer string
+	Name       string
+	Language   thrapb.LanguageID
+	DataStores []string
+	Proxy      string
 }
 
 // NewBasicStack builds a skeleton stack inferring as much information as
 // possible to assemble the stack.  It only inits the object with the minimal
 // valid defaults
 func NewBasicStack(c *BasicStackConfig, pks *packs.Packs) (*thrapb.Stack, error) {
+	if c.Language == "" {
+		return nil, errLanguageRequired
+	}
 
 	stack := thrapb.Stack{
 		ID:   c.Name,
@@ -33,28 +41,31 @@ func NewBasicStack(c *BasicStackConfig, pks *packs.Packs) (*thrapb.Stack, error)
 		consts.DefaultAPICompID: devComp,
 	}
 
-	var dsComp *thrapb.Component
-	if c.DataStore != "none" {
-		dspacks := pks.Datastore()
-		ds, err := dspacks.Load(c.DataStore)
+	dspacks := pks.Datastore()
+	for _, datastore := range c.DataStores {
+		var dsComp *thrapb.Component
+		ds, err := dspacks.Load(datastore)
 		if err != nil {
 			return nil, err
 		}
 
+		id := ds.Name
+
 		dsComp = thrapb.NewComponent(ds.Image, ds.DefaultVersion, thrapb.CompTypeDatastore)
-		comps[consts.DefaultDSCompID] = dsComp
+		dsComp.ID = id
+		comps[id] = dsComp
 
 		// Add env var for host, port and addr to dev component
-		ev := defaultCompEnvVars(consts.DefaultDSCompID)
+		ev := defaultCompEnvVars(id)
 		for k, v := range ev {
 			devComp.Env.Vars[k] = v
 		}
 	}
 
 	var wsComp *thrapb.Component
-	if c.WebServer != "none" {
+	if c.Proxy != "none" && c.Proxy != "" {
 		wpacks := pks.Web()
-		ws, err := wpacks.Load(c.WebServer)
+		ws, err := wpacks.Load(c.Proxy)
 		if err != nil {
 			return nil, err
 		}

@@ -7,6 +7,8 @@ import (
 	"math/rand"
 	"sort"
 	"strings"
+
+	"github.com/euforia/kvdb"
 )
 
 // NewIdentity returns a new Identity with given email address
@@ -15,6 +17,11 @@ func NewIdentity(email string) *Identity {
 		Email: email,
 		Nonce: rand.Uint64(),
 	}
+}
+
+// New satisfies the Object interface
+func (ident *Identity) New() kvdb.Object {
+	return &Identity{}
 }
 
 // SigHash returns the hash to be used to sign the object. This is everything

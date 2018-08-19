@@ -42,16 +42,29 @@ func commandAgent() *cli.Command {
 
 			pconf, err := config.ReadProjectConfig(".")
 			if err == nil {
-				conf.ThrapConfig = pconf
+				conf.Config = pconf
 			}
 
-			core, err := core.NewCore(conf)
+			c, err := core.NewCore(conf)
 			if err != nil {
 				return err
 			}
 
+			// lpath, err := utils.GetLocalPath("")
+			// if err != nil {
+			// 	return err
+			// }
+
+			// Load profiles
+			// profs, err := store.LoadHCLFileProfileStorage(lpath)
+			// if err != nil {
+			// 	return err
+			// }
+
+			// srv := api.NewHTTPHandler(c, profs)
+
 			srv := grpc.NewServer()
-			svc := thrap.NewService(core, conf.Logger)
+			svc := thrap.NewService(c, conf.Logger)
 			thrapb.RegisterThrapServer(srv, svc)
 
 			baddr := ctx.String("bind-addr")

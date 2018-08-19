@@ -13,20 +13,20 @@ type Registry interface {
 	// Initialize the registry provider
 	Init(conf *config.RegistryConfig) error
 	// Create a new repository
-	Create(string) (interface{}, error)
+	CreateRepo(string) (interface{}, error)
 	// Get repo info
-	Get(string) (interface{}, error)
+	GetRepo(string) (interface{}, error)
 	// Get image manifest
-	GetManifest(name, tag string) (interface{}, error)
+	GetImageManifest(name, tag string) (interface{}, error)
 	// Name of the image with the registry. Needed for deployments
 	ImageName(string) string
 	// Returns a docker AuthConfig
 	GetAuthConfig() (types.AuthConfig, error)
 }
 
-// New returns a new registry based on the config.
-// It returns an error if an unsupported provider is supplied or fails to
-// initialize the underlying registry provider
+// New returns a new registry based on the config.  It returns an error if an
+// unsupported provider is supplied or fails to initialize the underlying
+// registry provider
 func New(conf *config.RegistryConfig) (Registry, error) {
 	var (
 		reg Registry

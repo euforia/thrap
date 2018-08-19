@@ -92,8 +92,8 @@
     "table",
     "y"
   ]
-  revision = "a6f0866f06a0ef6ac612e427ffe5d081db4e6fab"
-  version = "v1.5.2"
+  revision = "391b6d3b93e6014fe8c2971fcc0c1266e47dbbd9"
+  version = "v1.5.3"
 
 [[projects]]
   branch = "master"
@@ -205,6 +205,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/euforia/kvdb"
+  packages = ["."]
+  revision = "6997266f323b1babc33b29f08138062d962e09ef"
+
+[[projects]]
+  branch = "master"
   name = "github.com/euforia/pseudo"
   packages = [
     ".",
@@ -262,6 +268,18 @@
   packages = ["."]
   revision = "a557574d6c024ed6e36acc8b610f5f211c91568a"
   version = "1.0.0"
+
+[[projects]]
+  name = "github.com/gorilla/context"
+  packages = ["."]
+  revision = "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
+  version = "v1.1.1"
+
+[[projects]]
+  name = "github.com/gorilla/mux"
+  packages = ["."]
+  revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
+  version = "v1.6.2"
 
 [[projects]]
   name = "github.com/hashicorp/consul"
@@ -747,6 +765,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "edeab87e32aead1c8dc60d59ce06414809e3ba8d6f92a13995b965ef242f9e9f"
+  inputs-digest = "ce3b4f90d5cfdca6b0004a2cedd69434d9b0fbb1ebb2096e65112235b4a65461"
   solver-name = "gps-cdcl"
   solver-version = 1

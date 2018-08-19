@@ -43,14 +43,14 @@ func ConfigureGlobal(opts ConfigureOptions) error {
 	}
 
 	var (
-		conf     *config.ThrapConfig
+		conf     *config.Config
 		varsfile = filepath.Join(opts.DataDir, consts.ConfigFile)
 	)
 
 	if !utils.FileExists(varsfile) {
-		conf = config.DefaultThrapConfig()
+		conf = config.DefaultConfig()
 	} else {
-		conf, err = config.ReadThrapConfig(varsfile)
+		conf, err = config.ReadConfig(varsfile)
 		if err != nil {
 			return err
 		}
@@ -64,7 +64,7 @@ func ConfigureGlobal(opts ConfigureOptions) error {
 	}
 	configureHomeVars(conf.VCS[opts.VCS.ID], opts.NoPrompt)
 
-	err = config.WriteThrapConfig(conf, varsfile)
+	err = config.WriteConfig(conf, varsfile)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func ConfigureGlobal(opts ConfigureOptions) error {
 	// Key file
 	keypath := filepath.Join(opts.DataDir, consts.KeyFile)
 	if !utils.FileExists(keypath) {
-		_, err = utils.GenerateECDSAKeyPair(keypath, elliptic.P256())
+		_, err = utils.GenerateECDSAKeyPairFile(keypath, elliptic.P256())
 	}
 	fmt.Fprintf(tw, "Keypair:\t%s\n", keypath)
 	tw.Flush()
@@ -146,7 +146,7 @@ func configureVCSCreds(conf *config.CredsConfig, vcsID string, noprompt bool) {
 }
 
 // ConfigureLocal configures the local project configuration
-func ConfigureLocal(conf *config.ThrapConfig, opts ConfigureOptions) (*config.ThrapConfig, error) {
+func ConfigureLocal(conf *config.Config, opts ConfigureOptions) (*config.Config, error) {
 	apath, err := filepath.Abs(opts.DataDir)
 	if err != nil {
 		return nil, err
@@ -167,7 +167,7 @@ func ConfigureLocal(conf *config.ThrapConfig, opts ConfigureOptions) (*config.Th
 
 	varsfile := filepath.Join(tdir, consts.ConfigFile)
 	if utils.FileExists(varsfile) {
-		cfg, err := config.ReadThrapConfig(varsfile)
+		cfg, err := config.ReadConfig(varsfile)
 		return cfg, err
 	}
 

@@ -76,7 +76,7 @@ func (ar *awsContainerRegistry) ID() string {
 	return ar.conf.ID
 }
 
-func (ar *awsContainerRegistry) GetManifest(name, tag string) (interface{}, error) {
+func (ar *awsContainerRegistry) GetImageManifest(name, tag string) (interface{}, error) {
 	imageID := &ecr.ImageIdentifier{}
 	imageID.SetImageTag(tag)
 
@@ -140,7 +140,7 @@ func (ar *awsContainerRegistry) GetAuthConfig() (types.AuthConfig, error) {
 	return auth, nil
 }
 
-func (ar *awsContainerRegistry) Get(name string) (interface{}, error) {
+func (ar *awsContainerRegistry) GetRepo(name string) (interface{}, error) {
 	input := &ecr.DescribeRepositoriesInput{
 		RepositoryNames: []*string{&name},
 	}
@@ -154,7 +154,7 @@ func (ar *awsContainerRegistry) Get(name string) (interface{}, error) {
 	return nil, errors.New(awsErr.Code())
 }
 
-func (ar *awsContainerRegistry) Delete(name string) (interface{}, error) {
+func (ar *awsContainerRegistry) DeleteRepo(name string) (interface{}, error) {
 	req := &ecr.DeleteRepositoryInput{}
 	req.SetRepositoryName(name)
 
@@ -165,7 +165,7 @@ func (ar *awsContainerRegistry) Delete(name string) (interface{}, error) {
 	return nil, err
 }
 
-func (ar *awsContainerRegistry) Create(name string) (interface{}, error) {
+func (ar *awsContainerRegistry) CreateRepo(name string) (interface{}, error) {
 	in := &ecr.CreateRepositoryInput{
 		RepositoryName: aws.String(name),
 	}
