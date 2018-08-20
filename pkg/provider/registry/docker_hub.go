@@ -9,6 +9,7 @@ import (
 	"github.com/docker/libtrust"
 
 	"github.com/euforia/docker-registry-client/registry"
+	"github.com/euforia/thrap/pkg/provider"
 )
 
 const defaultDockerRegAddr = "https://registry.hub.docker.com"
@@ -24,7 +25,7 @@ func (hub *dockerHub) ID() string {
 }
 
 // Initialize the registry provider
-func (hub *dockerHub) Init(rconf *Config) error {
+func (hub *dockerHub) Init(rconf *provider.Config) error {
 	hub.url = defaultDockerRegAddr
 
 	conf := rconf.Config

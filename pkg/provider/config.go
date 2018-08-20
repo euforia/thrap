@@ -1,4 +1,4 @@
-package registry
+package provider
 
 import (
 	"github.com/euforia/pseudo/scope"
@@ -26,7 +26,7 @@ func (conf *Config) Clone() *Config {
 	}
 
 	if conf.Config != nil {
-		conf.Config = make(map[string]interface{}, len(conf.Config))
+		conf.Config = make(map[string]interface{})
 		for k, v := range conf.Config {
 			rc.Config[k] = v
 		}

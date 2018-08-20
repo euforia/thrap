@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/docker/docker/api/types"
+	"github.com/euforia/thrap/pkg/provider"
 )
 
 var (
@@ -21,14 +22,14 @@ var (
 type awsContainerRegistry struct {
 	sess *session.Session
 	ecr  *ecr.ECR
-	conf *Config
+	conf *provider.Config
 }
 
 // Envionment Variables:
 // AWS_ACCESS_KEY_ID
 // AWS_SECRET_ACCESS_KEY
 // AWS_DEFAULT_REGION
-func (ar *awsContainerRegistry) Init(rconf *Config) error {
+func (ar *awsContainerRegistry) Init(rconf *provider.Config) error {
 	ar.conf = rconf
 
 	conf := aws.NewConfig()

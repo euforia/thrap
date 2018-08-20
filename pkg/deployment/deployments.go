@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/euforia/kvdb"
+	"github.com/euforia/thrap/pkg/storage"
 	"github.com/euforia/thrap/thrapb"
 )
 
@@ -23,11 +24,17 @@ type Deployments struct {
 	// Deployment descriptor i.e config/template used for all deploys across
 	// profiles and instances
 	desc *thrapb.DeploymentDescriptor
+
 	// Project who's deployments are being managed
 	proj thrapb.Project
-	// Deployment db for the project
+
+	// Profiles
+	profiles storage.ProfileStorage
+
+	// Project deployment db
 	db kvdb.DB
-	//
+
+	// Global datastore
 	ds kvdb.Datastore
 }
 
@@ -77,13 +84,14 @@ func (d *Deployments) Create(dpl *thrapb.Deployment) (*Deployment, error) {
 	err = table.Create([]byte(key), dpl)
 	if err == nil {
 		dtable, _ := d.db.GetTable(filepath.Join(instTableKey, d.proj.ID), dpl)
-		return NewDeployment(d.desc, dpl, dtable), nil
+		return NewDeployment(d.proj, d.desc, dpl, dtable), nil
 	}
 
 	return nil, err
 }
 
-// Get returns an existing deployment given the provide and instance name
+// Get returns an existing deployment given the profile and instance name,
+// which can then be used to perform deployments.
 func (d *Deployments) Get(profID, instance string) (*Deployment, error) {
 	td := &thrapb.Deployment{}
 	table, _ := d.db.GetTable(instTableKey, td)
@@ -94,9 +102,10 @@ func (d *Deployments) Get(profID, instance string) (*Deployment, error) {
 		return nil, err
 	}
 	dp := obj.(*thrapb.Deployment)
-	// table with proj id. diff from above
+
+	// Table with proj id. diff from above
 	dtable, _ := d.db.GetTable(filepath.Join(instTableKey, d.proj.ID), td)
-	return NewDeployment(d.desc, dp, dtable), nil
+	return NewDeployment(d.proj, d.desc, dp, dtable), nil
 }
 
 // Descriptor returns the current loaded deployment descriptor

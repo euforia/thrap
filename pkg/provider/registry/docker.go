@@ -7,6 +7,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/euforia/thrap/pkg/provider"
 )
 
 var (
@@ -28,7 +29,7 @@ func (reg *localDocker) ID() string {
 }
 
 // Initialize the registry provider
-func (reg *localDocker) Init(conf *Config) (err error) {
+func (reg *localDocker) Init(conf *provider.Config) (err error) {
 	reg.id = conf.ID
 
 	// Set default

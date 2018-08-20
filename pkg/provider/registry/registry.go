@@ -4,13 +4,14 @@ import (
 	"fmt"
 
 	"github.com/docker/docker/api/types"
+	"github.com/euforia/thrap/pkg/provider"
 )
 
 // Registry implements a registry interface
 type Registry interface {
 	ID() string
 	// Initialize the registry provider
-	Init(conf *Config) error
+	Init(conf *provider.Config) error
 	// Create a new repository
 	CreateRepo(string) (interface{}, error)
 	// Get repo info
@@ -26,7 +27,7 @@ type Registry interface {
 // New returns a new registry based on the config.  It returns an error if an
 // unsupported provider is supplied or fails to initialize the underlying
 // registry provider
-func New(conf *Config) (Registry, error) {
+func New(conf *provider.Config) (Registry, error) {
 	var (
 		reg Registry
 		err error

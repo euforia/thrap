@@ -1,14 +1,17 @@
 package registry
 
 import (
+	"io/ioutil"
 	"testing"
 
-	"github.com/euforia/thrap/config"
+	"github.com/hashicorp/hcl"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/euforia/thrap/pkg/provider"
 )
 
 func Test_New(t *testing.T) {
-	conf := &Config{
+	conf := &provider.Config{
 		ID:       "ecr",
 		Provider: "ecr",
 	}
@@ -33,13 +36,16 @@ func fatal(t *testing.T, err error) {
 }
 
 func Test_Registry_ECR(t *testing.T) {
+	// Add creds
 	credsfile := "../../../.thrap/creds.hcl"
-	cc, err := config.ReadCredentials(credsfile)
+	b, _ := ioutil.ReadFile(credsfile)
+	out := make(map[string]map[string]map[string]string)
+	err := hcl.Unmarshal(b, &out)
 	fatal(t, err)
 
-	// Add creds
-	ecrCreds := cc.RegistryCreds("sandbox")
-	conf := &Config{
+	ecrCreds := out["registry"]["sandbox"]
+
+	conf := &provider.Config{
 		Provider: "ecr",
 		Config: map[string]interface{}{
 			"region": "us-west-2",
