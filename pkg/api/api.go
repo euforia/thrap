@@ -52,7 +52,7 @@ func (server *Server) registerHandlers() {
 	server.router.HandleFunc("/project/{pid}/deployments", server.handler.handleListDeployments)
 
 	server.router.HandleFunc("/project/{pid}/deployment/spec", server.handler.handleDeploymentSpec)
-	server.router.HandleFunc("/project/{pid}/deployment/{eid}/{did}", server.handler.handleDeployment)
+	server.router.HandleFunc("/project/{pid}/deployment/{eid}/{iid}", server.handler.handleDeployment)
 
 	// server.router.HandleFunc("/project/{pid}/deployment/{eid}", server.deploy.listEnvDeployments)
 }

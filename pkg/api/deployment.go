@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/euforia/thrap/pkg/thrap"
 	"github.com/euforia/thrap/thrapb"
 
 	"github.com/gorilla/mux"
@@ -29,7 +30,9 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 		projID = vars["pid"]
 		envID  = vars["eid"]
 		instID = vars["iid"]
-		resp   interface{}
+
+		d    *thrap.Deployment
+		resp interface{}
 	)
 
 	proj, err := api.projects.Get(projID)
@@ -42,10 +45,10 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 
 	switch r.Method {
 	case "GET":
-		resp, err = dpl.Get(envID, instID)
+		d, err = dpl.Get(envID, instID)
 
 	case "POST":
-		_, err = dpl.Create(&thrapb.Deployment{
+		d, err = dpl.Create(&thrapb.Deployment{
 			Name:    instID,
 			Profile: &thrapb.Profile{ID: envID},
 		})
@@ -57,6 +60,10 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 	default:
 		w.WriteHeader(405)
 		return
+	}
+
+	if err == nil {
+		resp = d.Deployable()
 	}
 
 	// w.WriteHeader(404)
