@@ -6,6 +6,25 @@ import (
 	"github.com/euforia/kvdb"
 )
 
+func (d *Deployment) Clone() *Deployment {
+	if d == nil {
+		return nil
+	}
+
+	n := &Deployment{
+		Name:    d.Name,
+		Version: d.Version,
+		State:   d.State,
+	}
+	if d.Spec != nil {
+		n.Spec = make([]byte, len(d.Spec))
+		copy(n.Spec, d.Spec)
+	}
+	n.Profile = d.Profile.Clone()
+
+	return n
+}
+
 func (d *Deployment) New() kvdb.Object {
 	return &Deployment{}
 }

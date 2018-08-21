@@ -176,21 +176,8 @@ message Deployment {
     bytes Spec = 3; 
     // Profile for this deployment
     Profile Profile  = 4;
-
-    enum state {
-        Unknown = 0;
-        Create  = 1;
-        Prepare = 2;
-        Deploy  = 3;
-    }
-    state State = 5;
-
-    enum status {
-        Ok = 0;
-        Failed = 1;
-    }
-
-    status Status = 6;
+    string State = 5;
+    string Status = 6;
 }
 
 message DeploymentDescriptor {

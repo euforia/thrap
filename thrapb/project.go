@@ -26,6 +26,9 @@ func (p *Project) Hash(h hash.Hash) []byte {
 }
 
 func (p *Project) Clone() *Project {
+	if p == nil {
+		return p
+	}
 	proj := &Project{
 		ID:          p.ID,
 		Name:        p.Name,

@@ -11,6 +11,9 @@ func DefaultProfile() *Profile {
 
 // Clone returns a deep copy of the Profile
 func (p *Profile) Clone() *Profile {
+	if p == nil {
+		return p
+	}
 	n := &Profile{
 		ID:           p.ID,
 		Orchestrator: p.Orchestrator,
