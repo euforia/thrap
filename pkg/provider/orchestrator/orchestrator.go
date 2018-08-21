@@ -2,11 +2,17 @@ package orchestrator
 
 import (
 	"context"
-	"fmt"
 	"io"
+
+	"github.com/pkg/errors"
 
 	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/thrapb"
+)
+
+var (
+	errOrchProviderMissing      = errors.New("orchestration provider missing")
+	errOrchProviderNotSupported = errors.New("orchestration provider not supported")
 )
 
 // RequestOptions holds available deployment options
@@ -38,6 +44,9 @@ type PreparedDeployment interface {
 	Artifacts() []string
 	// Orchestrator specific spec
 	Spec() interface{}
+	// Serialized bytes of a deploy after all normalization.  This is stored
+	// along with the deployment
+	Bytes() []byte
 }
 
 // Orchestrator implements an application/project deployment orchestrator
@@ -49,7 +58,7 @@ type Orchestrator interface {
 	ID() string
 
 	// Prepares a deployment.  The output of this is used to call deploy
-	Prepare(req *DeploymentRequest) (PreparedDeployment, error)
+	PrepareDeploy(req *DeploymentRequest) (PreparedDeployment, error)
 
 	// Deploy should deploy the stack returning the response, deploy object
 	// based on the orchestrator or an error
@@ -73,8 +82,11 @@ func New(conf *provider.Config) (Orchestrator, error) {
 	case "nomad":
 		orch = &nomadOrchestrator{}
 
+	case "":
+		err = errors.Wrapf(errOrchProviderMissing, conf.ID)
+
 	default:
-		err = fmt.Errorf("unsupported orchestrator: '%s'", conf.Provider)
+		err = errors.Wrap(errOrchProviderNotSupported, conf.Provider)
 
 	}
 

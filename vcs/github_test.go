@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/euforia/thrap/config"
+	"github.com/euforia/thrap/pkg/credentials"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,7 +18,7 @@ func Test_Github(t *testing.T) {
 }
 
 func Test_Github_calls(t *testing.T) {
-	conf, err := config.ReadCredsConfig("../.thrap/creds.hcl")
+	conf, err := credentials.ReadCredentials("../.thrap/creds.hcl")
 	if err != nil {
 		t.Skipf("Skipping github calls: %v", err)
 	}
@@ -26,7 +26,7 @@ func Test_Github_calls(t *testing.T) {
 	tdir := "/tmp/github-test"
 	defer os.RemoveAll(tdir)
 
-	c := conf.GetVCSCreds("github")
+	c := conf.VCSCreds("github")
 	if c == nil {
 		t.Skip("Skipping github calls: no config")
 	}

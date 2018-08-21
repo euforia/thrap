@@ -5,18 +5,17 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/euforia/thrap/crt"
-	"github.com/euforia/thrap/thrapb"
-
-	"github.com/euforia/thrap/packs"
-
 	"github.com/pkg/errors"
 
-	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
+	"github.com/euforia/thrap/crt"
 	"github.com/euforia/thrap/orchestrator"
-	"github.com/euforia/thrap/registry"
+	"github.com/euforia/thrap/packs"
+	"github.com/euforia/thrap/pkg/config"
+	"github.com/euforia/thrap/pkg/credentials"
+	"github.com/euforia/thrap/pkg/provider/registry"
 	"github.com/euforia/thrap/secrets"
+	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/vcs"
 )
 
@@ -36,7 +35,7 @@ const (
 // Core is the thrap core
 type Core struct {
 	conf  *config.Config
-	creds *config.CredsConfig
+	creds *credentials.Credentials
 
 	// Remote VCS github etc.
 	vcs vcs.VCS

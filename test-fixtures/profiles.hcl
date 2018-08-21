@@ -3,28 +3,23 @@ default = "local"
 profiles {
     local {
         orchestrator = "docker"
-        secrets = "file"
-        registry = "docker"
+        secrets      = "file"
+        registry     = "docker"
+        vcs          = "git"
     }
-    remote-registry {
+    sandbox {
         orchestrator = "docker"
-        secrets = "file"
-        registry = "ecr"
+        secrets      = "file"
+        registry     = "sandbox"
     }
     // Remote pull (predefined)
     dev {
         orchestrator = "nomad"
-        registry = "ecr"
+        registry     = "shared"
     }
     // Remote pull (predefined)
     live {
         orchestrator = "nomad"
-        registry = "ecr"
-    }
-    // Example 
-    custom {
-        orchestrator = "nomad"
-        secrets  = "vault"
-        registry = "ecr"
+        registry     = "shared"
     }
 }

@@ -87,6 +87,10 @@ func (hub *dockerHub) GetAuthConfig() (types.AuthConfig, error) {
 	return auth, errors.New("TBI")
 }
 
+func (hub *dockerHub) Name() string {
+	return ""
+}
+
 func (hub *dockerHub) ImageName(name string) string {
 	return name
 }

@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/euforia/thrap/orchestrator"
+	"github.com/euforia/thrap/pkg/storage"
+	"github.com/euforia/thrap/utils"
 
 	"github.com/euforia/thrap/manifest"
-	"github.com/euforia/thrap/store"
-	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vcs"
 	"gopkg.in/urfave/cli.v2"
 )
@@ -29,6 +29,7 @@ func commandStackDeploy() *cli.Command {
 			if err != nil {
 				return err
 			}
+
 			// Load stack version
 			lpath, err := utils.GetLocalPath("")
 			if err != nil {
@@ -36,14 +37,14 @@ func commandStackDeploy() *cli.Command {
 			}
 
 			// Load profiles
-			profs, err := store.LoadHCLFileProfileStorage(lpath)
+			profs, err := storage.LoadHCLFileProfileStorage(lpath)
 			if err != nil {
 				return err
 			}
 
 			// Load request profile
 			profName := ctx.String("profile")
-			prof := profs.Get(profName)
+			prof, _ := profs.Get(profName)
 			if prof == nil {
 				return fmt.Errorf("profile not found: %s", profName)
 			}

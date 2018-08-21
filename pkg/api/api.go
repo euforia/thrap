@@ -4,19 +4,19 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/euforia/kvdb"
-
-	"github.com/euforia/thrap/pkg/project"
+	"github.com/euforia/thrap/pkg/thrap"
 	"github.com/gorilla/mux"
 )
 
 // Config is the api server config
 type Config struct {
-	Datastore kvdb.Datastore
+	// Projects *project.Projects
+	// Profiles storage.ProfileStorage
 }
 
 type httpHandler struct {
-	projs *project.Projects
+	t        *thrap.Thrap
+	projects *thrap.Projects
 }
 
 // Server is the REST api interface
@@ -28,28 +28,19 @@ type Server struct {
 }
 
 // NewServer returns a new API server
-func NewServer(conf *Config) *Server {
+func NewServer(t *thrap.Thrap) *Server {
 	server := &Server{
 		router: mux.NewRouter(),
 		handler: &httpHandler{
-			projs: project.NewProjects(conf.Datastore),
+			t:        t,
+			projects: thrap.NewProjects(t),
 		},
-		// ident:  &identities{},
 	}
 
-	// server.initHandlers(ds)
 	server.registerHandlers()
 
 	return server
 }
-
-// func (server *Server) initHandlers(ds *storage.Datastore) {
-// server.proj.store, _ = ds.Project()
-
-// conf := &identity.Config{}
-// conf.Storage, _ = ds.Identity()
-// server.ident.store = identity.New(conf)
-// }
 
 func (server *Server) registerHandlers() {
 	server.router.HandleFunc("/projects", server.handler.handleListProjects)

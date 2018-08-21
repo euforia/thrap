@@ -9,9 +9,10 @@ import (
 	"text/tabwriter"
 
 	"github.com/euforia/hclencoder"
-	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
-	"github.com/euforia/thrap/store"
+	"github.com/euforia/thrap/pkg/config"
+	"github.com/euforia/thrap/pkg/credentials"
+	"github.com/euforia/thrap/pkg/storage"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vcs"
 )
@@ -73,19 +74,19 @@ func ConfigureGlobal(opts ConfigureOptions) error {
 
 	// Creds
 	var (
-		cconf     *config.CredsConfig
+		cconf     *credentials.Credentials
 		credsFile = filepath.Join(opts.DataDir, consts.CredsFile)
 	)
 	if !utils.FileExists(credsFile) {
-		cconf = config.DefaultCredsConfig()
+		cconf = credentials.DefaultCredentials()
 	} else {
-		cconf, err = config.ReadCredsConfig(credsFile)
+		cconf, err = credentials.ReadCredentials(credsFile)
 		if err != nil {
 			return err
 		}
 	}
 	configureVCSCreds(cconf, opts.VCS.ID, opts.NoPrompt)
-	err = config.WriteCredsConfig(cconf, credsFile)
+	err = credentials.WriteCredentials(cconf, credsFile)
 	if err != nil {
 		return err
 	}
@@ -127,7 +128,7 @@ func configureHomeVars(conf *config.VCSConfig, noprompt bool) {
 
 }
 
-func configureVCSCreds(conf *config.CredsConfig, vcsID string, noprompt bool) {
+func configureVCSCreds(conf *credentials.Credentials, vcsID string, noprompt bool) {
 	token := conf.VCS[vcsID]["token"]
 	if token != "" || noprompt {
 		return
@@ -158,7 +159,7 @@ func ConfigureLocal(conf *config.Config, opts ConfigureOptions) (*config.Config,
 	// var profs config.Profiles
 	profsFile := filepath.Join(tdir, consts.ProfilesFile)
 	if !utils.FileExists(profsFile) {
-		st := store.NewHCLFileProfileStorage(profsFile)
+		st := storage.NewHCLFileProfileStorage(profsFile)
 		err = st.Sync()
 		if err != nil {
 			return nil, err
@@ -172,7 +173,7 @@ func ConfigureLocal(conf *config.Config, opts ConfigureOptions) (*config.Config,
 	}
 
 	// Add project settings to supplied global
-	conf.VCS[opts.VCS.ID].Repo = &config.VCSRepoConfig{
+	conf.VCS[opts.VCS.ID].Repo = &config.RepoConfig{
 		Name:  opts.VCS.Repo.Name,
 		Owner: opts.VCS.Repo.Owner,
 	}

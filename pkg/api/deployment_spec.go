@@ -5,14 +5,14 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/euforia/thrap/pkg/deployment"
+	"github.com/euforia/thrap/pkg/thrap"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/gorilla/mux"
 )
 
 func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Request) {
 	projID := mux.Vars(r)["pid"]
-	proj, err := api.projs.Get(projID)
+	proj, err := api.projects.Get(projID)
 	if err != nil {
 		w.WriteHeader(404)
 		w.Write([]byte(err.Error()))
@@ -39,7 +39,7 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 	writeJSONResponse(w, resp, err)
 }
 
-func (api *httpHandler) setDeploymentSpec(r *http.Request, dpl *deployment.Deployments) error {
+func (api *httpHandler) setDeploymentSpec(r *http.Request, dpl *thrap.Deployments) error {
 	defer r.Body.Close()
 
 	b, err := ioutil.ReadAll(r.Body)

@@ -10,7 +10,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/euforia/thrap/crt"
 	"github.com/euforia/thrap/metrics"
-	"github.com/euforia/thrap/registry"
+	"github.com/euforia/thrap/pkg/provider/registry"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/vars"
 	"github.com/pkg/errors"
@@ -47,9 +47,6 @@ func (result *CompBuildResult) HasError() bool {
 }
 
 type stackBuilder struct {
-	// optional registry config
-	// rconf *config.RegistryConfig
-
 	// stack being built
 	stack *thrapb.Stack
 

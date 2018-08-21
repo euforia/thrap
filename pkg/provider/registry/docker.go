@@ -52,6 +52,10 @@ func (reg *localDocker) GetAuthConfig() (types.AuthConfig, error) {
 	return auth, ErrAuthNotRequired
 }
 
+func (reg *localDocker) Name() string {
+	return ""
+}
+
 // Create is a no-op that satisfies the Register interface, as there's
 // nothing to do for local docker
 func (reg *localDocker) CreateRepo(string) (interface{}, error) {

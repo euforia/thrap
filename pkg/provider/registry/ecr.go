@@ -98,6 +98,11 @@ func (ar *awsContainerRegistry) GetImageManifest(name, tag string) (interface{},
 	return resp.Images[0], nil
 }
 
+// Name returns the name used to prefix an image for ecr
+func (ar *awsContainerRegistry) Name() string {
+	return ar.conf.Addr
+}
+
 // ImageName returns the name prepended with the registry address delimited by /
 func (ar *awsContainerRegistry) ImageName(name string) string {
 	return filepath.Join(ar.conf.Addr, name)

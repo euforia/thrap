@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/thrapb"
 )
 
@@ -17,16 +18,10 @@ type RequestOptions struct {
 	Output io.Writer
 }
 
-// Config holds the config used to init the orchestrator
-type Config struct {
-	Provider string
-	Conf     map[string]interface{}
-}
-
 // Orchestrator implements an application/project deployment orchestrator
 type Orchestrator interface {
 	// Init is called to initialize the orchestrator with the given config
-	Init(config map[string]interface{}) error
+	Init(config *provider.Config) error
 
 	// ID of the orchestrator. Each orchestrator must have a unique id
 	ID() string
@@ -42,7 +37,7 @@ type Orchestrator interface {
 }
 
 // New returns a new orchestrator based on the given config
-func New(conf *Config) (Orchestrator, error) {
+func New(conf *provider.Config) (Orchestrator, error) {
 	var (
 		orch Orchestrator
 		err  error
@@ -55,13 +50,16 @@ func New(conf *Config) (Orchestrator, error) {
 	case "docker":
 		orch = &DockerOrchestrator{}
 
+	case "":
+		err = fmt.Errorf("orchestration provider missing: '%s'", conf.ID)
+
 	default:
-		err = fmt.Errorf("unsupported orchestrator: '%s'", conf.Provider)
+		err = fmt.Errorf("orchestration provider not supported: '%s'", conf.Provider)
 
 	}
 
 	if err == nil {
-		err = orch.Init(conf.Conf)
+		err = orch.Init(conf)
 	}
 
 	return orch, err

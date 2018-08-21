@@ -25,7 +25,7 @@ type InmemProfileStorage struct {
 // Get returns the profile by id.  It returns nil if it is not found
 func (db *InmemProfileStorage) Get(id string) (*thrapb.Profile, error) {
 	if val, ok := db.Profiles[id]; ok {
-		return val, nil
+		return val.Clone(), nil
 	}
 
 	return nil, ErrProfileNotFound
@@ -45,7 +45,10 @@ func (db *InmemProfileStorage) List() []*thrapb.Profile {
 // GetDefault returns the default profile.  It returns nil if one has not been
 // previously declared
 func (db *InmemProfileStorage) GetDefault() *thrapb.Profile {
-	return db.Profiles[db.Default]
+	if val, ok := db.Profiles[db.Default]; ok {
+		return val.Clone()
+	}
+	return nil
 }
 
 // SetDefault sets the id to the default profile.  It returns an errProfileNotFound
@@ -97,6 +100,14 @@ func (st *HCLFileProfileStorage) Sync() error {
 	}
 
 	return ioutil.WriteFile(st.file, b, 0644)
+}
+
+func ReadHCLFileProfileStorage(filename string) (*HCLFileProfileStorage, error) {
+	db, err := parseProfiles(filename)
+	if err == nil {
+		return &HCLFileProfileStorage{InmemProfileStorage: db, file: filename}, nil
+	}
+	return nil, err
 }
 
 // ParseProfiles parses profiles at the given path

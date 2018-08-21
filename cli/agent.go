@@ -4,14 +4,13 @@ import (
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 
-	"github.com/euforia/thrap"
-	"github.com/euforia/thrap/config"
-	"github.com/euforia/thrap/consts"
-	"github.com/euforia/thrap/core"
-	"github.com/euforia/thrap/thrapb"
-	"google.golang.org/grpc"
 	"gopkg.in/urfave/cli.v2"
+
+	"github.com/euforia/thrap/pkg/api"
+	"github.com/euforia/thrap/pkg/credentials"
+	"github.com/euforia/thrap/pkg/thrap"
 )
 
 func commandAgent() *cli.Command {
@@ -20,52 +19,53 @@ func commandAgent() *cli.Command {
 		Usage: "Run a server agent",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:  "bind-addr",
-				Usage: "bind address",
-				Value: "0.0.0.0:10000",
+				Name:    "bind-addr",
+				Aliases: []string{"b"},
+				Usage:   "bind address",
+				Value:   "0.0.0.0:10000",
 			},
 			&cli.StringFlag{
 				Name:  "data-dir",
-				Usage: "Data directory",
-				Value: consts.DefaultDataDir,
+				Usage: "data directory",
+				Value: "",
 			},
-			// &cli.StringFlag{
-			// 	Name:  "adv-addr",
-			// 	Usage: "advertise address",
-			// },
+			&cli.StringFlag{
+				Name:  "conf-dir",
+				Usage: "configuration directory",
+				Value: "",
+			},
 		},
 		Action: func(ctx *cli.Context) error {
-			conf := &core.Config{
-				DataDir: ctx.String("data-dir"),
-				Logger:  log.New(os.Stderr, "", log.LstdFlags|log.Lmicroseconds),
-			}
-
-			pconf, err := config.ReadProjectConfig(".")
-			if err == nil {
-				conf.Config = pconf
-			}
-
-			c, err := core.NewCore(conf)
+			conf, err := buildConfig(ctx)
 			if err != nil {
 				return err
 			}
 
-			// lpath, err := utils.GetLocalPath("")
+			conf.Credentials, err = credentials.ReadCredentials(filepath.Join(conf.ConfigDir, "creds.hcl"))
+			if err != nil {
+				return err
+			}
+
+			thp, err := thrap.New(conf)
+			if err != nil {
+				return err
+			}
+
+			// pconf, err := config.ReadProjectConfig(".")
+			// if err == nil {
+			// 	conf.Config = pconf
+			// }
+
+			// c, err := core.NewCore(conf)
 			// if err != nil {
 			// 	return err
 			// }
 
-			// Load profiles
-			// profs, err := store.LoadHCLFileProfileStorage(lpath)
-			// if err != nil {
-			// 	return err
-			// }
+			srv := api.NewServer(thp)
 
-			// srv := api.NewHTTPHandler(c, profs)
-
-			srv := grpc.NewServer()
-			svc := thrap.NewService(c, conf.Logger)
-			thrapb.RegisterThrapServer(srv, svc)
+			// srv := grpc.NewServer()
+			// svc := thrap.NewService(c, conf.Logger)
+			// thrapb.RegisterThrapServer(srv, svc)
 
 			baddr := ctx.String("bind-addr")
 			lis, err := net.Listen("tcp", baddr)
@@ -78,4 +78,13 @@ func commandAgent() *cli.Command {
 			return err
 		},
 	}
+}
+
+func buildConfig(ctx *cli.Context) (*thrap.Config, error) {
+	conf := &thrap.Config{
+		DataDir:   ctx.String("data-dir"),
+		ConfigDir: ctx.String("conf-dir"),
+		Logger:    log.New(os.Stderr, "", log.LstdFlags|log.Lmicroseconds),
+	}
+	return conf, conf.Validate()
 }

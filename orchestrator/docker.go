@@ -8,9 +8,11 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/euforia/thrap/crt"
+	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/thrapb"
 )
 
+// DockerOrchestrator implements a local docker orchestrator
 type DockerOrchestrator struct {
 	crt *crt.Docker
 }
@@ -21,7 +23,7 @@ func (orch *DockerOrchestrator) ID() string {
 }
 
 // Init initializes the docker orchestrator
-func (orch *DockerOrchestrator) Init(conf map[string]interface{}) (err error) {
+func (orch *DockerOrchestrator) Init(conf *provider.Config) (err error) {
 	orch.crt, err = crt.NewDocker()
 	return
 }

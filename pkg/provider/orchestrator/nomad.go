@@ -28,6 +28,12 @@ func newNomadDeployment(job *nomad.Job) (*nomadDeployment, error) {
 	return n, err
 }
 
+// Bytes returns the bytes for a given deployment after all normalization
+// has occured.  This is the spec that was deployed.
+func (d *nomadDeployment) Bytes() []byte {
+	return d.serialized
+}
+
 func (d *nomadDeployment) Spec() interface{} {
 	return d.job
 }
@@ -79,7 +85,7 @@ func (orch *nomadOrchestrator) Init(c *provider.Config) error {
 	return err
 }
 
-func (orch *nomadOrchestrator) Prepare(req *DeploymentRequest) (p PreparedDeployment, err error) {
+func (orch *nomadOrchestrator) PrepareDeploy(req *DeploymentRequest) (p PreparedDeployment, err error) {
 	var job nomad.Job
 	err = json.Unmarshal(req.Deployment.Spec, &job)
 	if err != nil {

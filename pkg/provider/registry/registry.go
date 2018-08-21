@@ -10,6 +10,8 @@ import (
 // Registry implements a registry interface
 type Registry interface {
 	ID() string
+	// Registry name ie. imange name prefix
+	Name() string
 	// Initialize the registry provider
 	Init(conf *provider.Config) error
 	// Create a new repository

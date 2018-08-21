@@ -5,19 +5,18 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/pkg/errors"
 	"google.golang.org/grpc"
+	"gopkg.in/urfave/cli.v2"
 
 	"github.com/euforia/thrap/consts"
-	"github.com/euforia/thrap/store"
+	"github.com/euforia/thrap/core"
+	"github.com/euforia/thrap/pkg/config"
+	"github.com/euforia/thrap/pkg/credentials"
+	"github.com/euforia/thrap/pkg/storage"
+	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vars"
-
-	"github.com/pkg/errors"
-
-	"github.com/euforia/thrap/config"
-	"github.com/euforia/thrap/core"
-	"github.com/euforia/thrap/thrapb"
-	"gopkg.in/urfave/cli.v2"
 )
 
 var (
@@ -150,7 +149,7 @@ func loadCore(ctx *cli.Context) (*core.Core, error) {
 		return nil, err
 	}
 
-	conf.Creds, err = config.ReadProjectCredsConfig(lpath)
+	conf.Creds, err = credentials.ReadProjectCredentials(lpath)
 	if err != nil {
 		return nil, err
 	}
@@ -158,21 +157,21 @@ func loadCore(ctx *cli.Context) (*core.Core, error) {
 	return core.NewCore(conf)
 }
 
-func loadProfile(ctx *cli.Context) (*store.HCLFileProfileStorage, *thrapb.Profile, error) {
+func loadProfile(ctx *cli.Context) (*storage.HCLFileProfileStorage, *thrapb.Profile, error) {
 	lpath, err := utils.GetLocalPath("")
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// Load profiles
-	profs, err := store.LoadHCLFileProfileStorage(lpath)
+	profs, err := storage.LoadHCLFileProfileStorage(lpath)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// Load request profile
 	profName := ctx.String("profile")
-	prof := profs.Get(profName)
+	prof, _ := profs.Get(profName)
 	if prof == nil {
 		return profs, nil, fmt.Errorf("profile not found: %s", profName)
 	}

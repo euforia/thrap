@@ -10,7 +10,7 @@ import (
 
 func (api *httpHandler) handleListDeployments(w http.ResponseWriter, r *http.Request) {
 	projID := mux.Vars(r)["pid"]
-	proj, err := api.projs.Get(projID)
+	proj, err := api.projects.Get(projID)
 	if err != nil {
 		w.WriteHeader(404)
 		w.Write([]byte(err.Error()))
@@ -32,7 +32,7 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 		resp   interface{}
 	)
 
-	proj, err := api.projs.Get(projID)
+	proj, err := api.projects.Get(projID)
 	if err != nil {
 		w.WriteHeader(404)
 		w.Write([]byte(err.Error()))

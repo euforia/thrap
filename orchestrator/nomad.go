@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/euforia/thrap/manifest"
+	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/thrapb"
 	nomad "github.com/hashicorp/nomad/api"
 	//"github.com/hashicorp/nomad/nomad/structs"
@@ -21,16 +22,15 @@ func (orch *nomadOrchestrator) ID() string {
 
 // Environment Variables:
 // NOMAD_ADDR
-func (orch *nomadOrchestrator) Init(conf map[string]interface{}) error {
+func (orch *nomadOrchestrator) Init(c *provider.Config) error {
+
 	var (
 		config = nomad.DefaultConfig()
 		err    error
 	)
 
-	if iaddr, ok := conf["addr"]; ok {
-		if addr, ok := iaddr.(string); ok {
-			config.Address = addr
-		}
+	if c.Addr != "" {
+		config.Address = c.Addr
 	}
 
 	orch.client, err = nomad.NewClient(config)

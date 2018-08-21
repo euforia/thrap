@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/euforia/hclencoder"
+	"github.com/euforia/thrap/pkg/storage"
 	"github.com/euforia/thrap/thrapb"
 
-	"github.com/euforia/thrap/store"
 	"github.com/euforia/thrap/utils"
 	"gopkg.in/urfave/cli.v2"
 )
@@ -25,7 +25,7 @@ func commandProfile() *cli.Command {
 				return err
 			}
 
-			profs, err := store.LoadHCLFileProfileStorage(ppath)
+			profs, err := storage.LoadHCLFileProfileStorage(ppath)
 			if err != nil {
 				return err
 			}
@@ -45,9 +45,9 @@ func commandProfile() *cli.Command {
 				}
 				id := kv[0]
 
-				prof := profs.Get(id)
+				prof, _ := profs.Get(id)
 				if prof == nil {
-					return store.ErrProfileNotFound
+					return storage.ErrProfileNotFound
 				}
 				display = map[string]*thrapb.Profile{id: prof}
 				fmt.Println()

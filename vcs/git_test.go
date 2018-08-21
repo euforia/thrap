@@ -7,10 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func committer() *git.CommitOptions {
@@ -54,7 +55,7 @@ func Test_GetRepoVersion(t *testing.T) {
 			repo.Storer.SetReference(ref)
 
 			ver, _ = getRepoVersion(repo)
-			assert.Zero(t, ver.Count)
+			assert.EqualValues(t, 0, ver.Count)
 		}
 
 	}

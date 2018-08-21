@@ -8,12 +8,14 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/euforia/thrap/config"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/manifest"
+	"github.com/euforia/thrap/pkg/config"
+	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
-	"github.com/stretchr/testify/assert"
 )
 
 func fatal(t *testing.T, err error) {
@@ -81,14 +83,14 @@ func Test_Core_Build(t *testing.T) {
 	}
 
 	conf := &Config{DataDir: tmpdir, Config: &config.Config{
-		Registry: map[string]*config.RegistryConfig{
-			"ecr": &config.RegistryConfig{
+		Registry: map[string]*provider.Config{
+			"ecr": &provider.Config{
 				ID:   "ecr",
 				Addr: "foobar.com",
 			},
 		},
-		Orchestrator: map[string]*config.OrchestratorConfig{
-			"docker": &config.OrchestratorConfig{},
+		Orchestrator: map[string]*provider.Config{
+			"docker": &provider.Config{},
 		},
 	}}
 	c, err := NewCore(conf)
@@ -134,14 +136,14 @@ func Test_Core_populateFromImageConf(t *testing.T) {
 	}
 
 	conf := &Config{DataDir: tmpdir, Config: &config.Config{
-		Registry: map[string]*config.RegistryConfig{
-			"ecr": &config.RegistryConfig{
+		Registry: map[string]*provider.Config{
+			"ecr": &provider.Config{
 				ID:   "ecr",
 				Addr: "foobar.com",
 			},
 		},
-		Orchestrator: map[string]*config.OrchestratorConfig{
-			"docker": &config.OrchestratorConfig{},
+		Orchestrator: map[string]*provider.Config{
+			"docker": &provider.Config{},
 		},
 	}}
 	c, err := NewCore(conf)

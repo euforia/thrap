@@ -9,11 +9,11 @@ import (
 
 	"github.com/euforia/thrap/analysis"
 	"github.com/euforia/thrap/asm"
-	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/packs"
+	"github.com/euforia/thrap/pkg/config"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vars"
@@ -101,7 +101,7 @@ func commandStackInit() *cli.Command {
 				VCS: &config.VCSConfig{
 					Addr: defaultVCS.Addr,
 					ID:   defaultVCS.ID,
-					Repo: &config.VCSRepoConfig{
+					Repo: &config.RepoConfig{
 						Name:  projName,
 						Owner: repoOwner,
 					},

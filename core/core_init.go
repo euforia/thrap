@@ -4,11 +4,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/orchestrator"
 	"github.com/euforia/thrap/packs"
-	"github.com/euforia/thrap/registry"
+	"github.com/euforia/thrap/pkg/config"
+	"github.com/euforia/thrap/pkg/credentials"
+	"github.com/euforia/thrap/pkg/provider"
+	"github.com/euforia/thrap/pkg/provider/registry"
 	"github.com/euforia/thrap/secrets"
 	"github.com/euforia/thrap/store"
 	"github.com/euforia/thrap/utils"
@@ -44,7 +46,7 @@ func (core *Core) loadConfigs(conf *Config) error {
 
 	// Creds
 	credsFile := filepath.Join(conf.DataDir, consts.CredsFile)
-	creds, err := config.ReadCredsConfig(credsFile)
+	creds, err := credentials.ReadCredentials(credsFile)
 	if err != nil {
 		return err
 	}
@@ -95,7 +97,7 @@ func (core *Core) initVCS() (err error) {
 		Conf:     map[string]interface{}{"username": vc.Username},
 	}
 
-	vcreds := core.creds.GetVCSCreds(vc.ID)
+	vcreds := core.creds.VCSCreds(vc.ID)
 	for k, v := range vcreds {
 		vconf.Conf[k] = v
 	}
@@ -108,7 +110,7 @@ func (core *Core) initVCS() (err error) {
 func (core *Core) initSecrets() (err error) {
 	sc := core.conf.DefaultSecrets()
 
-	screds := core.creds.GetSecretsCreds(sc.ID)
+	screds := core.creds.SecretsCreds(sc.ID)
 	sconf := &secrets.Config{
 		Provider: sc.ID,
 		Conf:     make(map[string]interface{}),
@@ -128,23 +130,12 @@ func (core *Core) initRegistries() error {
 	core.regs = make(map[string]registry.Registry)
 
 	for k, rc := range core.conf.Registry {
-		conf := core.creds.GetRegistryCreds(k)
-		if conf != nil {
-			if rc.Config == nil {
-				rc.Config = make(map[string]interface{})
-			}
-
-			for k, v := range conf {
-				rc.Config[k] = v
-			}
-		} else {
-			core.log.Printf("Credentials not found for registry: %s", k)
-		}
-
-		reg, err := registry.New(rc)
+		creds := core.creds.RegistryCreds(k)
+		reg, err := core.initRegistry(rc, creds)
 		if err != nil {
 			return err
 		}
+
 		core.log.Println("Registry loaded:", k)
 		core.regs[k] = reg
 	}
@@ -152,12 +143,29 @@ func (core *Core) initRegistries() error {
 	return nil
 }
 
+func (core *Core) initRegistry(conf *provider.Config, creds map[string]string) (registry.Registry, error) {
+	if creds != nil {
+		if conf.Config == nil {
+			conf.Config = make(map[string]interface{})
+		}
+
+		for k, v := range conf.Config {
+			conf.Config[k] = v
+		}
+
+	} else {
+		core.log.Printf("Credentials not found for registry: %s", conf.ID)
+	}
+
+	return registry.New(conf)
+}
+
 // load all configured orchestrators
 func (core *Core) initOrchestrators() error {
 	orchs := make(map[string]orchestrator.Orchestrator, len(core.conf.Orchestrator))
-	for k := range core.conf.Orchestrator {
+	for k, conf := range core.conf.Orchestrator {
 		// TODO: add config
-		conf := &orchestrator.Config{Provider: k}
+		// conf := &provider.Config{Provider: k}
 		orch, err := orchestrator.New(conf)
 		if err != nil {
 			return err

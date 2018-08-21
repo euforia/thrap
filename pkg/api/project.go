@@ -13,7 +13,7 @@ import (
 func (api *httpHandler) handleListProjects(w http.ResponseWriter, r *http.Request) {
 	list := make([]*thrapb.Project, 0)
 
-	err := api.projs.Iter("", func(proj *thrapb.Project) error {
+	err := api.projects.Iter("", func(proj *thrapb.Project) error {
 		list = append(list, proj)
 		return nil
 	})
@@ -52,7 +52,7 @@ func (api *httpHandler) handleProject(w http.ResponseWriter, r *http.Request) {
 
 func (api *httpHandler) getProject(w http.ResponseWriter, r *http.Request) (*thrapb.Project, error) {
 	projID := mux.Vars(r)["id"]
-	proj, err := api.projs.Get(projID)
+	proj, err := api.projects.Get(projID)
 	if err == nil {
 		return proj.Project, nil
 	}
@@ -73,7 +73,7 @@ func (api *httpHandler) createProject(w http.ResponseWriter, r *http.Request) (*
 	}
 	proj.ID = projID
 
-	nProj, err := api.projs.Create(&proj)
+	nProj, err := api.projects.Create(&proj)
 	if err == nil {
 		return nProj.Project, nil
 	}
@@ -94,7 +94,7 @@ func (api *httpHandler) updateProject(w http.ResponseWriter, r *http.Request) (*
 	}
 	proj.ID = projID
 
-	sproj, err := api.projs.Get(projID)
+	sproj, err := api.projects.Get(projID)
 	if err != nil {
 		return nil, err
 	}

@@ -10,8 +10,9 @@ import (
 	"time"
 
 	"github.com/euforia/pseudo/scope"
-	"github.com/euforia/thrap/config"
+
 	"github.com/euforia/thrap/metrics"
+	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/thrapb"
 )
 
@@ -25,7 +26,7 @@ func printScopeVars(scopeVars scope.Variables) {
 
 // getBuildImageTags returns tags that should be applied to a given image build. If a
 // registry config is provided, names are generated accordingly
-func getBuildImageTags(sid string, comp *thrapb.Component, rconf *config.RegistryConfig) []string {
+func getBuildImageTags(sid string, comp *thrapb.Component, rconf *provider.Config) []string {
 	base := filepath.Join(sid, comp.ID)
 
 	out := []string{}

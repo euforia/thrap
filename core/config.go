@@ -5,8 +5,9 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/euforia/thrap/config"
 	"github.com/euforia/thrap/consts"
+	"github.com/euforia/thrap/pkg/config"
+	"github.com/euforia/thrap/pkg/credentials"
 )
 
 // Config holds the core configuration
@@ -15,7 +16,7 @@ type Config struct {
 	// instance
 	*config.Config
 	// Load creds
-	Creds *config.CredsConfig
+	Creds *credentials.Credentials
 	// Overall logger
 	Logger *log.Logger
 	// Data directory. This must exist

@@ -10,13 +10,14 @@ import (
 	"path/filepath"
 
 	"github.com/euforia/base58"
-	"github.com/euforia/thrap/config"
-	"github.com/euforia/thrap/consts"
-	"github.com/euforia/thrap/thrapb"
-	"github.com/euforia/thrap/utils"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"gopkg.in/urfave/cli.v2"
+
+	"github.com/euforia/thrap/consts"
+	"github.com/euforia/thrap/pkg/config"
+	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/utils"
 )
 
 func commandIdentityRegister() *cli.Command {
