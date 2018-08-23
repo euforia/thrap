@@ -33,7 +33,7 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 	switch r.Method {
 	case "GET":
 		desc := dpl.Descriptor()
-		if len(desc.Spec) == 0 {
+		if desc == nil || len(desc.Spec) == 0 {
 			w.WriteHeader(404)
 			return
 		}
@@ -65,18 +65,18 @@ func (api *httpHandler) setDeploymentSpec(r *http.Request, dpl *thrap.Deployment
 		return nil, err
 	}
 
-	var desc thrapb.DeploymentDescriptor
+	var desc *thrapb.DeploymentDescriptor
 
 	contentType := r.Header.Get("Content-Type")
 	switch contentType {
-	case "application/hcl":
-		var out map[string]interface{}
-		err = hcl.Unmarshal(b, &out)
-		if err == nil {
-			desc = thrapb.DeploymentDescriptor{
-				Spec: b,
-			}
-		}
+	case DescContentTypeMold:
+		// Replace < > first
+		str := replaceMetaPlaceholders(string(b))
+		desc, err = checkAndMakeHCLDescriptor([]byte(str))
+
+	case DescContentTypeNomad:
+		desc, err = checkAndMakeHCLDescriptor(b)
+
 	case "application/json":
 		err = json.Unmarshal(b, &desc)
 
@@ -86,8 +86,22 @@ func (api *httpHandler) setDeploymentSpec(r *http.Request, dpl *thrap.Deployment
 	}
 
 	if err == nil {
-		err = dpl.SetDescriptor(&desc)
+		if err = dpl.SetDescriptor(desc); err == nil {
+			return desc.Spec, nil
+		}
 	}
 
-	return desc.Spec, err
+	return nil, err
+}
+
+func checkAndMakeHCLDescriptor(b []byte) (*thrapb.DeploymentDescriptor, error) {
+	var out map[string]interface{}
+	err := hcl.Unmarshal(b, &out)
+	if err == nil {
+		return &thrapb.DeploymentDescriptor{
+			Spec: b,
+			Mime: DescContentTypeNomad,
+		}, nil
+	}
+	return nil, err
 }

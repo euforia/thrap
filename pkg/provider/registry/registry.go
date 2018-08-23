@@ -10,7 +10,7 @@ import (
 // Registry implements a registry interface
 type Registry interface {
 	ID() string
-	// Registry name ie. imange name prefix
+	// Registry name ie. image name prefix e.g. 123456789012.ecr.xxx
 	Name() string
 	// Initialize the registry provider
 	Init(conf *provider.Config) error

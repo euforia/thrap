@@ -6,6 +6,9 @@ orchestrator {
 }
 
 registry {
+  dockerhub {
+    provider = "dockerhub"
+  }
   docker {
     provider = "docker"
   }

@@ -1,20 +1,47 @@
 package thrapb
 
 import (
+	"encoding/binary"
 	"errors"
+	"hash"
+	"math/rand"
+	"time"
+
+	"github.com/opencontainers/go-digest"
 
 	"github.com/euforia/kvdb"
 )
 
+const (
+	// ZeroSHA256Digest is a zero digest used on creation
+	ZeroSHA256Digest = digest.Digest("sha256:0000000000000000000000000000000000000000000000000000000000000000")
+)
+
+func NewDeployment(profID, name string) *Deployment {
+	return &Deployment{
+		Name:      name,
+		CreatedAt: time.Now().UnixNano(),
+		Profile:   &Profile{ID: profID},
+		Nonce:     rand.Uint64(),
+		Previous:  ZeroSHA256Digest,
+	}
+}
+
+// Clone retunrs a deep copy of a Deployment
 func (d *Deployment) Clone() *Deployment {
 	if d == nil {
 		return nil
 	}
 
 	n := &Deployment{
-		Name:    d.Name,
-		Version: d.Version,
-		State:   d.State,
+		Previous:  d.Previous,
+		Name:      d.Name,
+		Version:   d.Version,
+		CreatedAt: d.CreatedAt,
+		StartedAt: d.StartedAt,
+		Nonce:     d.Nonce,
+		State:     d.State,
+		Status:    d.Status,
 	}
 	if d.Spec != nil {
 		n.Spec = make([]byte, len(d.Spec))
@@ -25,10 +52,31 @@ func (d *Deployment) Clone() *Deployment {
 	return n
 }
 
-func (d *Deployment) New() kvdb.Object {
+func (d *Deployment) PreviousDigest() digest.Digest {
+	return d.Previous
+}
+
+// Hash satisfies the ObjectVersion interface
+func (d *Deployment) Hash(h hash.Hash) {
+	h.Write([]byte(d.Previous))
+	h.Write([]byte(d.Name))
+	binary.Write(h, binary.BigEndian, d.Version)
+	binary.Write(h, binary.BigEndian, d.State)
+	binary.Write(h, binary.BigEndian, d.Status)
+	binary.Write(h, binary.BigEndian, d.CreatedAt)
+	binary.Write(h, binary.BigEndian, d.StartedAt)
+	binary.Write(h, binary.BigEndian, d.Nonce)
+	h.Write(d.Spec)
+
+	d.Profile.Hash(h)
+}
+
+// New satisfies the ObjectVersion interface
+func (d *Deployment) New() kvdb.ObjectVersion {
 	return &Deployment{}
 }
 
+// Validate validates the deployment settings
 func (d *Deployment) Validate() error {
 	if d.Name == "" {
 		return errors.New("name required")

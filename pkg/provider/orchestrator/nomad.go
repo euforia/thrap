@@ -1,20 +1,25 @@
 package orchestrator
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
-	"strings"
+	"fmt"
+
+	"github.com/hashicorp/nomad/jobspec"
+	"github.com/pkg/errors"
 
 	"github.com/euforia/thrap/pkg/provider"
 	nomad "github.com/hashicorp/nomad/api"
-	//"github.com/hashicorp/nomad/nomad/structs"
+	"github.com/hashicorp/nomad/client/driver/env"
+	hargs "github.com/hashicorp/nomad/helper/args"
 )
 
 type nomadDeployment struct {
 	job *nomad.Job
 
-	// serialized job
+	// Serialized job.  This is the final job and cannot be used
+	// for a resubmit
 	serialized []byte
 }
 
@@ -24,7 +29,7 @@ func newNomadDeployment(job *nomad.Job) (*nomadDeployment, error) {
 		err error
 	)
 
-	n.serialized, err = json.Marshal(job)
+	n.serialized, err = json.MarshalIndent(job, "", "  ")
 	return n, err
 }
 
@@ -36,6 +41,20 @@ func (d *nomadDeployment) Bytes() []byte {
 
 func (d *nomadDeployment) Spec() interface{} {
 	return d.job
+}
+
+func (d *nomadDeployment) evalImageNames(imgs []string) []string {
+	meta := map[string]string{}
+	for k, v := range d.job.Meta {
+		meta[env.MetaPrefix+k] = v
+	}
+
+	replaced := make([]string, len(imgs))
+	for i, img := range imgs {
+		replaced[i] = hargs.ReplaceEnv(img, meta)
+	}
+
+	return replaced
 }
 
 func (d *nomadDeployment) Artifacts() []string {
@@ -50,13 +69,7 @@ func (d *nomadDeployment) Artifacts() []string {
 		}
 	}
 
-	for _, img := range out {
-		if idx := strings.Index(img, "${"); idx >= 0 {
-			// TODO: replace vars
-		}
-	}
-
-	return out
+	return d.evalImageNames(out)
 }
 
 type nomadOrchestrator struct {
@@ -86,15 +99,20 @@ func (orch *nomadOrchestrator) Init(c *provider.Config) error {
 }
 
 func (orch *nomadOrchestrator) PrepareDeploy(req *DeploymentRequest) (p PreparedDeployment, err error) {
-	var job nomad.Job
-	err = json.Unmarshal(req.Deployment.Spec, &job)
+	job, err := jobspec.Parse(bytes.NewBuffer(req.Deployment.Spec))
+
+	// var apiJob nomad.Job
+	// err = hcl.Unmarshal(req.Deployment.Spec, &apiJob)
 	if err != nil {
 		return
 	}
 
-	jid := req.Project.ID + "-" + req.Deployment.Name
-	job.ID = &jid
-	job.Name = &jid
+	// job := agent.ApiJobToStructJob(&apiJob)
+	// job := &apiJob
+
+	jobID := req.Project.ID + "-" + req.Deployment.Name
+	job.ID = &jobID
+	job.Name = &jobID
 
 	// Inject platform variables
 	profile := req.Deployment.Profile
@@ -119,7 +137,7 @@ func (orch *nomadOrchestrator) PrepareDeploy(req *DeploymentRequest) (p Prepared
 
 	job.Canonicalize()
 
-	p, err = newNomadDeployment(&job)
+	p, err = newNomadDeployment(job)
 
 	return
 }
@@ -131,6 +149,8 @@ func (orch *nomadOrchestrator) Deploy(ctx context.Context, d PreparedDeployment,
 		err = errors.New("not a nomad job")
 		return
 	}
+	b, _ := json.MarshalIndent(job, " ", "  ")
+	fmt.Printf("%s\n", b)
 
 	jobs := orch.client.Jobs()
 	q := &nomad.WriteOptions{

@@ -167,6 +167,19 @@ message Project {
     repeated string Developers = 7;
 }
 
+enum DeploymentState {
+    UNKNOWN = 0;
+    CREATE = 1;
+    PREPARE = 2;
+    DEPLOY = 3;
+}
+
+enum DeployStateStatus {
+    INPROGRESS = 0;
+    OK = 1;
+    FAILED = 2;
+}
+
 message Deployment {
     // Unique deployment instance name
     string Name = 1; 
@@ -176,14 +189,21 @@ message Deployment {
     bytes Spec = 3; 
     // Profile for this deployment
     Profile Profile  = 4;
-    string State = 5;
-    string Status = 6;
+    DeploymentState State = 5;
+    DeployStateStatus Status = 6;
+    int64 CreatedAt = 7;
+    int64 StartedAt = 8;
+    // Nonce set when deploy is created
+    uint64 Nonce = 9;
+
+    string Previous = 10 [(gogoproto.casttype) = "github.com/opencontainers/go-digest.Digest"];
 }
 
 message DeploymentDescriptor {
     // Spec template deploy job. This is the spec used to generate the actual
     // runtime Spec in the Deployment object
     bytes Spec = 2; 
+    string Mime = 3;
 }
 
 message IterOptions {
