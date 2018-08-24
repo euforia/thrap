@@ -189,14 +189,21 @@ message Deployment {
     bytes Spec = 3; 
     // Profile for this deployment
     Profile Profile  = 4;
+    // State the deployment is in
     DeploymentState State = 5;
+    // Status of the given state 
     DeployStateStatus Status = 6;
+    
     int64 CreatedAt = 7;
     int64 StartedAt = 8;
+    
     // Nonce set when deploy is created
     uint64 Nonce = 9;
 
     string Previous = 10 [(gogoproto.casttype) = "github.com/opencontainers/go-digest.Digest"];
+
+    // Additional info about the current state
+    string StateMessage = 11;
 }
 
 message DeploymentDescriptor {

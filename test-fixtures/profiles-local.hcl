@@ -7,16 +7,11 @@ profiles {
         registry     = "docker"
         vcs          = "git"
     }
-    sandbox {
-        orchestrator = "docker"
-        secrets      = "local"
-        registry     = "sandbox"
-    }
     // Remote pull (predefined)
     dev {
-        orchestrator = "nomad"
-        secrets      = "local"
-        registry     = "shared"
+        orchestrator = "docker"
+        secrets      = "file"
+        registry     = "docker"
         meta {
             PUBLIC_TLD = "com"
             TLD        = "local"
@@ -28,8 +23,8 @@ profiles {
     }
     // Remote pull (predefined)
     live {
-        orchestrator = "nomad"
-        registry     = "shared"
-        secrets      = "local"
+        orchestrator = "docker"
+        secrets      = "file"
+        registry     = "docker"
     }
 }

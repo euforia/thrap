@@ -112,13 +112,17 @@ func ReadHCLFileProfileStorage(filename string) (*HCLFileProfileStorage, error) 
 
 // ParseProfiles parses profiles at the given path
 func parseProfiles(profPath string) (*InmemProfileStorage, error) {
-	var db InmemProfileStorage
 	b, err := ioutil.ReadFile(profPath)
 	if err != nil {
 		return nil, err
 	}
 
-	err = hcl.Unmarshal(b, &db)
+	return ParseProfiles(b)
+}
+
+func ParseProfiles(b []byte) (*InmemProfileStorage, error) {
+	var db InmemProfileStorage
+	err := hcl.Unmarshal(b, &db)
 	if err != nil {
 		return nil, err
 	}

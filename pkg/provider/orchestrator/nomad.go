@@ -1,12 +1,10 @@
 package orchestrator
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 
-	"github.com/hashicorp/nomad/jobspec"
 	"github.com/pkg/errors"
 
 	"github.com/euforia/thrap/pkg/provider"
@@ -98,19 +96,20 @@ func (orch *nomadOrchestrator) Init(c *provider.Config) error {
 	return err
 }
 
-func (orch *nomadOrchestrator) PrepareDeploy(req *DeploymentRequest) (p PreparedDeployment, err error) {
-	job, err := jobspec.Parse(bytes.NewBuffer(req.Deployment.Spec))
+func (orch *nomadOrchestrator) PrepareDeploy(req *provider.Request) (p PreparedDeployment, err error) {
+	// job, err := jobspec.Parse(bytes.NewBuffer(req.Deployment.Spec))
 
-	// var apiJob nomad.Job
-	// err = hcl.Unmarshal(req.Deployment.Spec, &apiJob)
+	var apiJob nomad.Job
+	err = json.Unmarshal(req.Deployment.Spec, &apiJob)
 	if err != nil {
 		return
 	}
 
-	// job := agent.ApiJobToStructJob(&apiJob)
-	// job := &apiJob
+	var (
+		jobID = req.Project.ID + "-" + req.Deployment.Name
+		job   = &apiJob
+	)
 
-	jobID := req.Project.ID + "-" + req.Deployment.Name
 	job.ID = &jobID
 	job.Name = &jobID
 
@@ -149,8 +148,8 @@ func (orch *nomadOrchestrator) Deploy(ctx context.Context, d PreparedDeployment,
 		err = errors.New("not a nomad job")
 		return
 	}
-	b, _ := json.MarshalIndent(job, " ", "  ")
-	fmt.Printf("%s\n", b)
+	// b, _ := json.MarshalIndent(job, " ", "  ")
+	// fmt.Printf("%s\n", b)
 
 	jobs := orch.client.Jobs()
 	q := &nomad.WriteOptions{
@@ -164,6 +163,8 @@ func (orch *nomadOrchestrator) Deploy(ctx context.Context, d PreparedDeployment,
 		regOpts := &nomad.RegisterOptions{}
 		resp, _, err = jobs.RegisterOpts(job, regOpts, q)
 	}
+
+	fmt.Println(resp, err)
 
 	return
 }

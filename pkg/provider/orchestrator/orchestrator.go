@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/euforia/thrap/pkg/provider"
-	"github.com/euforia/thrap/thrapb"
 )
 
 var (
@@ -31,11 +30,13 @@ type RequestOptions struct {
 	Region string
 }
 
-// DeploymentRequest is a raw deployment request.
-type DeploymentRequest struct {
-	Project    thrapb.Project
-	Deployment thrapb.Deployment
-}
+// // DeploymentRequest is a raw deployment request.
+// type DeploymentRequest struct {
+// 	Project    thrapb.Project
+// 	Deployment thrapb.Deployment
+// 	// Unmarshalled Deployment.Spec
+// 	// Spec interface{}
+// }
 
 // PreparedDeployment implements a prepared deployment that the orchestrator
 // then uses to perform a deploy
@@ -58,7 +59,7 @@ type Orchestrator interface {
 	ID() string
 
 	// Prepares a deployment.  The output of this is used to call deploy
-	PrepareDeploy(req *DeploymentRequest) (PreparedDeployment, error)
+	PrepareDeploy(req *provider.Request) (PreparedDeployment, error)
 
 	// Deploy should deploy the stack returning the response, deploy object
 	// based on the orchestrator or an error

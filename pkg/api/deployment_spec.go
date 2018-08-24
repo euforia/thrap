@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/hashicorp/hcl"
 	"github.com/pkg/errors"
 
 	"github.com/euforia/thrap/pkg/thrap"
@@ -70,12 +69,10 @@ func (api *httpHandler) setDeploymentSpec(r *http.Request, dpl *thrap.Deployment
 	contentType := r.Header.Get("Content-Type")
 	switch contentType {
 	case DescContentTypeMold:
-		// Replace < > first
-		str := replaceMetaPlaceholders(string(b))
-		desc, err = checkAndMakeHCLDescriptor([]byte(str))
+		desc, err = parseMoldHCLDeployDesc(b)
 
 	case DescContentTypeNomad:
-		desc, err = checkAndMakeHCLDescriptor(b)
+		desc, err = parseNomadHCLDescriptor(b)
 
 	case "application/json":
 		err = json.Unmarshal(b, &desc)
@@ -91,17 +88,5 @@ func (api *httpHandler) setDeploymentSpec(r *http.Request, dpl *thrap.Deployment
 		}
 	}
 
-	return nil, err
-}
-
-func checkAndMakeHCLDescriptor(b []byte) (*thrapb.DeploymentDescriptor, error) {
-	var out map[string]interface{}
-	err := hcl.Unmarshal(b, &out)
-	if err == nil {
-		return &thrapb.DeploymentDescriptor{
-			Spec: b,
-			Mime: DescContentTypeNomad,
-		}, nil
-	}
 	return nil, err
 }

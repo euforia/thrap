@@ -1,12 +1,13 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"regexp"
 
-	"github.com/hashicorp/nomad/client/driver/env"
+	"github.com/euforia/thrap/thrapb"
+	nomad "github.com/hashicorp/nomad/api"
+	"github.com/hashicorp/nomad/jobspec"
 )
 
 func setAccessControlHeaders(w http.ResponseWriter) {
@@ -37,33 +38,26 @@ func writeJSONResponse(w http.ResponseWriter, resp interface{}, err error) {
 	w.Write(data)
 }
 
-var (
-	metaPlaceHolderRe = regexp.MustCompile(`\<[a-zA-Z0-9_\-\.]+\>`)
-)
+// JSON Marshal nomad job, store in descriptor. It returns aDeploymentDescriptor
+func makeNomadJSONDeployDesc(job *nomad.Job) (*thrapb.DeploymentDescriptor, error) {
+	nb, err := json.Marshal(job)
+	if err != nil {
+		return nil, err
+	}
 
-// replaceMetaPlaceholders replaces internal placeholders with nomad variables
-// This will eventually be deprecated
-func replaceMetaPlaceholders(data string) string {
-	return metaPlaceHolderRe.ReplaceAllStringFunc(data, func(match string) string {
-		// Remove leading < and trailing >
-		stripped := match[1 : len(match)-1]
-		// Append nomad meta and the mapped value
-		return fmt.Sprintf("${%s%s}", env.MetaPrefix, stripped)
-	})
+	return &thrapb.DeploymentDescriptor{
+		Spec: nb,
+		Mime: DescContentTypeJSON,
+	}, nil
 }
 
-// // replaceMetaPlaceholders replaces internal placeholders with nomad variables
-// // This will eventually be deprecated
-// func replaceMetaPlaceholders(data string, maps ...map[string]string) string {
-// 	return metaPlaceHolderRe.ReplaceAllStringFunc(data, func(match string) string {
-// 		// Remove leading < and trailing >
-// 		stripped := match[1 : len(match)-1]
-// 		for _, m := range maps {
-// 			if val, ok := m[stripped]; ok {
-// 				// Append nomad meta and the mapped value
-// 				return fmt.Sprintf("${%s%s}", env.MetaPrefix, val)
-// 			}
-// 		}
-// 		return match
-// 	})
-// }
+func parseNomadHCLDescriptor(b []byte) (*thrapb.DeploymentDescriptor, error) {
+	// var out map[string]interface{}
+	// err := hcl.Unmarshal(b, &out)
+	job, err := jobspec.Parse(bytes.NewBuffer(b))
+	if err != nil {
+		return nil, err
+	}
+
+	return makeNomadJSONDeployDesc(job)
+}

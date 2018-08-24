@@ -11,6 +11,7 @@ import (
 const (
 	DescContentTypeMold  = "application/vnd.thrap.mold.deployment.descriptor.v1+hcl"
 	DescContentTypeNomad = "application/vnd.thrap.nomad.deployment.descriptor.v1+hcl"
+	DescContentTypeJSON  = "application/json"
 )
 
 // Config is the api server config

@@ -28,6 +28,11 @@ registry {
   }
 }
 
+
 secrets {
-  file {}
+  local {
+    addr = "http://127.0.0.1:8200"
+    provider = "vault"
+    config {}
+  }
 }

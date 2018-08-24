@@ -16,7 +16,7 @@ type Config struct {
 	VCS          map[string]*VCSConfig       `hcl:"vcs"`
 	Orchestrator map[string]*provider.Config `hcl:"orchestrator"`
 	Registry     map[string]*provider.Config `hcl:"registry"`
-	Secrets      map[string]*SecretsConfig   `hcl:"secrets"`
+	Secrets      map[string]*provider.Config `hcl:"secrets"`
 }
 
 // Clone returns a copy of the config
@@ -29,7 +29,7 @@ func (conf *Config) Clone() *Config {
 		VCS:          make(map[string]*VCSConfig, len(conf.VCS)),
 		Orchestrator: make(map[string]*provider.Config, len(conf.Orchestrator)),
 		Registry:     make(map[string]*provider.Config, len(conf.Registry)),
-		Secrets:      make(map[string]*SecretsConfig, len(conf.Secrets)),
+		Secrets:      make(map[string]*provider.Config, len(conf.Secrets)),
 	}
 
 	for k, v := range conf.VCS {
@@ -122,7 +122,7 @@ func (conf *Config) DefaultRegistry() *provider.Config {
 }
 
 // DefaultSecrets returns the first secrets provider
-func (conf *Config) DefaultSecrets() *SecretsConfig {
+func (conf *Config) DefaultSecrets() *provider.Config {
 	for _, v := range conf.Secrets {
 		return v
 	}
@@ -168,8 +168,8 @@ func DefaultConfig() *Config {
 				Provider: "docker",
 			},
 		},
-		Secrets: map[string]*SecretsConfig{
-			"file": &SecretsConfig{},
+		Secrets: map[string]*provider.Config{
+			"file": &provider.Config{},
 		},
 	}
 }
