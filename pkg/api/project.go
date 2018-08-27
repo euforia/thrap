@@ -42,6 +42,11 @@ func (api *httpHandler) handleProject(w http.ResponseWriter, r *http.Request) {
 	// case "DELETE":
 	// 	err = api.delete(w, r)
 
+	case "OPTIONS":
+		setAccessControlHeaders(w)
+		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT")
+		return
+
 	default:
 		w.WriteHeader(405)
 		return

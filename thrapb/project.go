@@ -25,6 +25,7 @@ func (p *Project) Hash(h hash.Hash) []byte {
 	return h.Sum(nil)
 }
 
+// Clone returns a copy of the project
 func (p *Project) Clone() *Project {
 	if p == nil {
 		return p

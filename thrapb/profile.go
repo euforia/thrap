@@ -1,18 +1,41 @@
 package thrapb
 
-import "hash"
+import (
+	"errors"
+	"hash"
+)
 
 // DefaultProfile returns the default local profile
 func DefaultProfile() *Profile {
 	return &Profile{
 		ID:           "local",
+		Name:         "Local",
 		Orchestrator: "docker",
 		Registry:     "docker",
 	}
 }
 
+// Validate validates the profile checking for required fields
+func (p *Profile) Validate() error {
+	if p.ID == "" {
+		return errors.New("profile ID required")
+	}
+	if p.Orchestrator == "" {
+		return errors.New("profile orchestrator provider ID required")
+	}
+	if p.Secrets == "" {
+		return errors.New("profile secrets provider ID required")
+	}
+
+	// We don't validate the registry as the default docker hub registry is
+	// loaded and assumed
+	return nil
+}
+
+// Hash writes the data structure contents to the hash function
 func (p *Profile) Hash(h hash.Hash) {
 	h.Write([]byte(p.ID))
+	h.Write([]byte(p.Name))
 	h.Write([]byte(p.Orchestrator))
 	h.Write([]byte(p.Secrets))
 	h.Write([]byte(p.Registry))
@@ -46,6 +69,7 @@ func (p *Profile) Clone() *Profile {
 	}
 	n := &Profile{
 		ID:           p.ID,
+		Name:         p.Name,
 		Orchestrator: p.Orchestrator,
 		Registry:     p.Registry,
 		Secrets:      p.Secrets,

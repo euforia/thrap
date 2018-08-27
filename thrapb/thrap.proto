@@ -120,6 +120,14 @@ message Language {
     repeated string ScaffoldFiles = 8;
 }
 
+message Artifact {
+    string             ID       = 1 [(gogoproto.casttype) = "github.com/opencontainers/go-digest.Digest"];
+    repeated string    Tags     = 2;
+    map<string,string> Labels   = 3;
+    int64              Created  = 4;
+    int64              DataSize = 5;
+}
+
 message Stack {
     string                 ID           = 2 [(gogoproto.moretags) = "hcle:\"omit\" yaml:\"-\""];
     string                 Name         = 3 [(gogoproto.moretags) = "hcl:\"name\""];
@@ -139,22 +147,15 @@ message Identity {
     map<string, string> Meta = 6 [(gogoproto.moretags) = "hcl:\"meta\""];
 }
 
-message Artifact {
-    string             ID       = 1 [(gogoproto.casttype) = "github.com/opencontainers/go-digest.Digest"];
-    repeated string    Tags     = 2;
-    map<string,string> Labels   = 3;
-    int64              Created  = 4;
-    int64              DataSize = 5;
-}
-
 message Profile {
     string ID                    = 1 [(gogoproto.moretags) = "hcle:\"omit\" yaml:\"-\""];
-    string Orchestrator          = 2 [(gogoproto.moretags) = "hcl:\"orchestrator\""];
-    string Secrets               = 3 [(gogoproto.moretags) = "hcl:\"secrets\""];
-    string Registry              = 4 [(gogoproto.moretags) = "hcl:\"registry\""];
-    string VCS                   = 5 [(gogoproto.moretags) = "hcl:\"vcs\""];
-    map<string,string> Meta      = 6 [(gogoproto.moretags) = "hcl:\"meta\""];
-    map<string,string> Variables = 7 [(gogoproto.moretags) = "hcl:\"variables\""];
+    string Name                  = 2 [(gogoproto.moretags) = "hcl:\"name\""];
+    string Orchestrator          = 3 [(gogoproto.moretags) = "hcl:\"orchestrator\""];
+    string Secrets               = 4 [(gogoproto.moretags) = "hcl:\"secrets\""];
+    string Registry              = 5 [(gogoproto.moretags) = "hcl:\"registry\""];
+    string VCS                   = 6 [(gogoproto.moretags) = "hcl:\"vcs\""];
+    map<string,string> Meta      = 7 [(gogoproto.moretags) = "hcl:\"meta\""];
+    map<string,string> Variables = 8 [(gogoproto.moretags) = "hcl:\"variables\""];
 }
 
 message Project {
@@ -195,7 +196,7 @@ message Deployment {
     DeployStateStatus Status = 6;
     
     int64 CreatedAt = 7;
-    int64 StartedAt = 8;
+    int64 ModifiedAt = 8;
     
     // Nonce set when deploy is created
     uint64 Nonce = 9;

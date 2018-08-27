@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/euforia/kvdb"
+
 	"github.com/euforia/hclencoder"
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/thrapb"
@@ -18,7 +20,8 @@ var (
 
 // InmemProfileStorage is an in-memory profile store
 type InmemProfileStorage struct {
-	Default  string
+	Default string
+	// Needed to unmarshal.  Should not be used otherwise
 	Profiles map[string]*thrapb.Profile
 }
 
@@ -40,6 +43,21 @@ func (db *InmemProfileStorage) List() []*thrapb.Profile {
 	}
 
 	return out
+}
+
+// Add adds a new profile to the store.  it returns an error if it already
+// exists or required files are missing.
+func (db *InmemProfileStorage) Add(profile *thrapb.Profile) error {
+	err := profile.Validate()
+	if err != nil {
+		return err
+	}
+
+	if _, ok := db.Profiles[profile.ID]; ok {
+		return kvdb.ErrExists
+	}
+	db.Profiles[profile.ID] = profile.Clone()
+	return nil
 }
 
 // GetDefault returns the default profile.  It returns nil if one has not been

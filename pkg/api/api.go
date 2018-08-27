@@ -49,18 +49,18 @@ func NewServer(t *thrap.Thrap) *Server {
 }
 
 func (server *Server) registerHandlers() {
-	server.router.HandleFunc("/projects", server.handler.handleListProjects)
-	server.router.HandleFunc("/project/{id}", server.handler.handleProject)
+	// server.router.HandleFunc("/v1/identities", server.ident.list)
+	// server.router.HandleFunc("/v1/identity/{id}", server.ident.identity)
 
-	// server.router.HandleFunc("/identities", server.ident.list)
-	// server.router.HandleFunc("/identity/{id}", server.ident.identity)
+	server.router.HandleFunc("/v1/profiles", server.handler.handleListProfiles)
+	server.router.HandleFunc("/v1/profile/{id}", server.handler.handleProfile)
 
-	server.router.HandleFunc("/project/{pid}/deployments", server.handler.handleListDeployments)
+	server.router.HandleFunc("/v1/projects", server.handler.handleListProjects)
+	server.router.HandleFunc("/v1/project/{id}", server.handler.handleProject)
 
-	server.router.HandleFunc("/project/{pid}/deployment/spec", server.handler.handleDeploymentSpec)
-	server.router.HandleFunc("/project/{pid}/deployment/{eid}/{iid}", server.handler.handleDeployment)
-
-	// server.router.HandleFunc("/project/{pid}/deployment/{eid}", server.deploy.listEnvDeployments)
+	server.router.HandleFunc("/v1/project/{pid}/deployments", server.handler.handleListDeployments)
+	server.router.HandleFunc("/v1/project/{pid}/deployment/spec", server.handler.handleDeploymentSpec)
+	server.router.HandleFunc("/v1/project/{pid}/deployment/{eid}/{iid}", server.handler.handleDeployment)
 }
 
 // Serve starts serving the registered handlers on the given listener

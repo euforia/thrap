@@ -19,7 +19,6 @@ func commandProfile() *cli.Command {
 		Usage:     "Iteract with profiles",
 		ArgsUsage: "<profile>",
 		Action: func(ctx *cli.Context) error {
-
 			ppath, err := utils.GetLocalPath("")
 			if err != nil {
 				return err
@@ -36,7 +35,7 @@ func commandProfile() *cli.Command {
 			)
 
 			if profIn == "" {
-				display = profs.Profiles
+				display = profs.List()
 				os.Stdout.Write([]byte("\n"))
 			} else {
 				kv := strings.Split(profIn, "=")

@@ -17,12 +17,14 @@ const (
 	ZeroSHA256Digest = digest.Digest("sha256:0000000000000000000000000000000000000000000000000000000000000000")
 )
 
+// NewDeployment returns a new deployment object
 func NewDeployment(profID, name string) *Deployment {
 	return &Deployment{
 		Name:      name,
 		CreatedAt: time.Now().UnixNano(),
 		Profile:   &Profile{ID: profID},
 		Nonce:     rand.Uint64(),
+		Version:   1,
 		Previous:  ZeroSHA256Digest,
 	}
 }
@@ -34,14 +36,14 @@ func (d *Deployment) Clone() *Deployment {
 	}
 
 	n := &Deployment{
-		Previous:  d.Previous,
-		Name:      d.Name,
-		Version:   d.Version,
-		CreatedAt: d.CreatedAt,
-		StartedAt: d.StartedAt,
-		Nonce:     d.Nonce,
-		State:     d.State,
-		Status:    d.Status,
+		Previous:   d.Previous,
+		Name:       d.Name,
+		Version:    d.Version,
+		CreatedAt:  d.CreatedAt,
+		ModifiedAt: d.ModifiedAt,
+		Nonce:      d.Nonce,
+		State:      d.State,
+		Status:     d.Status,
 	}
 	if d.Spec != nil {
 		n.Spec = make([]byte, len(d.Spec))
@@ -64,7 +66,7 @@ func (d *Deployment) Hash(h hash.Hash) {
 	binary.Write(h, binary.BigEndian, d.State)
 	binary.Write(h, binary.BigEndian, d.Status)
 	binary.Write(h, binary.BigEndian, d.CreatedAt)
-	binary.Write(h, binary.BigEndian, d.StartedAt)
+	binary.Write(h, binary.BigEndian, d.ModifiedAt)
 	binary.Write(h, binary.BigEndian, d.Nonce)
 	h.Write(d.Spec)
 
@@ -87,6 +89,7 @@ func (d *Deployment) Validate() error {
 	return nil
 }
 
+// New satisfies the Object interface
 func (desc *DeploymentDescriptor) New() kvdb.Object {
 	return &DeploymentDescriptor{}
 }

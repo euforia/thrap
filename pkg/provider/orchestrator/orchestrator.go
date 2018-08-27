@@ -58,7 +58,8 @@ type Orchestrator interface {
 	// ID of the orchestrator. Each orchestrator must have a unique id
 	ID() string
 
-	// Prepares a deployment.  The output of this is used to call deploy
+	// Prepares a deployment.  The output of this is used to call deploy. This
+	// should check the state of the deploy and not re-prepare if it is already prepared.
 	PrepareDeploy(req *provider.Request) (PreparedDeployment, error)
 
 	// Deploy should deploy the stack returning the response, deploy object

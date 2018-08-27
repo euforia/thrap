@@ -60,6 +60,10 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 		}
 
 	case http.MethodOptions:
+		setAccessControlHeaders(w)
+		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT")
+		return
+
 	default:
 		w.WriteHeader(405)
 		return

@@ -5,6 +5,7 @@ import (
 	"hash"
 )
 
+// Hash writes the data structure contents to the hash function
 func (hc *HealthCheck) Hash(h hash.Hash) {
 	h.Write([]byte(hc.Protocol))
 	h.Write([]byte(hc.Path))

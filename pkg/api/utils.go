@@ -12,6 +12,7 @@ import (
 
 func setAccessControlHeaders(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
 }
 
 func writeJSONResponse(w http.ResponseWriter, resp interface{}, err error) {
