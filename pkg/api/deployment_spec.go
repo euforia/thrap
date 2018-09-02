@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -18,7 +17,6 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 	proj, err := api.projects.Get(projID)
 	if err != nil {
 		err = errors.Wrapf(err, "project %s", projID)
-
 		w.WriteHeader(404)
 		w.Write([]byte(err.Error()))
 		return
@@ -64,21 +62,24 @@ func (api *httpHandler) setDeploymentSpec(r *http.Request, dpl *thrap.Deployment
 		return nil, err
 	}
 
-	var desc *thrapb.DeploymentDescriptor
+	var (
+		desc        *thrapb.DeploymentDescriptor
+		contentType = r.Header.Get("Content-Type")
+	)
 
-	contentType := r.Header.Get("Content-Type")
 	switch contentType {
-	case DescContentTypeMold:
+
+	case DescContentTypeMoldHCL:
 		desc, err = parseMoldHCLDeployDesc(b)
 
-	case DescContentTypeNomad:
+	case DescContentTypeNomadHCL:
 		desc, err = parseNomadHCLDescriptor(b)
 
-	case "application/json":
-		err = json.Unmarshal(b, &desc)
+	case DescContentTypeNomadJSON:
+		desc, err = parseNomadJSONDescriptor(b)
 
 	default:
-		err = fmt.Errorf("unknown content-type: '%s'", contentType)
+		err = fmt.Errorf("unsupported Content-Type: '%s'", contentType)
 
 	}
 

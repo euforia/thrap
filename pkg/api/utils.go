@@ -17,6 +17,7 @@ func setAccessControlHeaders(w http.ResponseWriter) {
 
 func writeJSONResponse(w http.ResponseWriter, resp interface{}, err error) {
 	if err != nil {
+		setAccessControlHeaders(w)
 		w.WriteHeader(400)
 		w.Write([]byte(err.Error()))
 		return
@@ -48,17 +49,25 @@ func makeNomadJSONDeployDesc(job *nomad.Job) (*thrapb.DeploymentDescriptor, erro
 
 	return &thrapb.DeploymentDescriptor{
 		Spec: nb,
-		Mime: DescContentTypeJSON,
+		Mime: DescContentTypeNomadJSON,
 	}, nil
 }
 
 func parseNomadHCLDescriptor(b []byte) (*thrapb.DeploymentDescriptor, error) {
-	// var out map[string]interface{}
-	// err := hcl.Unmarshal(b, &out)
 	job, err := jobspec.Parse(bytes.NewBuffer(b))
 	if err != nil {
 		return nil, err
 	}
 
 	return makeNomadJSONDeployDesc(job)
+}
+
+func parseNomadJSONDescriptor(b []byte) (*thrapb.DeploymentDescriptor, error) {
+	var job nomad.Job
+	err := json.Unmarshal(b, &job)
+	if err == nil {
+		return makeNomadJSONDeployDesc(&job)
+	}
+
+	return nil, err
 }

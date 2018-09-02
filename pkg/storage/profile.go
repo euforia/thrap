@@ -39,7 +39,12 @@ func (db *InmemProfileStorage) List() []*thrapb.Profile {
 	out := make([]*thrapb.Profile, 0, len(db.Profiles))
 
 	for _, v := range db.Profiles {
-		out = append(out, v.Clone())
+		if v.ID == db.Default {
+			// Default is the first in the list
+			out = append([]*thrapb.Profile{v.Clone()}, out...)
+		} else {
+			out = append(out, v.Clone())
+		}
 	}
 
 	return out

@@ -1,23 +1,21 @@
 package secrets
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
+
+	"github.com/pkg/errors"
 
 	"github.com/euforia/thrap/pkg/provider"
 	vault "github.com/hashicorp/vault/api"
 )
 
-// func defaultPolicies() []string {
-// 	return []string{"create", "read", "update", "delete"}
-// }
 const defaultPolicy = `{
 	capabilities = ["create", "read", "update", "delete", "list"]
 }`
 
-// only support kv v1
-type vaultSecrets struct {
+// VaultSecrets is used to manage vault interactions. Currently it only support kv v1
+type VaultSecrets struct {
 	conf *provider.Config
 
 	// prefix the kv is mounted on. this is to handle v1 vs v2
@@ -29,7 +27,7 @@ type vaultSecrets struct {
 // Envionment Variables:
 // VAULT_ADDR
 // VAULT_TOKEN (required)
-func (sec *vaultSecrets) Init(config *provider.Config) error {
+func (sec *VaultSecrets) Init(config *provider.Config) error {
 	// Default v1 prefix
 	sec.prefix = "secret"
 
@@ -67,24 +65,56 @@ func (sec *vaultSecrets) Init(config *provider.Config) error {
 	return err
 }
 
-func (sec *vaultSecrets) RecursiveGet(startPath string) (map[string]map[string]interface{}, error) {
+// Authenticate authenticates the token returning details about it.
+func (sec *VaultSecrets) Authenticate(token string) (*vault.Secret, error) {
+	// We use a complete new client so as to not mess with the current configured
+	// client loaded via a profile
+	conf := vault.DefaultConfig()
+	client, err := vault.NewClient(conf)
+	if err != nil {
+		return nil, err
+	}
+	client.SetAddress(sec.conf.Addr)
+	client.SetToken(token)
+
+	// Validate token
+	secret, err := client.Auth().Token().LookupSelf()
+	if err != nil {
+		return nil, errors.Wrap(err, "error looking up token")
+	}
+
+	if secret == nil {
+		return nil, fmt.Errorf("empty response from lookup-self")
+	}
+
+	return secret, nil
+}
+
+func (sec *VaultSecrets) RecursiveGet(startPath string) (map[string]map[string]interface{}, error) {
+	path := sec.SecretsPath(startPath)
+	return sec.recursiveGet(path)
+}
+
+func (sec *VaultSecrets) recursiveGet(startPath string) (map[string]map[string]interface{}, error) {
 	out := make(map[string]map[string]interface{})
-	kv, err := sec.Get(startPath)
+	kv, err := sec.get(startPath)
 	if err == nil {
 		out[startPath] = kv
 	}
 
-	keys, err := sec.List(startPath + "/")
+	keys, err := sec.list(startPath + "/")
 	if err != nil {
 		fmt.Println(err)
 		return out, nil
 	}
+	fmt.Println(startPath)
+	fmt.Println(keys)
 
 	for _, key := range keys {
 		k := filepath.Join(startPath, key)
 
 		if key[len(key)-1] != '/' {
-			kv, err := sec.Get(k)
+			kv, err := sec.get(k)
 			if err != nil {
 				fmt.Println(err)
 				continue
@@ -92,7 +122,7 @@ func (sec *vaultSecrets) RecursiveGet(startPath string) (map[string]map[string]i
 			out[k] = kv
 
 		} else {
-			kvs, err := sec.RecursiveGet(k)
+			kvs, err := sec.recursiveGet(k)
 			if err != nil {
 				fmt.Println(err)
 				continue
@@ -106,12 +136,14 @@ func (sec *vaultSecrets) RecursiveGet(startPath string) (map[string]map[string]i
 	return out, nil
 }
 
-func (sec *vaultSecrets) List(prefix string) ([]string, error) {
+func (sec *VaultSecrets) List(prefix string) ([]string, error) {
 	pre := sec.SecretsPath(prefix)
+	return sec.list(pre)
+}
 
+func (sec *VaultSecrets) list(prefix string) ([]string, error) {
 	vlt := sec.client.Logical()
-	// pre := filepath.Join("secret", prefix)
-	resp, err := vlt.List(pre)
+	resp, err := vlt.List(prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -121,14 +153,14 @@ func (sec *vaultSecrets) List(prefix string) ([]string, error) {
 }
 
 // Create creates an all access policy under the path of vaultKeyPrefix/name
-func (sec *vaultSecrets) Create(path string) error {
+func (sec *VaultSecrets) Create(path string) error {
 	rules := `path "` + sec.SecretsPath(path) + `/*" ` + defaultPolicy
 
 	vlt := sec.client.Sys()
 	return vlt.PutPolicy(path, rules)
 }
 
-func (sec *vaultSecrets) Set(key string, value map[string]interface{}) error {
+func (sec *VaultSecrets) Set(key string, value map[string]interface{}) error {
 	path := sec.SecretsPath(key)
 	// req := map[string]interface{}{
 	// 	"data": value,
@@ -139,23 +171,25 @@ func (sec *vaultSecrets) Set(key string, value map[string]interface{}) error {
 	return err
 }
 
-func (sec *vaultSecrets) Get(key string) (map[string]interface{}, error) {
+func (sec *VaultSecrets) Get(key string) (map[string]interface{}, error) {
 	path := sec.SecretsPath(key)
+	return sec.get(path)
+}
 
+func (sec *VaultSecrets) get(key string) (map[string]interface{}, error) {
 	vlt := sec.client.Logical()
-	resp, err := vlt.Read(path)
+	resp, err := vlt.Read(key)
 	if err == nil {
 		if resp == nil {
 			return nil, nil
 		}
-		// fmt.Println(path)
 		return resp.Data, nil
 	}
 
 	return nil, err
 }
 
-func (sec *vaultSecrets) SecretsPath(key string) string {
+func (sec *VaultSecrets) SecretsPath(key string) string {
 	return filepath.Join(sec.prefix, key)
 }
 

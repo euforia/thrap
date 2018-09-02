@@ -1,8 +1,6 @@
 package secrets
 
 import (
-	"encoding/json"
-	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -17,7 +15,7 @@ func Test_Secrets(t *testing.T) {
 	}
 	sec, err := New(conf)
 	assert.Nil(t, err)
-	s := sec.(*vaultSecrets)
+	s := sec.(*VaultSecrets)
 	assert.NotNil(t, s.client)
 
 	conf.Provider = "foo"
@@ -26,12 +24,13 @@ func Test_Secrets(t *testing.T) {
 }
 
 var testKeyValues = map[string]map[string]interface{}{
-	"foo": map[string]interface{}{"first": "1", "second": "2"},
-	"bar": map[string]interface{}{"first": "1", "second": "2"},
-	"baz": map[string]interface{}{"first": "1", "second": "2"},
-	"com": map[string]interface{}{"first": "1", "second": "2"},
-	"net": map[string]interface{}{"first": "1", "second": "2"},
-	"org": map[string]interface{}{"first": "1", "second": "2"},
+	"foo":         map[string]interface{}{"first": "1", "second": "2"},
+	"bar":         map[string]interface{}{"first": "1", "second": "2"},
+	"baz":         map[string]interface{}{"first": "1", "second": "2"},
+	"com":         map[string]interface{}{"first": "1", "second": "2"},
+	"net":         map[string]interface{}{"first": "1", "second": "2"},
+	"org":         map[string]interface{}{"first": "1", "second": "2"},
+	"org/sub/two": map[string]interface{}{"first": "1", "second": "2"},
 }
 
 func Test_vault(t *testing.T) {
@@ -65,13 +64,13 @@ func Test_vault(t *testing.T) {
 		assert.Nil(t, err)
 	}
 
-	vlt := sec.(*vaultSecrets)
+	vlt := sec.(*VaultSecrets)
 	list, err := vlt.List("thrap/test")
 	assert.Nil(t, err)
 	assert.Equal(t, len(testKeyValues), len(list))
 }
 
-func Test_vault_tree(t *testing.T) {
+func Test_Vault_RecursiveGet(t *testing.T) {
 	conf := &provider.Config{
 		Provider: "vault",
 		Addr:     "http://localhost:8200",
@@ -83,9 +82,35 @@ func Test_vault_tree(t *testing.T) {
 	err := sec.Init(conf)
 	assert.Nil(t, err)
 
-	vlt := sec.(*vaultSecrets)
-	tree, err := vlt.RecursiveGet("recurse")
+	for k, v := range testKeyValues {
+		key := filepath.Join("recurseGet", k)
+		err = sec.Set(key, v)
+		assert.Nil(t, err)
+	}
+
+	vlt := sec.(*VaultSecrets)
+	tree, err := vlt.RecursiveGet("recurseGet")
 	assert.Nil(t, err)
-	b, _ := json.MarshalIndent(tree, "", " ")
-	fmt.Printf("%s\n", b)
+
+	assert.Equal(t, len(testKeyValues)+2, len(tree))
+}
+
+func Test_Auth(t *testing.T) {
+	conf := &provider.Config{
+		Addr:     "http://localhost:8200",
+		Provider: "vault",
+	}
+	sec, err := New(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	vlt := sec.(*VaultSecrets)
+	resp, err := vlt.Authenticate("myroot")
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+
+	resp, err = vlt.Authenticate("invalid")
+	assert.NotNil(t, err)
+	assert.Nil(t, resp)
 }

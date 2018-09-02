@@ -147,6 +147,23 @@ message Identity {
     map<string, string> Meta = 6 [(gogoproto.moretags) = "hcl:\"meta\""];
 }
 
+message IterOptions {
+    string Prefix = 1;
+}
+
+service Thrap {
+    rpc RegisterStack(Stack) returns (Stack);
+    rpc CommitStack(Stack) returns (Stack);
+    rpc GetStack(Stack) returns (Stack);
+    rpc IterStacks(IterOptions) returns (stream Stack);
+    rpc RegisterIdentity(Identity) returns (Identity);
+    rpc IterIdentities(IterOptions) returns (stream Identity);
+    rpc ConfirmIdentity(Identity) returns (Identity);
+    rpc GetIdentity(Identity) returns (Identity);
+}
+
+// Version 2 starts here 
+
 message Profile {
     string ID                    = 1 [(gogoproto.moretags) = "hcle:\"omit\" yaml:\"-\""];
     string Name                  = 2 [(gogoproto.moretags) = "hcl:\"name\""];
@@ -184,23 +201,32 @@ enum DeployStateStatus {
 message Deployment {
     // Unique deployment instance name
     string Name = 1; 
+    
     // Incremented on each deploy 
     uint64 Version = 2;
+    
     // Action marshalled & normalized deploy job
     bytes Spec = 3; 
+    
     // Profile for this deployment
     Profile Profile  = 4;
+    
     // State the deployment is in
     DeploymentState State = 5;
+    
     // Status of the given state 
     DeployStateStatus Status = 6;
     
+    // When the deploy object was created
     int64 CreatedAt = 7;
+
+    // Last modified time of update
     int64 ModifiedAt = 8;
     
     // Nonce set when deploy is created
     uint64 Nonce = 9;
 
+    // Digest of previous deployment object
     string Previous = 10 [(gogoproto.casttype) = "github.com/opencontainers/go-digest.Digest"];
 
     // Additional info about the current state
@@ -208,23 +234,10 @@ message Deployment {
 }
 
 message DeploymentDescriptor {
-    // Spec template deploy job. This is the spec used to generate the actual
-    // runtime Spec in the Deployment object
+    // Deploy spec. This is the spec used to generate the actual
+    // runtime Spec in the Deployment object i.e. a template
     bytes Spec = 2; 
+    
+    // Mime type of the stored spec
     string Mime = 3;
-}
-
-message IterOptions {
-    string Prefix = 1;
-}
-
-service Thrap {
-    rpc RegisterStack(Stack) returns (Stack);
-    rpc CommitStack(Stack) returns (Stack);
-    rpc GetStack(Stack) returns (Stack);
-    rpc IterStacks(IterOptions) returns (stream Stack);
-    rpc RegisterIdentity(Identity) returns (Identity);
-    rpc IterIdentities(IterOptions) returns (stream Identity);
-    rpc ConfirmIdentity(Identity) returns (Identity);
-    rpc GetIdentity(Identity) returns (Identity);
 }

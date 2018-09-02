@@ -41,10 +41,12 @@ type RequestOptions struct {
 // PreparedDeployment implements a prepared deployment that the orchestrator
 // then uses to perform a deploy
 type PreparedDeployment interface {
-	// Artifacts needed for the deployment
+	// Should return a list of artifacts referenced in the deployment
 	Artifacts() []string
-	// Orchestrator specific spec
+
+	// Orchestrator specific spec data structure
 	Spec() interface{}
+
 	// Serialized bytes of a deploy after all normalization.  This is stored
 	// along with the deployment
 	Bytes() []byte

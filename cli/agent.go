@@ -61,7 +61,7 @@ func commandAgent() *cli.Command {
 			// 	return err
 			// }
 
-			srv := api.NewServer(thp)
+			srv := api.NewServer(thp, conf.Logger)
 
 			// srv := grpc.NewServer()
 			// svc := thrap.NewService(c, conf.Logger)

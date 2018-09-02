@@ -73,9 +73,6 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 		resp = d.Deployable()
 	}
 
-	// w.WriteHeader(404)
-	// w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
-
 	writeJSONResponse(w, resp, err)
 }
 

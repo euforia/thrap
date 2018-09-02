@@ -1,69 +1,49 @@
 package api
 
 import (
-	"net"
 	"net/http"
 
 	"github.com/euforia/thrap/pkg/thrap"
-	"github.com/gorilla/mux"
 )
 
 const (
-	DescContentTypeMold  = "application/vnd.thrap.mold.deployment.descriptor.v1+hcl"
-	DescContentTypeNomad = "application/vnd.thrap.nomad.deployment.descriptor.v1+hcl"
-	DescContentTypeJSON  = "application/json"
+	// DescContentTypeMoldHCL is the legacy type to be deprecated
+	DescContentTypeMoldHCL = "application/vnd.thrap.mold.deployment.descriptor.v1+hcl"
+	// DescContentTypeNomadHCL is a nomad hcl file
+	DescContentTypeNomadHCL = "application/vnd.thrap.nomad.deployment.descriptor.v1+hcl"
+	// DescContentTypeNomadJSON is json object
+	DescContentTypeNomadJSON = "application/vnd.thrap.nomad.deployment.descriptor.v1+json"
 )
 
-// Config is the api server config
-type Config struct {
-	// Projects *project.Projects
-	// Profiles storage.ProfileStorage
-}
+const (
+	// TokenHeader is the auth token header key
+	TokenHeader = "X-Vault-Token"
+	// ProfileHeader is the profile header key
+	ProfileHeader = "Thrap-Profile"
+)
+
+// ContextKey is used for go context keys
+type ContextKey string
+
+const (
+	// IAMContextKey represents the context used for IAM data
+	IAMContextKey ContextKey = "iam"
+)
 
 type httpHandler struct {
 	t        *thrap.Thrap
 	projects *thrap.Projects
 }
 
-// Server is the REST api interface
-type Server struct {
-	// api request router
-	router *mux.Router
-	// api handler
-	handler *httpHandler
+// This is handled by the middleware
+func (h *httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	val := ctx.Value(IAMContextKey)
+
+	writeJSONResponse(w, val, nil)
 }
 
-// NewServer returns a new API server
-func NewServer(t *thrap.Thrap) *Server {
-	server := &Server{
-		router: mux.NewRouter(),
-		handler: &httpHandler{
-			t:        t,
-			projects: thrap.NewProjects(t),
-		},
-	}
-
-	server.registerHandlers()
-
-	return server
-}
-
-func (server *Server) registerHandlers() {
-	// server.router.HandleFunc("/v1/identities", server.ident.list)
-	// server.router.HandleFunc("/v1/identity/{id}", server.ident.identity)
-
-	server.router.HandleFunc("/v1/profiles", server.handler.handleListProfiles)
-	server.router.HandleFunc("/v1/profile/{id}", server.handler.handleProfile)
-
-	server.router.HandleFunc("/v1/projects", server.handler.handleListProjects)
-	server.router.HandleFunc("/v1/project/{id}", server.handler.handleProject)
-
-	server.router.HandleFunc("/v1/project/{pid}/deployments", server.handler.handleListDeployments)
-	server.router.HandleFunc("/v1/project/{pid}/deployment/spec", server.handler.handleDeploymentSpec)
-	server.router.HandleFunc("/v1/project/{pid}/deployment/{eid}/{iid}", server.handler.handleDeployment)
-}
-
-// Serve starts serving the registered handlers on the given listener
-func (server *Server) Serve(ln net.Listener) error {
-	return http.Serve(ln, server.router)
+func (h *httpHandler) handleOptionsLogin(w http.ResponseWriter, r *http.Request) {
+	setAccessControlHeaders(w)
+	w.Header().Set("Access-Control-Allow-Methods", "POST,OPTIONS")
 }

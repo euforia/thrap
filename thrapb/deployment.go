@@ -36,14 +36,15 @@ func (d *Deployment) Clone() *Deployment {
 	}
 
 	n := &Deployment{
-		Previous:   d.Previous,
-		Name:       d.Name,
-		Version:    d.Version,
-		CreatedAt:  d.CreatedAt,
-		ModifiedAt: d.ModifiedAt,
-		Nonce:      d.Nonce,
-		State:      d.State,
-		Status:     d.Status,
+		Previous:     d.Previous,
+		Name:         d.Name,
+		Version:      d.Version,
+		CreatedAt:    d.CreatedAt,
+		ModifiedAt:   d.ModifiedAt,
+		Nonce:        d.Nonce,
+		State:        d.State,
+		Status:       d.Status,
+		StateMessage: d.StateMessage,
 	}
 	if d.Spec != nil {
 		n.Spec = make([]byte, len(d.Spec))
@@ -69,6 +70,7 @@ func (d *Deployment) Hash(h hash.Hash) {
 	binary.Write(h, binary.BigEndian, d.ModifiedAt)
 	binary.Write(h, binary.BigEndian, d.Nonce)
 	h.Write(d.Spec)
+	h.Write([]byte(d.StateMessage))
 
 	d.Profile.Hash(h)
 }

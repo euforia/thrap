@@ -9,66 +9,7 @@ import (
 
 	"github.com/euforia/thrap/pkg/provider"
 	nomad "github.com/hashicorp/nomad/api"
-	"github.com/hashicorp/nomad/client/driver/env"
-	hargs "github.com/hashicorp/nomad/helper/args"
 )
-
-type nomadDeployment struct {
-	job *nomad.Job
-
-	// Serialized job.  This is the final job and cannot be used
-	// for a resubmit
-	serialized []byte
-}
-
-func newNomadDeployment(job *nomad.Job) (*nomadDeployment, error) {
-	var (
-		n   = &nomadDeployment{job: job}
-		err error
-	)
-
-	n.serialized, err = json.MarshalIndent(job, "", "  ")
-	return n, err
-}
-
-// Bytes returns the bytes for a given deployment after all normalization
-// has occured.  This is the spec that was deployed.
-func (d *nomadDeployment) Bytes() []byte {
-	return d.serialized
-}
-
-func (d *nomadDeployment) Spec() interface{} {
-	return d.job
-}
-
-func (d *nomadDeployment) evalImageNames(imgs []string) []string {
-	meta := map[string]string{}
-	for k, v := range d.job.Meta {
-		meta[env.MetaPrefix+k] = v
-	}
-
-	replaced := make([]string, len(imgs))
-	for i, img := range imgs {
-		replaced[i] = hargs.ReplaceEnv(img, meta)
-	}
-
-	return replaced
-}
-
-func (d *nomadDeployment) Artifacts() []string {
-	// Pull images from each task
-	out := make([]string, 0)
-	for _, g := range d.job.TaskGroups {
-		for _, t := range g.Tasks {
-			if i, ok := t.Config["image"]; ok {
-				image := i.(string)
-				out = append(out, image)
-			}
-		}
-	}
-
-	return d.evalImageNames(out)
-}
 
 type nomadOrchestrator struct {
 	client *nomad.Client
@@ -136,7 +77,7 @@ func (orch *nomadOrchestrator) PrepareDeploy(req *provider.Request) (p PreparedD
 
 	job.Canonicalize()
 
-	p, err = newNomadDeployment(job)
+	p, err = newNomadPreparedDeployment(job)
 
 	return
 }
@@ -225,4 +166,15 @@ func (orch *nomadOrchestrator) Deploy(ctx context.Context, d PreparedDeployment,
 // 	_, _, err := jobs.Deregister(stack.ID, opts.Purge, writeOpt)
 
 // 	return err
+// }
+
+// default service block added to each task
+// func serviceBlock(instance, name, comp, portLabel string) *nomad.Service {
+// 	prefix := comp + "." + instance
+// 	return &nomad.Service{
+// 		Id:        prefix + "." + name,
+// 		Name:      name,
+// 		PortLabel: portLabel,
+// 		Tags:      []string{prefix},
+// 	}
 // }

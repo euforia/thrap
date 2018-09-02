@@ -17,6 +17,7 @@ type Config struct {
 	Orchestrator map[string]*provider.Config `hcl:"orchestrator"`
 	Registry     map[string]*provider.Config `hcl:"registry"`
 	Secrets      map[string]*provider.Config `hcl:"secrets"`
+	IAM          map[string]*provider.Config `hcl:"iam"`
 }
 
 // Clone returns a copy of the config
@@ -30,6 +31,7 @@ func (conf *Config) Clone() *Config {
 		Orchestrator: make(map[string]*provider.Config, len(conf.Orchestrator)),
 		Registry:     make(map[string]*provider.Config, len(conf.Registry)),
 		Secrets:      make(map[string]*provider.Config, len(conf.Secrets)),
+		IAM:          make(map[string]*provider.Config, len(conf.IAM)),
 	}
 
 	for k, v := range conf.VCS {
@@ -43,6 +45,10 @@ func (conf *Config) Clone() *Config {
 	}
 	for k, v := range conf.Secrets {
 		c.Secrets[k] = v.Clone()
+	}
+
+	for k, v := range conf.IAM {
+		c.IAM[k] = v.Clone()
 	}
 
 	return conf
