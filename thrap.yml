@@ -26,9 +26,9 @@ components:
         CONSUL_ADDR: http://${comp.consul.container.addr.http}
         VAULT_ADDR: http://${comp.vault.container.addr.default}
 
-  registry:
+  api:
     # Image name will be ${stack.name}/${component.name}
-    name: registry
+    name: api
     # Version is calculated
     # version: 
     type: api

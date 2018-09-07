@@ -212,7 +212,7 @@ func Test_Core_Assembler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	casm := sasm.ComponentAsm("registry")
+	casm := sasm.ComponentAsm("api")
 	assert.NotNil(t, casm)
 	fmt.Println(sasm.ComponentAsm("nomad").Dockerfile())
 }
