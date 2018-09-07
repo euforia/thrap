@@ -79,13 +79,13 @@ func (core *Core) initProviders() (err error) {
 	if err = core.initVCS(); err != nil {
 		return err
 	}
+
 	if err = core.initRegistries(); err != nil {
 		return err
 	}
-	// if err = core.initSecrets(); err != nil {
-	// 	return err
-	// }
+
 	err = core.initOrchestrators()
+
 	return err
 }
 
@@ -105,24 +105,6 @@ func (core *Core) initVCS() (err error) {
 	core.log.Printf("VCS loaded: id=%s user=%s", core.vcs.ID(), vc.Username)
 	return err
 }
-
-// func (core *Core) initSecrets() (err error) {
-// 	sc := core.conf.DefaultSecrets()
-
-// 	screds := core.creds.SecretsCreds(sc.ID)
-// 	sconf := &secrets.Config{
-// 		Provider: sc.ID,
-// 		Conf:     make(map[string]interface{}),
-// 	}
-// 	sconf.Conf["addr"] = sc.Addr
-// 	for k, v := range screds {
-// 		sconf.Conf[k] = v
-// 	}
-
-// 	core.sec, err = secrets.New(sconf)
-
-// 	return err
-// }
 
 // load all configured registries
 func (core *Core) initRegistries() error {

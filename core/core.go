@@ -42,9 +42,6 @@ type Core struct {
 	// Loaded registries
 	regs map[string]registry.Registry
 
-	// Secrets engine
-	// sec secrets.Secrets
-
 	// Deployment orchestrator
 	orchs map[string]orchestrator.Orchestrator
 

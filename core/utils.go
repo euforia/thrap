@@ -11,7 +11,7 @@ import (
 
 	"github.com/euforia/pseudo/scope"
 
-	"github.com/euforia/thrap/metrics"
+	"github.com/euforia/thrap/pkg/metrics"
 	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/thrapb"
 )

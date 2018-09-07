@@ -9,7 +9,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/euforia/thrap/crt"
-	"github.com/euforia/thrap/metrics"
+	"github.com/euforia/thrap/pkg/metrics"
 	"github.com/euforia/thrap/pkg/provider/registry"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/vars"
