@@ -20,6 +20,10 @@ func (p *Profile) Validate() error {
 	if p.ID == "" {
 		return errors.New("profile ID required")
 	}
+	if p.Name == "" {
+		p.Name = p.ID
+	}
+
 	if p.Orchestrator == "" {
 		return errors.New("profile orchestrator provider ID required")
 	}

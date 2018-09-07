@@ -3,7 +3,7 @@ default = "local"
 profiles {
     local {
         orchestrator = "docker"
-        secrets      = "file"
+        secrets      = "local"
         registry     = "docker"
         vcs          = "git"
     }

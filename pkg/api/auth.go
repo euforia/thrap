@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/euforia/thrap/pkg/credentials"
 	"github.com/euforia/thrap/pkg/thrap"
 )
 
@@ -38,7 +39,17 @@ func (a *authHandler) authWriteRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.WithValue(r.Context(), IAMContextKey, resp)
+	creds := &credentials.Credentials{
+		Secrets: map[string]map[string]string{
+			profID: map[string]string{
+				"token": token,
+			},
+		},
+	}
+
+	ctx := context.WithValue(r.Context(), thrap.IAMContextKey, resp)
+	ctx = context.WithValue(ctx, thrap.CredsContextKey, creds)
+
 	a.next.ServeHTTP(w, r.WithContext(ctx))
 }
 

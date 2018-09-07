@@ -152,6 +152,10 @@ func ParseProfiles(b []byte) (*InmemProfileStorage, error) {
 
 	for k, v := range db.Profiles {
 		v.ID = k
+		err = v.Validate()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &db, err

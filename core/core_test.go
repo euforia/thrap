@@ -57,7 +57,7 @@ func Test_NewCore(t *testing.T) {
 	}
 
 	assert.NotNil(t, c.regs)
-	assert.NotNil(t, c.sec)
+	// assert.NotNil(t, c.sec)
 	assert.NotNil(t, c.vcs)
 	assert.NotNil(t, c.orchs)
 	assert.NotNil(t, c.packs)

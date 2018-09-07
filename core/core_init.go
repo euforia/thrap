@@ -11,7 +11,6 @@ import (
 	"github.com/euforia/thrap/pkg/credentials"
 	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/pkg/provider/registry"
-	"github.com/euforia/thrap/secrets"
 	"github.com/euforia/thrap/store"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vcs"
@@ -83,9 +82,9 @@ func (core *Core) initProviders() (err error) {
 	if err = core.initRegistries(); err != nil {
 		return err
 	}
-	if err = core.initSecrets(); err != nil {
-		return err
-	}
+	// if err = core.initSecrets(); err != nil {
+	// 	return err
+	// }
 	err = core.initOrchestrators()
 	return err
 }
@@ -107,23 +106,23 @@ func (core *Core) initVCS() (err error) {
 	return err
 }
 
-func (core *Core) initSecrets() (err error) {
-	sc := core.conf.DefaultSecrets()
+// func (core *Core) initSecrets() (err error) {
+// 	sc := core.conf.DefaultSecrets()
 
-	screds := core.creds.SecretsCreds(sc.ID)
-	sconf := &secrets.Config{
-		Provider: sc.ID,
-		Conf:     make(map[string]interface{}),
-	}
-	sconf.Conf["addr"] = sc.Addr
-	for k, v := range screds {
-		sconf.Conf[k] = v
-	}
+// 	screds := core.creds.SecretsCreds(sc.ID)
+// 	sconf := &secrets.Config{
+// 		Provider: sc.ID,
+// 		Conf:     make(map[string]interface{}),
+// 	}
+// 	sconf.Conf["addr"] = sc.Addr
+// 	for k, v := range screds {
+// 		sconf.Conf[k] = v
+// 	}
 
-	core.sec, err = secrets.New(sconf)
+// 	core.sec, err = secrets.New(sconf)
 
-	return err
-}
+// 	return err
+// }
 
 // load all configured registries
 func (core *Core) initRegistries() error {

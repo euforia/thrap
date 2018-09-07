@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/euforia/thrap/pkg/thrap"
 	"github.com/euforia/thrap/thrapb"
 
 	"github.com/gorilla/mux"
@@ -71,14 +72,20 @@ func (api *httpHandler) createProject(w http.ResponseWriter, r *http.Request) (*
 		return nil, err
 	}
 
-	var proj thrapb.Project
-	err = json.Unmarshal(body, &proj)
+	var req thrap.ProjectCreateRequest
+	err = json.Unmarshal(body, &req)
 	if err != nil {
 		return nil, err
 	}
-	proj.ID = projID
 
-	nProj, err := api.projects.Create(&proj)
+	if req.Project == nil {
+		req.Project = &thrapb.Project{ID: projID}
+	} else {
+		req.Project.ID = projID
+	}
+
+	ctx := r.Context()
+	nProj, err := api.projects.Create(ctx, &req)
 	if err == nil {
 		return nProj.Project, nil
 	}
@@ -109,7 +116,7 @@ func (api *httpHandler) updateProject(w http.ResponseWriter, r *http.Request) (*
 	return &proj, err
 }
 
-// func (api*httpHandler) delete(w http.ResponseWriter, r *http.Request) error {
-// 	projID := mux.Vars(r)["id"]
-// 	return api.store.Delete(projID)
-// }
+func (api *httpHandler) delete(w http.ResponseWriter, r *http.Request) error {
+	projID := mux.Vars(r)["id"]
+	return api.projects.Delete(projID)
+}

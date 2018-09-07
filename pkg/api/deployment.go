@@ -42,19 +42,21 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 		w.Write([]byte(err.Error()))
 		return
 	}
+
 	dpl := proj.Deployments()
+	ctx := r.Context()
 
 	switch r.Method {
 	case "GET":
-		d, err = dpl.Get(envID, instID)
+		d, err = dpl.Get(ctx, envID, instID)
 
 	case "POST":
-		d, err = dpl.Create(envID, instID)
+		d, err = dpl.Create(ctx, envID, instID)
 
 	case "PUT":
 		defer r.Body.Close()
 
-		d, err = dpl.Get(envID, instID)
+		d, err = dpl.Get(ctx, envID, instID)
 		if err == nil {
 			err = api.handleDeploy(d, r)
 		}

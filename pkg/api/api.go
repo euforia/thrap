@@ -22,14 +22,6 @@ const (
 	ProfileHeader = "Thrap-Profile"
 )
 
-// ContextKey is used for go context keys
-type ContextKey string
-
-const (
-	// IAMContextKey represents the context used for IAM data
-	IAMContextKey ContextKey = "iam"
-)
-
 type httpHandler struct {
 	t        *thrap.Thrap
 	projects *thrap.Projects
@@ -38,7 +30,7 @@ type httpHandler struct {
 // This is handled by the middleware
 func (h *httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	val := ctx.Value(IAMContextKey)
+	val := ctx.Value(thrap.IAMContextKey)
 
 	writeJSONResponse(w, val, nil)
 }

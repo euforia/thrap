@@ -33,13 +33,17 @@ var testKeyValues = map[string]map[string]interface{}{
 	"org/sub/two": map[string]interface{}{"first": "1", "second": "2"},
 }
 
+var testVaultAddr = ""
+
+// var testVaultAddr = "http://localhost:8200"
+
 func Test_vault(t *testing.T) {
 	conf := &provider.Config{
 		Provider: "vault",
-		Addr:     "http://localhost:8200",
+		Addr:     testVaultAddr,
 		Config: map[string]interface{}{
-			// "prefix": "/thrap/db",
-			"token": "myroot",
+			"token":   "myroot",
+			"version": 2,
 		},
 	}
 	sec, _ := New(conf)
@@ -68,14 +72,21 @@ func Test_vault(t *testing.T) {
 	list, err := vlt.List("thrap/test")
 	assert.Nil(t, err)
 	assert.Equal(t, len(testKeyValues), len(list))
+
+	// Cleanup
+	for k := range testKeyValues {
+		key := filepath.Join("thrap/test", k)
+		vlt.Delete(key)
+	}
 }
 
 func Test_Vault_RecursiveGet(t *testing.T) {
 	conf := &provider.Config{
 		Provider: "vault",
-		Addr:     "http://localhost:8200",
+		Addr:     testVaultAddr,
 		Config: map[string]interface{}{
-			"token": "myroot",
+			"token":   "myroot",
+			"version": 2,
 		},
 	}
 	sec, _ := New(conf)
@@ -97,7 +108,7 @@ func Test_Vault_RecursiveGet(t *testing.T) {
 
 func Test_Auth(t *testing.T) {
 	conf := &provider.Config{
-		Addr:     "http://localhost:8200",
+		Addr:     testVaultAddr,
 		Provider: "vault",
 	}
 	sec, err := New(conf)

@@ -7,7 +7,7 @@ import (
 )
 
 func Test_Profiles(t *testing.T) {
-	db, err := parseProfiles("../test-fixtures/profiles.hcl")
+	db, err := parseProfiles("../../test-fixtures/profiles.hcl")
 	if err != nil {
 		t.Fatal(err)
 	}

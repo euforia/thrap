@@ -16,5 +16,5 @@ func Test_Orchestrator(t *testing.T) {
 
 	conf.Provider = "foo"
 	_, err = New(conf)
-	assert.Contains(t, err.Error(), "unsupported")
+	assert.Contains(t, err.Error(), "not supported")
 }

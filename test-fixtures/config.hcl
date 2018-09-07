@@ -31,8 +31,7 @@ registry {
 
 secrets {
   local {
-    addr = "http://127.0.0.1:8200"
+    # addr = "http://127.0.0.1:8200"
     provider = "vault"
-    config {}
   }
 }

@@ -14,12 +14,28 @@ const defaultPolicy = `{
 	capabilities = ["create", "read", "update", "delete", "list"]
 }`
 
+var (
+	vmap = map[uint8]map[string]string{
+		1: map[string]string{
+			"get":  "",
+			"list": "",
+		},
+		2: map[string]string{
+			"get":  "data",
+			"list": "metadata",
+		},
+	}
+)
+
 // VaultSecrets is used to manage vault interactions. Currently it only support kv v1
 type VaultSecrets struct {
 	conf *provider.Config
 
 	// prefix the kv is mounted on. this is to handle v1 vs v2
 	prefix string
+
+	//
+	kvVersion uint8
 
 	client *vault.Client
 }
@@ -28,8 +44,6 @@ type VaultSecrets struct {
 // VAULT_ADDR
 // VAULT_TOKEN (required)
 func (sec *VaultSecrets) Init(config *provider.Config) error {
-	// Default v1 prefix
-	sec.prefix = "secret"
 
 	var (
 		conf = vault.DefaultConfig()
@@ -56,6 +70,23 @@ func (sec *VaultSecrets) Init(config *provider.Config) error {
 		}
 	}
 
+	// Default v1 prefix
+	if sec.prefix == "" {
+		sec.prefix = "secret"
+	}
+
+	if val, ok := c["version"]; ok {
+		if s, ok := val.(int); ok {
+			sec.kvVersion = uint8(s)
+		} else {
+			return errors.New("version not a integer")
+		}
+	}
+
+	if sec.kvVersion == 0 {
+		sec.kvVersion = 1
+	}
+
 	if val, ok := c["token"]; ok {
 		if s, ok := val.(string); ok {
 			sec.client.SetToken(s)
@@ -74,7 +105,11 @@ func (sec *VaultSecrets) Authenticate(token string) (*vault.Secret, error) {
 	if err != nil {
 		return nil, err
 	}
-	client.SetAddress(sec.conf.Addr)
+
+	if sec.conf.Addr != "" {
+		client.SetAddress(sec.conf.Addr)
+	}
+
 	client.SetToken(token)
 
 	// Validate token
@@ -91,8 +126,9 @@ func (sec *VaultSecrets) Authenticate(token string) (*vault.Secret, error) {
 }
 
 func (sec *VaultSecrets) RecursiveGet(startPath string) (map[string]map[string]interface{}, error) {
-	path := sec.SecretsPath(startPath)
-	return sec.recursiveGet(path)
+	// path := sec.SecretsPath(startPath)
+	// return sec.recursiveGet(path)
+	return sec.recursiveGet(startPath)
 }
 
 func (sec *VaultSecrets) recursiveGet(startPath string) (map[string]map[string]interface{}, error) {
@@ -136,14 +172,19 @@ func (sec *VaultSecrets) recursiveGet(startPath string) (map[string]map[string]i
 	return out, nil
 }
 
+// List returns a list of all keys under the prefix
 func (sec *VaultSecrets) List(prefix string) ([]string, error) {
-	pre := sec.SecretsPath(prefix)
-	return sec.list(pre)
+	// pre := sec.listPath(prefix)
+	return sec.list(prefix)
+}
+
+func (sec *VaultSecrets) listPath(key string) string {
+	return filepath.Join(sec.prefix, vmap[sec.kvVersion]["list"], key)
 }
 
 func (sec *VaultSecrets) list(prefix string) ([]string, error) {
 	vlt := sec.client.Logical()
-	resp, err := vlt.List(prefix)
+	resp, err := vlt.List(sec.listPath(prefix))
 	if err != nil {
 		return nil, err
 	}
@@ -160,37 +201,64 @@ func (sec *VaultSecrets) Create(path string) error {
 	return vlt.PutPolicy(path, rules)
 }
 
+// Set a given key to the given value
 func (sec *VaultSecrets) Set(key string, value map[string]interface{}) error {
-	path := sec.SecretsPath(key)
-	// req := map[string]interface{}{
-	// 	"data": value,
-	// }
+	var (
+		path = sec.SecretsPath(key)
+		val  map[string]interface{}
+	)
+
+	if sec.kvVersion == 2 {
+		val = map[string]interface{}{"data": value}
+	} else {
+		val = value
+	}
 
 	vlt := sec.client.Logical()
-	_, err := vlt.Write(path, value)
+	_, err := vlt.Write(path, val)
 	return err
 }
 
 func (sec *VaultSecrets) Get(key string) (map[string]interface{}, error) {
+	// path := sec.SecretsPath(key)
+	return sec.get(key)
+}
+
+func (sec *VaultSecrets) Delete(key string) error {
 	path := sec.SecretsPath(key)
-	return sec.get(path)
+	vlt := sec.client.Logical()
+	_, err := vlt.Delete(path)
+	return err
 }
 
 func (sec *VaultSecrets) get(key string) (map[string]interface{}, error) {
 	vlt := sec.client.Logical()
-	resp, err := vlt.Read(key)
-	if err == nil {
-		if resp == nil {
-			return nil, nil
-		}
+	resp, err := vlt.Read(sec.SecretsPath(key))
+	if err != nil {
+		return nil, err
+	}
+
+	if resp == nil {
+		return nil, nil
+	}
+
+	if sec.kvVersion == 1 {
 		return resp.Data, nil
 	}
 
-	return nil, err
+	// Assume v2
+	v := resp.Data["data"]
+	d, ok := v.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("data not a map: %v", v)
+	}
+
+	return d, nil
 }
 
+// SecretsPath returns the data path for th key
 func (sec *VaultSecrets) SecretsPath(key string) string {
-	return filepath.Join(sec.prefix, key)
+	return filepath.Join(sec.prefix, vmap[sec.kvVersion]["get"], key)
 }
 
 func extractListData(secret *vault.Secret) ([]string, bool) {

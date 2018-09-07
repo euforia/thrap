@@ -14,7 +14,6 @@ import (
 	"github.com/euforia/thrap/pkg/config"
 	"github.com/euforia/thrap/pkg/credentials"
 	"github.com/euforia/thrap/pkg/provider/registry"
-	"github.com/euforia/thrap/secrets"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/vcs"
 )
@@ -44,7 +43,7 @@ type Core struct {
 	regs map[string]registry.Registry
 
 	// Secrets engine
-	sec secrets.Secrets
+	// sec secrets.Secrets
 
 	// Deployment orchestrator
 	orchs map[string]orchestrator.Orchestrator
