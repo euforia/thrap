@@ -9,6 +9,7 @@ import (
 
 // Registry implements a registry interface
 type Registry interface {
+	// ID as specified in the config
 	ID() string
 	// Registry name ie. image name prefix e.g. 123456789012.ecr.xxx
 	Name() string
