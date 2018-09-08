@@ -9,8 +9,7 @@ import (
 	"github.com/euforia/thrap/packs"
 	"github.com/euforia/thrap/pkg/config"
 	"github.com/euforia/thrap/pkg/credentials"
-	"github.com/euforia/thrap/pkg/provider"
-	"github.com/euforia/thrap/pkg/provider/registry"
+	"github.com/euforia/thrap/pkg/loader"
 	"github.com/euforia/thrap/store"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vcs"
@@ -106,39 +105,18 @@ func (core *Core) initVCS() (err error) {
 	return err
 }
 
-// load all configured registries
+// DEPRECATE load all configured registries
 func (core *Core) initRegistries() error {
-	core.regs = make(map[string]registry.Registry)
+	regs, err := loader.LoadRegistries(core.conf.Registry, core.creds)
+	if err != nil {
+		return err
+	}
+	core.regs = regs
 
-	for k, rc := range core.conf.Registry {
-		creds := core.creds.RegistryCreds(k)
-		reg, err := core.initRegistry(rc, creds)
-		if err != nil {
-			return err
-		}
-
+	for k := range core.regs {
 		core.log.Println("Registry loaded:", k)
-		core.regs[k] = reg
 	}
-
 	return nil
-}
-
-func (core *Core) initRegistry(conf *provider.Config, creds map[string]string) (registry.Registry, error) {
-	if creds != nil {
-		if conf.Config == nil {
-			conf.Config = make(map[string]interface{})
-		}
-
-		for k, v := range conf.Config {
-			conf.Config[k] = v
-		}
-
-	} else {
-		core.log.Printf("Credentials not found for registry: %s", conf.ID)
-	}
-
-	return registry.New(conf)
 }
 
 // load all configured orchestrators
