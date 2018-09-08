@@ -1,7 +1,12 @@
 package api
 
 import (
+	"fmt"
+	"mime"
 	"net/http"
+	"path"
+	"path/filepath"
+	"strings"
 
 	"github.com/euforia/thrap/pkg/thrap"
 )
@@ -25,6 +30,7 @@ const (
 type httpHandler struct {
 	t        *thrap.Thrap
 	projects *thrap.Projects
+	uiPrefix string
 }
 
 // This is handled by the middleware
@@ -38,4 +44,28 @@ func (h *httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 func (h *httpHandler) handleOptionsLogin(w http.ResponseWriter, r *http.Request) {
 	setAccessControlHeaders(w)
 	w.Header().Set("Access-Control-Allow-Methods", "POST,OPTIONS")
+}
+
+func (h *httpHandler) handleUI(w http.ResponseWriter, r *http.Request) {
+	// fmt.Println(r.URL.Path)
+	upath := strings.TrimPrefix(r.URL.Path, h.uiPrefix)
+	var fpath string
+
+	switch {
+	case strings.HasPrefix(upath, "/static/"):
+		fpath = filepath.Join("build", upath)
+	default:
+		fpath = filepath.Join("build", "index.html")
+	}
+
+	data, err := Asset(fpath)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(404)
+		return
+	}
+
+	contentType := mime.TypeByExtension(path.Ext(fpath))
+	w.Header().Add("Content-Type", contentType)
+	w.Write(data)
 }

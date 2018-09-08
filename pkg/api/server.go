@@ -27,6 +27,7 @@ func NewServer(t *thrap.Thrap, logger *log.Logger) *Server {
 		handler: &httpHandler{
 			t:        t,
 			projects: thrap.NewProjects(t),
+			uiPrefix: "/ui",
 		},
 	}
 
@@ -52,6 +53,9 @@ func (server *Server) enableAuthHandlers() {
 }
 
 func (server *Server) registerHandlers() {
+	server.router.PathPrefix("/ui/").HandlerFunc(server.handler.handleUI)
+	// server.router.PathPrefix("/ui/").Handler(http.StripPrefix("/ui/", http.FileServer(http.Dir("/Users/abs/workbench/platform-ui/build"))))
+
 	// No auth for profile operations
 	server.router.HandleFunc("/v1/profiles", server.handler.handleListProfiles).Methods("GET")
 	server.router.HandleFunc("/v1/profile/{id}", server.handler.handleProfile)

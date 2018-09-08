@@ -90,7 +90,7 @@ func New(conf *provider.Config) (Orchestrator, error) {
 		err = errors.Wrapf(errOrchProviderMissing, conf.ID)
 
 	default:
-		err = errors.Wrap(errOrchProviderNotSupported, conf.Provider)
+		err = errOrchProviderNotSupported
 
 	}
 
