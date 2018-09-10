@@ -53,8 +53,8 @@ func (server *Server) enableAuthHandlers() {
 }
 
 func (server *Server) registerHandlers() {
+	server.router.HandleFunc("/v1/status", server.handler.handleStatus)
 	server.router.PathPrefix("/ui/").HandlerFunc(server.handler.handleUI)
-	// server.router.PathPrefix("/ui/").Handler(http.StripPrefix("/ui/", http.FileServer(http.Dir("/Users/abs/workbench/platform-ui/build"))))
 
 	// No auth for profile operations
 	server.router.HandleFunc("/v1/profiles", server.handler.handleListProfiles).Methods("GET")

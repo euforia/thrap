@@ -35,14 +35,14 @@ job "thrap" {
                         provider = "docker"
                     }
                     sandbox {
-                        addr = "{{.Data.SandboxECRRegistry}}"
+                        addr = "{{.Data.SandboxRegistryAddr}}"
                         provider = "ecr"
                         config {
                             region = "us-west-2"
                         }
                     }
                     shared {
-                        addr = "{{.Data.SharedECRRegistry}}"
+                        addr = "{{.Data.SharedRegistryAddr}}"
                         provider = "ecr"
                         config {
                             region = "us-west-2"
@@ -91,12 +91,12 @@ job "thrap" {
                 {{ with printf "${NOMAD_META_SECRETS_PATH}" | secret }}
                 registry {
                     sandbox {
-                        key    = "{{.Data.SandboxRegKey}}"
-                        secret = "{{.Data.SandboxRegSecret}}"
+                        key    = "{{.Data.SandboxRegistryKey}}"
+                        secret = "{{.Data.SandboxRegistrySecret}}"
                     }
                     shared {
-                        key    = "{{.Data.SharedRegKey}}"
-                        secret = "{{.Data.SharedRegSecret}}"
+                        key    = "{{.Data.SharedRegistryKey}}"
+                        secret = "{{.Data.SharedRegistrySecret}}"
                     }
                 }
                 {{ end }}
@@ -116,8 +116,8 @@ job "thrap" {
                         secrets      = "dev"
                         registry     = "shared"
                         meta {
-                            PUBLIC_TLD   = ""
-                            TLD          = ""
+                            PUBLIC_TLD   = "{{.Data.DevPublicTLD}}"
+                            TLD          = "{{.Data.DevPrivateTLD}}"
                             SECRETS_PATH = ""
                             INSTANCE     = ""
                             PROJECT      = ""
@@ -133,8 +133,8 @@ job "thrap" {
                         secrets      = "int"
                         registry     = "shared"
                         meta {
-                            PUBLIC_TLD   = ""
-                            TLD          = ""
+                            PUBLIC_TLD   = "{{.Data.IntPublicTLD}}"
+                            TLD          = "{{.Data.IntPrivateTLD}}"
                             SECRETS_PATH = ""
                             INSTANCE     = ""
                             PROJECT      = ""
@@ -150,8 +150,8 @@ job "thrap" {
                         secrets      = "prod"
                         registry     = "shared"
                         meta {
-                            PUBLIC_TLD   = ""
-                            TLD          = ""
+                            PUBLIC_TLD   = "{{.Data.ProdPublicTLD}}"
+                            TLD          = "{{.Data.ProdPrivateTLD}}"
                             SECRETS_PATH = ""
                             INSTANCE     = ""
                             PROJECT      = ""
@@ -170,6 +170,12 @@ job "thrap" {
             service {
                 name = "${TASK}"
                 port = "default"
+                check {
+                    type     = "http"
+                    path     = "/v1/status"
+                    interval = "20s"
+                    timeout  = "3s"
+                }
             }
         }
     }

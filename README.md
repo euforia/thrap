@@ -1,12 +1,14 @@
 # thrap
-Thrap is a tool accelerate the software development process by automating common tasks and 
+
+Thrap is a tool accelerate the software development process by automating common tasks and
 simpifying various integration points
 
-## Getting Started 
+## Getting Started
 
 ### Pre-requisites
 
 The following are required for thrap:
+
 - Docker (api version >= 1.37)
 
 ### Installation
@@ -41,6 +43,7 @@ $ thrap stack init
 This will create the initial set of base files and configurations.
 
 ### Build your project (locally)
+
 Once the project is initialized, you can make code changes as needed.  When ready, the project stack can
 be built using the following command:
 
@@ -67,20 +70,22 @@ Check the status of your stack:
 $ thrap stack status
 ```
 
-
 ## Development
 
 #### Install dependencies
+
 ```shell
 $ make deps
 ```
 
 #### Run tests
+
 ```shell
 $ make test
 ```
 
 #### Make binary
+
 ```shell
 $ make thrap
 ```
@@ -89,6 +94,7 @@ Binary called `thrap` (built to be compatible with the system it was run on)
 will be available in this folder
 
 #### Make distribution
+
 ```shell
 $ make dist
 ```
@@ -96,7 +102,9 @@ $ make dist
 Binaries will be available in the `dist` folder.
 
 #### Docker
+
 A fully containerized build can be run as follows:
+
 ```shell
 docker build -t thrap -f < /path/to/dockerfile > .
 ```

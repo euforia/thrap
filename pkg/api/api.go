@@ -47,9 +47,10 @@ func (h *httpHandler) handleOptionsLogin(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *httpHandler) handleUI(w http.ResponseWriter, r *http.Request) {
-	// fmt.Println(r.URL.Path)
-	upath := strings.TrimPrefix(r.URL.Path, h.uiPrefix)
-	var fpath string
+	var (
+		upath = strings.TrimPrefix(r.URL.Path, h.uiPrefix)
+		fpath string
+	)
 
 	switch {
 	case strings.HasPrefix(upath, "/static/"):
@@ -68,4 +69,9 @@ func (h *httpHandler) handleUI(w http.ResponseWriter, r *http.Request) {
 	contentType := mime.TypeByExtension(path.Ext(fpath))
 	w.Header().Add("Content-Type", contentType)
 	w.Write(data)
+}
+
+func (h *httpHandler) handleStatus(w http.ResponseWriter, r *http.Request) {
+	setAccessControlHeaders(w)
+	w.WriteHeader(200)
 }
