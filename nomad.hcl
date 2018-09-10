@@ -177,6 +177,18 @@ job "thrap" {
                     timeout  = "3s"
                 }
             }
+
+            resources {
+                cpu     = 200
+                memory  = 128
+
+                network {
+                    mbits = 1
+                    port "default" {
+                        static = 10000
+                    }
+                }
+            }
         }
     }
 

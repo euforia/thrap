@@ -1,7 +1,6 @@
 tmp/
-.thrap
+.thrap/
 dist/
-thrap
 .Trash
 .DS_Store
 vendor/
