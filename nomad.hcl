@@ -4,6 +4,12 @@ job "thrap" {
 
     group "head" {
 
+        vault {
+            change_mode = "noop"
+            env = false
+            policies = ["read-secrets"]
+        }
+
         task "api" {
             driver = "docker"
             config {
@@ -20,7 +26,7 @@ job "thrap" {
             // Configured providers
             template {
                 data = <<EOF
-                {{ with printf "${NOMAD_META_SECRETS_PATH}" | secret }}
+                {{ with printf "%s" (env "NOMAD_META_SECRETS_PATH") | secret }}
                 orchestrator {
                     nomad {
                         provider = "nomad"
@@ -88,7 +94,7 @@ job "thrap" {
             // Creds for provider
             template {
                 data = <<EOF
-                {{ with printf "${NOMAD_META_SECRETS_PATH}" | secret }}
+                {{ with printf "%s" (env "NOMAD_META_SECRETS_PATH") | secret }}
                 registry {
                     sandbox {
                         key    = "{{.Data.SandboxRegistryKey}}"
@@ -108,6 +114,7 @@ job "thrap" {
             // Profiles based on configured providers
             template {
                 data = <<EOF
+                {{ with printf "%s" (env "NOMAD_META_SECRETS_PATH") | secret }}
                 default = "dev"
                 profiles {
                     dev {
@@ -161,6 +168,7 @@ job "thrap" {
                         }
                     }
                 }
+                {{end}}
                 EOF
                 destination   = "local/conf/profiles.hcl"
                 change_mode   = "signal"
