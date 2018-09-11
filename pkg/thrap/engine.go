@@ -202,7 +202,7 @@ func (eng *engine) checkArtifacts(p orchestrator.PreparedDeployment) error {
 }
 
 func (eng *engine) getImageManifest(reg, img, tag string) (interface{}, error) {
-	eng.log.Printf("Checking image=%s/%s/%s", reg, img, tag)
+	eng.log.Printf("Checking image=%s/%s:%s", reg, img, tag)
 	if reg != "" {
 		return eng.r.GetImageManifest(img, tag)
 	}

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	thrapServiceTagVar  = "${TASK}.${NOMAD_META_INSTANCE}"
+	thrapServiceTagVar  = "${NOMAD_TASK_NAME}.${NOMAD_META_INSTANCE}"
 	thrapServiceNameVar = "${NOMAD_META_PROJECT}"
 )
 
