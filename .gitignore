@@ -1,6 +1,7 @@
 tmp/
 .thrap/
 dist/
+build/
 .Trash
 .DS_Store
 vendor/

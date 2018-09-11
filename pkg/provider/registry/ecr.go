@@ -19,6 +19,22 @@ var (
 	errRepoTagNotFound = errors.New("repository tag not found")
 )
 
+const defaultECRRepoPolicy = `{
+    "Version": "2008-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowPull",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": [
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage",
+                "ecr:BatchCheckLayerAvailability"
+            ]
+        }
+    ]
+}`
+
 type awsContainerRegistry struct {
 	sess *session.Session
 	ecr  *ecr.ECR
@@ -178,9 +194,17 @@ func (ar *awsContainerRegistry) CreateRepo(name string) (interface{}, error) {
 		repo     *ecr.Repository
 	)
 
-	if err == nil {
-		repo = out.Repository
+	if err != nil {
+		return nil, err
 	}
+
+	repo = out.Repository
+
+	// Set default read-only for everyone
+	policy := &ecr.SetRepositoryPolicyInput{}
+	policy.SetPolicyText(defaultECRRepoPolicy)
+	policy.SetRepositoryName(name)
+	_, err = ar.ecr.SetRepositoryPolicy(policy)
 
 	return repo, err
 }
