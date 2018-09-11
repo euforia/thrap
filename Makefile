@@ -14,7 +14,7 @@ SOURCE_PACKAGES = $(shell go list ./... | grep -v /vendor/ | grep -v /crt)
 
 clean:
 	rm -rf dist
-	rm -f $(NAME)
+	rm -rf build 
 
 .PHONY: deps
 deps:
@@ -26,7 +26,7 @@ deps:
 test:
 	go test -cover $(SOURCE_PACKAGES)
 	
-$(NAME):
+build/$(NAME):
 	$(BUILD_CMD) -o $(NAME) $(SOURCE_FILES)
 
 dist/$(NAME)-linux:
