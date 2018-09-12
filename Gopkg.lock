@@ -213,7 +213,7 @@
   branch = "master"
   name = "github.com/euforia/kvdb"
   packages = ["."]
-  revision = "7a74ca028a18282755e097d1bb4644f5865158a1"
+  revision = "bb256a39d99b8c4e8ab9acb80b2d3a3b4c12ecb1"
 
 [[projects]]
   branch = "master"
