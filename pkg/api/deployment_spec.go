@@ -42,6 +42,7 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 	case http.MethodOptions:
 		setAccessControlHeaders(w)
 		w.Header().Set("Access-Control-Allow-Methods", "GET,POST")
+		w.WriteHeader(200)
 		return
 
 	default:
@@ -50,11 +51,12 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err != nil {
-		w.WriteHeader(400)
 		setAccessControlHeaders(w)
+		w.WriteHeader(400)
 		w.Write([]byte(err.Error()))
 	} else {
 		setAccessControlHeaders(w)
+		w.WriteHeader(200)
 		w.Write(resp)
 	}
 }

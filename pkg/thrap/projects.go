@@ -22,9 +22,11 @@ type ProjectCreateRequest struct {
 
 // Projects is used to interact with a set of projects
 type Projects struct {
-	t  *Thrap
-	ds kvdb.Datastore // global datastore
-	db kvdb.DB        // projects scoped db
+	t *Thrap
+	// global datastore
+	ds kvdb.Datastore
+	// projects scoped db
+	db kvdb.DB
 }
 
 // NewProjects returns a Projects instance backed by the given

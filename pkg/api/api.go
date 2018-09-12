@@ -44,6 +44,7 @@ func (h *httpHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 func (h *httpHandler) handleOptionsLogin(w http.ResponseWriter, r *http.Request) {
 	setAccessControlHeaders(w)
 	w.Header().Set("Access-Control-Allow-Methods", "POST,OPTIONS")
+	w.WriteHeader(200)
 }
 
 func (h *httpHandler) handleUI(w http.ResponseWriter, r *http.Request) {
@@ -68,6 +69,7 @@ func (h *httpHandler) handleUI(w http.ResponseWriter, r *http.Request) {
 
 	contentType := mime.TypeByExtension(path.Ext(fpath))
 	w.Header().Add("Content-Type", contentType)
+	w.WriteHeader(200)
 	w.Write(data)
 }
 

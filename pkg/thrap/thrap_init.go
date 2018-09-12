@@ -46,7 +46,7 @@ func (t *Thrap) initStorage(conf *Config) error {
 	}
 
 	var err error
-	t.ds, err = kvdb.NewBadgerDatastore(filepath.Join(conf.DataDir, dbDir))
+	t.ds, err = kvdb.NewBadgerDatastore(filepath.Join(conf.DataDir, dbDir), t.log)
 
 	return err
 }

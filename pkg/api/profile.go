@@ -28,6 +28,7 @@ func (api *httpHandler) handleProfile(w http.ResponseWriter, r *http.Request) {
 	case "OPTIONS":
 		setAccessControlHeaders(w)
 		w.Header().Set("Access-Control-Allow-Methods", "GET")
+		w.WriteHeader(200)
 		return
 
 	default:

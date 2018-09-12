@@ -132,8 +132,6 @@ func (sec *VaultSecrets) Authenticate(token string) (*vault.Secret, error) {
 }
 
 func (sec *VaultSecrets) RecursiveGet(startPath string) (map[string]map[string]interface{}, error) {
-	// path := sec.SecretsPath(startPath)
-	// return sec.recursiveGet(path)
 	return sec.recursiveGet(startPath)
 }
 
@@ -149,8 +147,6 @@ func (sec *VaultSecrets) recursiveGet(startPath string) (map[string]map[string]i
 		fmt.Println(err)
 		return out, nil
 	}
-	fmt.Println(startPath)
-	fmt.Println(keys)
 
 	for _, key := range keys {
 		k := filepath.Join(startPath, key)

@@ -46,6 +46,7 @@ func (api *httpHandler) handleProject(w http.ResponseWriter, r *http.Request) {
 	case "OPTIONS":
 		setAccessControlHeaders(w)
 		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT")
+		w.WriteHeader(200)
 		return
 
 	default:

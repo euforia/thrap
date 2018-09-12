@@ -54,14 +54,25 @@ func (a *authHandler) authWriteRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	a.log.Printf("%s %s", r.Method, r.URL.Path)
+	recW := &responseRecorder{w, 0}
 
 	switch r.Method {
 	case "PUT", "POST", "PATCH", "DELETE":
-		a.authWriteRequest(w, r)
+		a.authWriteRequest(recW, r)
 
 	default:
-		a.next.ServeHTTP(w, r)
+		a.next.ServeHTTP(recW, r)
 	}
 
+	a.log.Printf("%d %s %s", recW.status, r.Method, r.URL.Path)
+}
+
+type responseRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (w *responseRecorder) WriteHeader(c int) {
+	w.status = c
+	w.ResponseWriter.WriteHeader(c)
 }
