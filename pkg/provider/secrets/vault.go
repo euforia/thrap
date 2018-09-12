@@ -3,6 +3,7 @@ package secrets
 import (
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -13,6 +14,8 @@ import (
 const defaultPolicy = `{
 	capabilities = ["create", "read", "update", "delete", "list"]
 }`
+
+const defaultTimeout = 3 * time.Second
 
 var (
 	vmap = map[uint8]map[string]string{
@@ -49,6 +52,8 @@ func (sec *VaultSecrets) Init(config *provider.Config) error {
 		conf = vault.DefaultConfig()
 		err  error
 	)
+
+	conf.Timeout = defaultTimeout
 
 	sec.client, err = vault.NewClient(conf)
 	if err != nil {
@@ -101,6 +106,7 @@ func (sec *VaultSecrets) Authenticate(token string) (*vault.Secret, error) {
 	// We use a complete new client so as to not mess with the current configured
 	// client loaded via a profile
 	conf := vault.DefaultConfig()
+	conf.Timeout = defaultTimeout
 	client, err := vault.NewClient(conf)
 	if err != nil {
 		return nil, err
