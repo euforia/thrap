@@ -39,6 +39,11 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 	case "POST":
 		resp, err = api.setDeploymentSpec(r, dpl)
 
+	case http.MethodOptions:
+		setAccessControlHeaders(w)
+		w.Header().Set("Access-Control-Allow-Methods", "GET,POST")
+		return
+
 	default:
 		w.WriteHeader(405)
 		return

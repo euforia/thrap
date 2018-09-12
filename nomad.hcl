@@ -28,8 +28,17 @@ job "thrap" {
                 data = <<EOF
                 {{ with printf "%s" (env "NOMAD_META_SECRETS_PATH") | secret }}
                 orchestrator {
-                    nomad {
+                    dev {
                         provider = "nomad"
+                        addr = "{{.Data.DevNomadAddr}}"
+                    }
+                    int {
+                        provider = "nomad"
+                        addr = "{{.Data.IntNomadAddr}}"
+                    }
+                    prod {
+                        provider = "nomad"
+                        addr = "{{.Data.ProdNomadAddr}}"
                     }
                 }
 
@@ -119,7 +128,7 @@ job "thrap" {
                 profiles {
                     dev {
                         name         = "Development"
-                        orchestrator = "nomad"
+                        orchestrator = "dev"
                         secrets      = "dev"
                         registry     = "shared"
                         meta {
@@ -136,7 +145,7 @@ job "thrap" {
 
                     int {
                         name         = "Integration"
-                        orchestrator = "nomad"
+                        orchestrator = "int"
                         secrets      = "int"
                         registry     = "shared"
                         meta {
@@ -153,7 +162,7 @@ job "thrap" {
 
                     prod {
                         name         = "Production"
-                        orchestrator = "nomad"
+                        orchestrator = "prod"
                         secrets      = "prod"
                         registry     = "shared"
                         meta {
