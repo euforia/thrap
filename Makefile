@@ -13,20 +13,30 @@ SOURCE_FILES = $(shell ls ./cmd/*.go | grep -v _test.go)
 SOURCE_PACKAGES = $(shell go list ./... | grep -v /vendor/ | grep -v /crt)
 
 clean:
-	rm -rf dist
+	rm -rf ./dist
+	rm -rf ./ui/build
+	rm -f ./pkg/api/ui.go
 
 .PHONY: deps
 deps:
-	go get github.com/c4milo/github-release
+	go get github.com/go-swagger/go-swagger/cmd/swagger
+	go get github.com/jteeuwen/go-bindata
 	go get github.com/golang/dep/cmd/dep
-	dep ensure -v
 
 .PHONY: test
 test:
 	go test -cover $(SOURCE_PACKAGES)
 	
-swagger:
-	swagger generate spec -b ./pkg/api/ -o swagger.json
+ui/build/swagger.json:
+	swagger generate spec -i swagger.yml -o ./ui/build/swagger.json
+
+ui/build:
+	cd ./ui/ && yarn --verbose build
+	
+bindata:
+	cd ./ui/ && go-bindata -pkg api -o ../pkg/api/ui.go build/...
+
+ui: ui/build ui/build/swagger.json bindata
 
 $(NAME):
 	$(BUILD_CMD) -o $(NAME) $(SOURCE_FILES)

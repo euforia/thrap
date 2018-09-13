@@ -1,2 +1,3 @@
 secrets.hcl
 vendor/
+ui/node_modules/
