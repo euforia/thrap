@@ -1,0 +1,411 @@
+
+/* colorhexa.com */
+#root {
+  font-family: sans-serif;
+  color: #abbbc6;
+}
+
+
+#stage,
+.theme-bg {
+  background-color: #36454f;
+}
+
+#stage.docs {
+  background-color: #fafafa;
+  padding-right: 0;
+}
+
+a,
+input[type='text'],
+input[type='password'],
+select,
+.theme-color,
+.btn-default,
+.btn-trans,
+.btn-vertical,
+.btn-control {
+  color: #abbbc6;
+}
+
+table {
+  width: 100%;
+  border-spacing: 0;
+  padding: 0;
+}
+
+.modal-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  outline: none;
+  transform: translate(-50%, -50%);
+}
+
+a,
+a:hover,
+a:active,
+a:focus,
+a:link {
+  text-decoration: none;
+}
+
+input[type='text'] {
+  padding: 10px 20px;
+  font-size: 14px;
+  /* background-color: #2c3840; */
+  background: none;
+  /* border: 1px solid #556d7c; */
+  border: none;
+  /* border-radius: 3px; */
+  border-radius: 0;
+  box-sizing: border-box;
+}
+
+.select-container.invalid-input,
+input[type='password'].invalid-input,
+input[type='text'].invalid-input {
+  border-color: #f44336;
+}
+
+.error,
+.error-container {
+  color: #f44336;
+}
+
+.error-container {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 100;
+}
+
+/* The parent to these 2 must be relative for the positioning to work */
+select {
+  border: none;
+  background: none;
+  font-size: 14px;
+  outline: none;
+  /* padding: 10px 5px; */
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  -webkit-appearance: none;
+  padding: 10px 20px;
+}
+
+/* parent of select */
+input[type='password'],
+input[type='text'],
+.select-container {
+  border-bottom: 1px solid #668295;
+  outline: none;
+}
+
+input[type='password'],
+input[type='text'],
+select,
+.select-container {
+  position: relative;
+}
+
+input[type='password']:focus,
+input[type='password']:active,
+input[type='password']:hover,
+input[type='text']:focus,
+input[type='text']:active,
+input[type='text']:hover,
+.select-container:hover {
+  /* background-color:#2e3b43; */
+  background-color: rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid #4b5f6d;
+}
+
+input[disabled],
+input[disabled]:hover,
+input.disabled:hover,
+input.disabled {
+  /* cursor: none; */
+  border-bottom: 1px solid #4b5f6d;
+  background: none;
+}
+
+.select-expand {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+button {
+  outline: none;
+  cursor: pointer;
+}
+
+.list-item:hover,
+.panel-title,
+.header-title,
+.btn-control:hover,
+.btn-trans:hover,
+button:active,
+button:focus,
+button:hover {
+    color: #f1f4f6;
+}
+
+button.btn-default {
+  padding: 10px 20px;
+  margin: 10px;
+  font-size: 14px;
+  background: #53467f;
+  border: 1px solid #423866;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-trans {
+  background: none;
+  border: none;
+  font-weight: bold;
+  border-radius: 45px;
+  padding: 10px;
+}
+
+.btn-trans:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.btn-trans.disabled,
+.btn-trans.disabled:hover {
+  opacity: 0.25;
+}
+
+.btn-control {
+  background-color: #465966;
+  border-radius: 45px;
+  box-shadow: inset 0px 8px 15px rgba(0, 0, 0, 0.07);
+  width: 50px;
+  height: 50px;
+  border: 1px solid #2e3b43;
+  cursor: pointer;
+  opacity: 0.7;
+  outline: none;
+}
+
+.btn-control:hover { 
+  box-shadow: inset 0px 8px 15px rgba(0, 0, 0, 0.1);
+  opacity: 1;
+}
+/* 
+.btn-vertical {
+  border-left: 1px solid #4b5f6d;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.btn-vertical:hover {
+  opacity: 1;
+  background-color: #465966;
+  color: #eee;
+} */
+
+
+/* https://www.colorhexa.com/36454f */
+
+
+.kvtable > tbody > tr > td {
+  padding: 3px 0;
+  vertical-align: top;
+}
+
+#stage {
+  position: absolute;
+  top: 0;
+  left: 301px;
+  right: 0px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  bottom: 0;
+  padding: 0px 30px 0 30px;
+  border-left: 1px solid #4b5f6d;
+  transition-duration: 350ms;
+  transition-delay: 0;
+}
+
+#stage.close-sidebar {
+  left: 64px;
+  border-left: 1px solid #222; 
+}
+
+#stage.hide-sidebar {
+  left: 0;
+}
+
+.chevron-left-icon{
+  left: 306px;
+}
+
+.chevron-right-icon{
+  left: 69px;
+}
+
+.chevron-right-icon,
+.chevron-left-icon {
+  position: fixed;
+  top: 50%;
+  color: #637d90;
+  opacity: 1;
+  cursor: pointer;
+  /* override default with important */
+  transition: opacity 400ms linear 0ms !important; 
+}
+
+.hide,
+.chevron-right-icon.hide,
+.chevron-left-icon.hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.header,
+.table-header {
+  font-size: 24px;
+}
+
+.header {
+  margin: 20px 0px;
+}
+
+.header-label {
+  font-weight: 100;
+}
+
+.header-container {
+  padding: 20px 0;
+}
+
+.header-title {
+  font-weight: 100;
+  font-size: 30px;
+}
+
+.list {
+  margin: 10px 0;
+}
+
+.list-item {
+  padding: 10px 20px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.list-item:hover {
+  background: #465966;
+  border-radius: 3px;
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.list-item-desc,
+.list-item-title {
+  font-weight: 100;
+}
+.list-item-desc {
+  font-size: 11px;
+  color: #718c9e;
+  padding-top: 10px;
+}
+
+.create-form-container {
+  text-align: center;
+  width: 400px;
+  margin: auto;
+}
+
+.create-name {
+  width: 100%;
+  padding: 10px;
+  border-radius: 3px;
+}
+
+.create-btn-container {
+  margin: 25px 0;
+}
+
+.panel-title {
+  font-size: 20px;
+  padding: 10px 20px 20px;
+  border-bottom: 1px solid #4b5f6d;
+}
+
+.panel {
+  display: inline-block;
+  padding: 15px 30px;
+  border: 2px solid #4b5f6d;
+  border-radius: 4px;
+  font-weight: 100;
+  margin: 10px;
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+  background: #36454f;
+  vertical-align: top;
+}
+
+.panel:hover {
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-control:hover,
+.panel:hover {
+  border-color:#6958a0;
+}
+
+/* .navtab-bar, */
+.vars-header {
+  border-bottom: 1px solid #668295;
+}
+
+/* .navtab-bar {
+  margin-bottom: 20px;
+} */
+
+/* .navtab.active,
+.navtab:hover,
+.navtab:active {
+  border-top-color: #6958a0;
+} */
+
+/* .navtab {
+  border-top: 2px solid transparent;
+  border-right: 1px solid #668295;
+  border-bottom: 1px solid #668295;
+} */
+
+.disabled {
+  pointer-events: none;
+}
+
+.section-label {
+  text-align: left;
+  font-weight: 100;
+  padding: 5px 0;
+}
+
+.section {
+  padding: 15px 0px;
+}
+
+.form-title {
+  text-align: left;
+  padding-bottom: 40px;
+}
+
+.subscript {
+  font-size: 12px;
+  font-weight: 100;
+  opacity: 0.7;
+  padding: 5px 0;
+}
+
+/* for docs */
+.api-content {
+  background: #fff
+}
