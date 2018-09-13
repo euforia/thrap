@@ -12,7 +12,7 @@ vendor/
 *.dll
 *.so
 *.dylib
-.vscode/
 .a
+.vscode/
 secrets.*
 testdir

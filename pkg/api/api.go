@@ -77,3 +77,9 @@ func (h *httpHandler) handleStatus(w http.ResponseWriter, r *http.Request) {
 	setAccessControlHeaders(w)
 	w.WriteHeader(200)
 }
+
+func (h *httpHandler) handleSwaggerJSON(w http.ResponseWriter, r *http.Request) {
+	setAccessControlHeaders(w)
+	w.WriteHeader(200)
+	w.Write([]byte(swaggerJSON))
+}

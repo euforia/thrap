@@ -1,0 +1,304 @@
+swagger: "2.0"
+info:
+  title: "thrap API"
+  version: "v.0.1.0"
+  description: Thrap is toolchain to manage software development lifecycle.
+basePath: /v1
+schemes:
+  - http
+
+tags:
+  - name: Project
+    description: Project level operations
+  - name: Deployment
+    description: Deployment level operations
+
+paths:
+  /project/{project}:
+    post:
+      summary: Create project
+      description: Creates a new project
+      tags:
+      - Project
+      parameters:
+        - name: project
+          in: path
+          required: true
+          type: string
+          description: "project id"
+        - in: body
+          name: project
+          type: object
+          description: "project data"
+          schema:
+            $ref: '#/definitions/Project'
+        - name: Thrap-Profile
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Vault-Token
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Created
+          schema:
+            $ref: "#/definitions/Project"
+    get:
+      summary: Get project
+      description: Returns information about the project
+      tags:
+      - Project
+      parameters:
+        - name: project
+          in: path
+          required: true
+          type: string
+          description: "project id"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Project"
+        404:
+          description: "Project not found"
+    put:
+      summary: Update project
+      Description: Updates an existing project's properties
+      tags:
+      - Project
+      parameters:
+        - name: project
+          in: path
+          required: true
+          type: string
+          description: "project id"
+        - in: body
+          name: project
+          type: object
+          description: "project data"
+          schema:
+            $ref: '#/definitions/Project'
+        - name: Thrap-Profile
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Vault-Token
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Updated
+          schema:
+            $ref: "#/definitions/Project"
+        404:
+          description: "Project not found"
+  /projects:
+    get:
+      summary: List projects
+      description: Returns a list of all registered projects
+      tags:
+      - Project
+      responses:
+        200:
+          description: "OK"
+          type: array
+  /project/{project}/deployment/spec:
+    post: 
+      summary: Create/Update spec
+      description: Creates or updates a deployment specification for a project
+      tags:
+      - Deployment
+      parameters:
+        - name: project
+          in: path
+          required: true
+          type: string
+          description: "project id"
+        - name: Thrap-Profile
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Vault-Token
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: Project deployment specification
+        required: true
+        content:
+          application/vnd.thrap.mold.deployment.descriptor.v1+hcl:
+            schema:
+              type: string
+              format: binary
+          application/vnd.thrap.nomad.deployment.descriptor.v1+hcl:
+            schema:
+              type: string
+              format: binary
+          application/vnd.thrap.nomad.deployment.descriptor.v1+json:
+            schema:
+              type: string
+              format: binary
+      responses:
+        200:
+          description: OK
+        400:
+          description: Bad Request
+    get:
+      summary: Get spec
+      description: Returns the registered deployment specification
+      tags:
+      - Deployment
+      responses:
+        200:
+          description: "OK"
+          type: object
+        404:
+          description: Specification not found
+
+  /project/{project}/deployments:
+    get:
+      summary: List deployments
+      description: Returns a list of all known deployments for a project
+      tags:
+      - Deployment
+      responses:
+        200:
+          description: OK
+          type: array
+  /project/{project}/deployment/{environment}/{instance}:
+    get:
+      summary: Get deployment
+      description: Gets deployment instance details for a project in an environment
+      tags:
+      - Deployment
+      parameters:
+        - name: project
+          in: path
+          required: true
+          type: string
+          description: "project id"
+        - name: environment
+          in: path
+          required: true
+          type: string
+          description: "environment id"
+        - name: instance
+          in: path
+          required: true
+          type: string
+          description: "instance id"
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Deployment"
+    post:
+      summary: Create deployment
+      description: Creates a new deployment instanace for a project in an environment
+      tags:
+      - Deployment
+      parameters:
+        - name: project
+          in: path
+          required: true
+          type: string
+          description: "project id"
+        - name: environment
+          in: path
+          required: true
+          type: string
+          description: "environment id"
+        - name: instance
+          in: path
+          required: true
+          type: string
+          description: "instance id"
+        - name: Thrap-Profile
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Vault-Token
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Deployment"
+    put:
+      summary: Deploy
+      description: Deploys an existing deployment bundle
+      tags:
+        - Deployment
+      parameters:
+        - name: project
+          in: path
+          required: true
+          type: string
+          description: "project id"
+        - name: environment
+          in: path
+          required: true
+          type: string
+          description: "environment id"
+        - name: instance
+          in: path
+          required: true
+          type: string
+          description: "instance id"
+        - name: Thrap-Profile
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Vault-Token
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/Deployment"
+
+definitions:
+  Project:
+    type: object
+    properties:
+      Name:
+        type: string
+      Description:
+        type: string
+      Source:
+        type: string
+      Owner:
+        type: string
+      Maintianer:
+        type: string
+      Developers:
+        type: array
+  Deployment:
+    type: object
+    properties:
+      Name:
+        type: string
+      Version:
+        type: integer

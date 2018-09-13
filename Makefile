@@ -25,6 +25,9 @@ deps:
 test:
 	go test -cover $(SOURCE_PACKAGES)
 	
+swagger:
+	swagger generate spec -b ./pkg/api/ -o swagger.json
+
 $(NAME):
 	$(BUILD_CMD) -o $(NAME) $(SOURCE_FILES)
 

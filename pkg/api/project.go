@@ -11,6 +11,22 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// swagger:operation GET /projects listProjects
+//
+// Returns a list of projects
+//
+// Returns a list of projects
+//
+// ---
+// responses:
+//   200:
+//     description: "OK"
+//     schema:
+//       type: array
+//   400:
+//     description: "Bad Request"
+//   500:
+//     description: "Internal Server Error"
 func (api *httpHandler) handleListProjects(w http.ResponseWriter, r *http.Request) {
 	list := make([]*thrapb.Project, 0)
 
@@ -31,12 +47,56 @@ func (api *httpHandler) handleProject(w http.ResponseWriter, r *http.Request) {
 	)
 
 	switch r.Method {
+	// swagger:operation GET /project/{projectId} getProject
+	//
+	// Get project details
+	//
+	// Get project details
+	//
+	// ---
+	// responses:
+	//   200:
+	//     description: "OK"
+	//   400:
+	//     description: "Bad Request"
+	//   404:
+	//     description: "specification not found"
+	//   500:
+	//     description: "Internal Server Error"
 	case "GET":
 		resp, err = api.getProject(w, r)
 
+	// swagger:operation POST /project/{projectId} createProject
+	//
+	// Create a new project
+	//
+	// Create a new project
+	//
+	// ---
+	// responses:
+	//   200:
+	//     description: "OK"
+	//   400:
+	//     description: "Bad Request"
+	//   500:
+	//     description: "Internal Server Error"
 	case "POST":
 		resp, err = api.createProject(w, r)
 
+		// swagger:operation PUT /project/{projectId} updateProject
+		//
+		// Update a project
+		//
+		// Update a project
+		//
+		// ---
+		// responses:
+		//   200:
+		//     description: "OK"
+		//   400:
+		//     description: "Bad Request"
+		//   500:
+		//     description: "Internal Server Error"
 	case "PUT":
 		resp, err = api.updateProject(w, r)
 

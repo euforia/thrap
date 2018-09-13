@@ -28,6 +28,22 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 	)
 
 	switch r.Method {
+
+	// swagger:operation GET /project/{project}/deployment/spec getDeploySpec
+	//
+	// Get deployment spec for a project
+	//
+	// Get deployment spec for a project
+	//
+	// responses:
+	//   200:
+	//     description: "OK"
+	//   400:
+	//     description: "Bad Request"
+	//   404:
+	//     description: "specification not found"
+	//   500:
+	//     description: "Internal Server Error"
 	case "GET":
 		desc := dpl.Descriptor()
 		if desc == nil || len(desc.Spec) == 0 {
@@ -36,6 +52,19 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 		}
 		resp = desc.Spec
 
+		// swagger:operation POST /project/{project}/deployment/spec updateDeploySpec
+		//
+		// Update deployment spec for a project
+		//
+		// Update deployment spec for a project
+		//
+		// responses:
+		//   200:
+		//     description: "OK"
+		//   400:
+		//     description: "Bad Request"
+		//   500:
+		//     description: "Internal Server Error"
 	case "POST":
 		resp, err = api.setDeploymentSpec(r, dpl)
 
