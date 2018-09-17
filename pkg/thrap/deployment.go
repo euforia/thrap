@@ -161,6 +161,9 @@ func (d *Deployment) setupPrepare(vars map[string]string) error {
 	d.depl.Nonce = rand.Uint64()
 	d.depl.StateMessage = ""
 
+	// Version up
+	d.depl.Version++
+
 	// We copy the spec to the deployment as input.  The orchestrator consumes and
 	// returns the deployed/edited spec.
 	d.depl.Spec = make([]byte, len(d.desc.Spec))
@@ -175,8 +178,6 @@ func (d *Deployment) setupPrepare(vars map[string]string) error {
 		return err
 	}
 
-	// Version up
-	d.depl.Version++
 	d.depl.State = thrapb.DeploymentState_PREPARE
 
 	// Sync here so another concurrent call would bail
@@ -193,6 +194,7 @@ func (d *Deployment) setProfileVars(vars map[string]string) {
 	profile.Meta[InstanceVarName] = d.depl.Name
 	profile.Meta[ProjectVarName] = d.proj.ID
 	profile.Meta[SecretsPathVarName] = d.eng.SecretsPath(d.proj.ID, d.depl.Name)
+	profile.Meta[DeployVerVarName] = fmt.Sprintf("%d", d.depl.Version)
 
 	// Add user supplied variables to profile
 	if len(vars) > 0 {

@@ -26,7 +26,7 @@ const styles = theme => ({
 
 const descContentTypes = ([
     { 
-        label: 'mold+hcl', 
+        label: 'tmpl+hcl', 
         value: 'application/vnd.thrap.mold.deployment.descriptor.v1+hcl' 
     },
     { 

@@ -16,6 +16,7 @@ clean:
 	rm -rf ./dist
 	rm -rf ./ui/build
 	rm -f ./pkg/api/ui.go
+	rm -f ./pkg/api/swagger.go
 
 .PHONY: deps
 deps:

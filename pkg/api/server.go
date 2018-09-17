@@ -64,8 +64,8 @@ func (server *Server) enableAuthHandlers() {
 
 func (server *Server) registerHandlers() {
 	server.router.HandleFunc("/v1/status", server.handler.handleStatus)
-	server.router.PathPrefix("/ui/").HandlerFunc(server.handler.handleUI)
 	server.router.HandleFunc("/swagger.json", server.handler.handleSwaggerJSON)
+	server.router.PathPrefix("/ui/").HandlerFunc(server.handler.handleUI)
 
 	// No auth for profile operations
 	server.router.HandleFunc("/v1/profiles", server.handler.handleListProfiles).Methods("GET")

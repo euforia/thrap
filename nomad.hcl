@@ -132,11 +132,12 @@ job "thrap" {
                         secrets      = "dev"
                         registry     = "shared"
                         meta {
-                            PUBLIC_TLD   = "{{.Data.DevPublicTLD}}"
-                            TLD          = "{{.Data.DevPrivateTLD}}"
-                            SECRETS_PATH = ""
-                            INSTANCE     = ""
-                            PROJECT      = ""
+                            PUBLIC_TLD    = "{{.Data.DevPublicTLD}}"
+                            PUBLIC_DOMAIN = "{{.Data.DevPublicDomain}}"
+                            TLD           = "{{.Data.DevPrivateTLD}}"
+                            SECRETS_PATH  = ""
+                            INSTANCE      = ""
+                            PROJECT       = ""
                         }
                         variables {
                             APP_VERSION = ""
@@ -149,11 +150,12 @@ job "thrap" {
                         secrets      = "int"
                         registry     = "shared"
                         meta {
-                            PUBLIC_TLD   = "{{.Data.IntPublicTLD}}"
-                            TLD          = "{{.Data.IntPrivateTLD}}"
-                            SECRETS_PATH = ""
-                            INSTANCE     = ""
-                            PROJECT      = ""
+                            PUBLIC_TLD    = "{{.Data.IntPublicTLD}}"
+                            PUBLIC_DOMAIN = "{{.Data.IntPublicDomain}}"
+                            TLD           = "{{.Data.IntPrivateTLD}}"
+                            SECRETS_PATH  = ""
+                            INSTANCE      = ""
+                            PROJECT       = ""
                         }
                         variables {
                             APP_VERSION = ""
@@ -166,11 +168,12 @@ job "thrap" {
                         secrets      = "prod"
                         registry     = "shared"
                         meta {
-                            PUBLIC_TLD   = "{{.Data.ProdPublicTLD}}"
-                            TLD          = "{{.Data.ProdPrivateTLD}}"
-                            SECRETS_PATH = ""
-                            INSTANCE     = ""
-                            PROJECT      = ""
+                            PUBLIC_TLD    = "{{.Data.ProdPublicTLD}}"
+                            PUBLIC_DOMAIN = "{{.Data.ProdPublicDomain}}"
+                            TLD           = "{{.Data.ProdPrivateTLD}}"
+                            SECRETS_PATH  = ""
+                            INSTANCE      = ""
+                            PROJECT       = ""
                         }
                         variables {
                             APP_VERSION = ""

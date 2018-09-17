@@ -54,11 +54,11 @@ func (h *httpHandler) handleUI(w http.ResponseWriter, r *http.Request) {
 	)
 
 	switch {
-	case (upath == "/" || upath == ""):
-		fpath = filepath.Join("build", "index.html")
+	case strings.HasPrefix(upath, "/static/"):
+		fpath = filepath.Join("build", upath)
 
 	default:
-		fpath = filepath.Join("build", upath)
+		fpath = filepath.Join("build", "index.html")
 	}
 
 	data, err := Asset(fpath)
@@ -81,10 +81,8 @@ func (h *httpHandler) handleStatus(w http.ResponseWriter, r *http.Request) {
 
 func (h *httpHandler) handleSwaggerJSON(w http.ResponseWriter, r *http.Request) {
 	setAccessControlHeaders(w)
-	w.WriteHeader(200)
 	data, err := Asset("build/swagger.json")
 	if err != nil {
-		fmt.Println(err)
 		w.WriteHeader(404)
 		return
 	}

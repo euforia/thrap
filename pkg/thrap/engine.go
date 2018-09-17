@@ -31,6 +31,9 @@ const (
 	ProjectVarName = "PROJECT"
 	// RegistryVarName is the registry name configured with the engine
 	RegistryVarName = "REGISTRY"
+	// DeployVerVarName is the deployment version meta variable. This is
+	// incremented on each deploy
+	DeployVerVarName = "DEPLOY_VERSION"
 )
 
 // Engine interface implements an engine to run deployments
