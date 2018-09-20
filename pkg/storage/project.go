@@ -11,14 +11,20 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
+func newConsulClient(conf *api.Config) (*api.Client, error) {
+	conf.HttpClient = &http.Client{Timeout: 2 * time.Second}
+	return api.NewClient(conf)
+}
+
+// ConsulProjectStorage implements a consul backed ProjectStorage
 type ConsulProjectStorage struct {
 	client *api.Client
 	prefix string
 }
 
+// NewConsulProjectStorage returns a new instance of ConsulProjectStorage
 func NewConsulProjectStorage(conf *api.Config, prefix string) (*ConsulProjectStorage, error) {
-	conf.HttpClient = &http.Client{Timeout: 2 * time.Second}
-	client, err := api.NewClient(conf)
+	client, err := newConsulClient(conf)
 	if err != nil {
 		return nil, err
 	}
@@ -29,6 +35,7 @@ func NewConsulProjectStorage(conf *api.Config, prefix string) (*ConsulProjectSto
 	}, nil
 }
 
+// Iter satisfies the ProjectStorage interface
 func (s *ConsulProjectStorage) Iter(start string, cb func(*thrapb.Project) error) error {
 	kv := s.client.KV()
 	q := &api.QueryOptions{}
@@ -52,6 +59,7 @@ func (s *ConsulProjectStorage) Iter(start string, cb func(*thrapb.Project) error
 	return err
 }
 
+// Create satisfies the ProjectStorage interface
 func (s *ConsulProjectStorage) Create(proj *thrapb.Project) error {
 	key := s.keyPath(proj.ID)
 	val, err := proj.Marshal()
@@ -72,6 +80,7 @@ func (s *ConsulProjectStorage) Create(proj *thrapb.Project) error {
 	return putKV(kv, key, val)
 }
 
+// Update satisfies the ProjectStorage interface
 func (s *ConsulProjectStorage) Update(proj *thrapb.Project) error {
 	key := s.keyPath(proj.ID)
 	val, err := proj.Marshal()
@@ -92,6 +101,7 @@ func (s *ConsulProjectStorage) Update(proj *thrapb.Project) error {
 	return putKV(kv, key, val)
 }
 
+// Get satisfies the ProjectStorage interface
 func (s *ConsulProjectStorage) Get(id string) (*thrapb.Project, error) {
 	kv := s.client.KV()
 	q := &api.QueryOptions{}
@@ -107,6 +117,7 @@ func (s *ConsulProjectStorage) Get(id string) (*thrapb.Project, error) {
 	return &proj, err
 }
 
+// Delete satisfies the ProjectStorage interface
 func (s *ConsulProjectStorage) Delete(id string) error {
 	kv := s.client.KV()
 	opt := &api.WriteOptions{}

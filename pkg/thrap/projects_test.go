@@ -72,6 +72,7 @@ func Test_Projects(t *testing.T) {
 		_, err := projects.Create(ctx, &ProjectCreateRequest{Project: p})
 		assert.Nil(t, err)
 	}
+
 	for _, p := range testProjects {
 		r, err := projects.Get(p.ID)
 		assert.Nil(t, err)
@@ -105,4 +106,9 @@ func Test_Projects(t *testing.T) {
 	// deploy
 	deploys := proj.Deployments()
 	assert.NotNil(t, deploys)
+
+	for _, p := range testProjects {
+		err = projects.Delete(p.ID)
+		assert.Nil(t, err)
+	}
 }

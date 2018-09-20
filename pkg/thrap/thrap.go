@@ -66,6 +66,15 @@ type Thrap struct {
 	// Profiles
 	profiles storage.ProfileStorage
 
+	// Project store
+	projects storage.ProjectStorage
+
+	// Deployment descriptors
+	descs storage.DeployDescStorage
+
+	// Deployments
+	deploys storage.DeploymentStorage
+
 	// Datastore
 	ds kvdb.Datastore
 
@@ -87,6 +96,8 @@ func New(conf *Config) (*Thrap, error) {
 		creds:    conf.Credentials,
 		log:      conf.Logger,
 		hashFunc: conf.HashFunc,
+		projects: conf.Projects,
+		deploys:  conf.Deployments,
 	}
 
 	t.conf, err = config.ReadConfig(filepath.Join(conf.ConfigDir, providersConfigFile))

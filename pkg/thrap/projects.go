@@ -2,8 +2,8 @@ package thrap
 
 import (
 	"context"
+	"log"
 
-	"github.com/euforia/kvdb"
 	"github.com/euforia/thrap/pkg/storage"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/pkg/errors"
@@ -22,51 +22,32 @@ type ProjectCreateRequest struct {
 
 // Projects is used to interact with a set of projects
 type Projects struct {
-	t *Thrap
-	// global datastore
-	ds kvdb.Datastore
-	// projects scoped db
-	db kvdb.DB
+	t     *Thrap
+	store storage.ProjectStorage
 }
 
 // NewProjects returns a Projects instance backed by the given
 // datastore
 func NewProjects(t *Thrap) *Projects {
 	return &Projects{
-		t:  t,
-		ds: t.ds,
-		db: t.ds.GetDB(projDBKey),
+		t:     t,
+		store: t.projects,
 	}
 }
 
 // Iter iterates over all projects from the start point
 func (p *Projects) Iter(start string, cb func(*thrapb.Project) error) error {
-	table, _ := p.db.GetTable(descTableKey, &thrapb.Project{})
-
-	var prefix []byte
-	if start != "" {
-		prefix = []byte(start)
-	}
-
-	return table.Iter(prefix, func(obj kvdb.Object) error {
-		proj, ok := obj.(*thrapb.Project)
-		if ok {
-			return cb(proj)
-		}
-		return storage.ErrInvalidType
-	})
+	return p.store.Iter(start, cb)
 }
 
 // Create creates a new project and returns a object to manage the project
 func (p *Projects) Create(ctx context.Context, req *ProjectCreateRequest) (*Project, error) {
 	proj := req.Project
-	table, _ := p.db.GetTable(descTableKey, proj)
-
 	if proj.Name == "" {
 		proj.Name = proj.ID
 	}
 
-	err := table.Create([]byte(proj.ID), proj)
+	err := p.store.Create(proj)
 	if err != nil {
 		return nil, err
 	}
@@ -90,6 +71,8 @@ func (p *Projects) setupProjectSecrets(ctx context.Context, projID string, secre
 			continue
 		}
 
+		log.Printf("Secrets setup project=%s profile=%s", projID, profile.ID)
+
 		er = eng.SetupSecrets(projID, secrets)
 		if er != nil {
 			err = errors.Wrapf(err, "failed to setup secrets for project %s", projID)
@@ -101,20 +84,16 @@ func (p *Projects) setupProjectSecrets(ctx context.Context, projID string, secre
 
 // Get returns a object to manage the project
 func (p *Projects) Get(id string) (*Project, error) {
-	table, _ := p.db.GetTable(descTableKey, &thrapb.Project{})
-
-	obj, err := table.Get([]byte(id))
-	if err == nil {
-		proj := obj.(*thrapb.Project)
-		return newProject(p.t, proj), nil
+	proj, err := p.store.Get(id)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, err
+	return newProject(p.t, proj), nil
 }
 
 // Delete deletes the project from the db. Currently it does not purge the
 // underlying resources that were created in the Create call
 func (p *Projects) Delete(id string) error {
-	table, _ := p.db.GetTable(descTableKey, &thrapb.Project{})
-	return table.Delete([]byte(id))
+	return p.store.Delete(id)
 }

@@ -27,3 +27,28 @@ type ProfileStorage interface {
 	GetDefault() *thrapb.Profile
 	SetDefault(id string) error
 }
+
+// ProjectStorage implements storage to persist projects
+type ProjectStorage interface {
+	Get(id string) (*thrapb.Project, error)
+	Update(proj *thrapb.Project) error
+	Create(proj *thrapb.Project) error
+	Delete(id string) error
+	Iter(start string, cb func(*thrapb.Project) error) error
+}
+
+// DeploymentStorage implements storage to persist deployment instances
+type DeploymentStorage interface {
+	Get(project, profile, id string) (*thrapb.Deployment, error)
+	Update(string, string, *thrapb.Deployment) error
+	Create(string, string, *thrapb.Deployment) error
+	Delete(project, profile, id string) error
+	List(project string, prefix string) ([]*thrapb.Deployment, error)
+}
+
+// DeployDescStorage implements storage to persist deployment descriptors
+type DeployDescStorage interface {
+	Get(string) (*thrapb.DeploymentDescriptor, error)
+	Set(string, *thrapb.DeploymentDescriptor) error
+	Delete(string) error
+}

@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"path/filepath"
 	"time"
 
 	"github.com/pkg/errors"
 
-	"github.com/euforia/kvdb"
 	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/pkg/provider/orchestrator"
+	"github.com/euforia/thrap/pkg/storage"
 	"github.com/euforia/thrap/thrapb"
 )
 
@@ -44,19 +43,18 @@ type Deployment struct {
 	// Engine loaded with the deployment profile
 	eng Engine
 
-	// Table to store deploy state
-	state kvdb.TableVersion
+	store storage.DeploymentStorage
 }
 
 func newDeployment(proj thrapb.Project, desc *thrapb.DeploymentDescriptor,
-	deploy *thrapb.Deployment, eng Engine, state kvdb.TableVersion) *Deployment {
+	deploy *thrapb.Deployment, eng Engine) *Deployment {
 
 	return &Deployment{
-		proj:  proj,
-		desc:  desc,
-		depl:  *deploy,
-		eng:   eng,
-		state: state,
+		proj: proj,
+		desc: desc,
+		depl: *deploy,
+		eng:  eng,
+		// state: state,
 	}
 }
 
@@ -106,6 +104,8 @@ func (d *Deployment) PrepareDeploy(req *DeployRequest) (orchestrator.PreparedDep
 
 // Deploy performs a deployment and updates the internal state
 func (d *Deployment) Deploy(req *DeployRequest) (*thrapb.Deployment, error) {
+	// TODO: lock()
+	// TODO: defer unlock()
 	prepared, err := d.PrepareDeploy(req)
 	if err != nil {
 		return nil, err
@@ -132,11 +132,7 @@ func (d *Deployment) Deploy(req *DeployRequest) (*thrapb.Deployment, error) {
 // Sync persists the current deployment to the store
 func (d *Deployment) Sync() error {
 	d.depl.ModifiedAt = time.Now().UnixNano()
-
-	key := filepath.Join(d.depl.Profile.ID, d.depl.Name)
-	_, err := d.state.Update([]byte(key), &d.depl)
-
-	return err
+	return d.store.Update(d.proj.ID, d.depl.Profile.ID, &d.depl)
 }
 
 func (d *Deployment) isVoid() bool {

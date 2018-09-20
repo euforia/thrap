@@ -125,6 +125,7 @@ func (st *HCLFileProfileStorage) Sync() error {
 	return ioutil.WriteFile(st.file, b, 0644)
 }
 
+// ReadHCLFileProfileStorage reads an hcl file
 func ReadHCLFileProfileStorage(filename string) (*HCLFileProfileStorage, error) {
 	db, err := parseProfiles(filename)
 	if err == nil {
@@ -143,6 +144,7 @@ func parseProfiles(profPath string) (*InmemProfileStorage, error) {
 	return ParseProfiles(b)
 }
 
+// ParseProfiles parse profile hcl config bytes
 func ParseProfiles(b []byte) (*InmemProfileStorage, error) {
 	var db InmemProfileStorage
 	err := hcl.Unmarshal(b, &db)

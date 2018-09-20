@@ -27,6 +27,10 @@ type Config struct {
 	Credentials *credentials.Credentials
 	// Profile storage
 	Profiles storage.ProfileStorage
+	// Projects store
+	Projects storage.ProjectStorage
+	//
+	Deployments storage.DeploymentStorage
 	// Overall logger
 	Logger *log.Logger
 	// Data directory. This must exist

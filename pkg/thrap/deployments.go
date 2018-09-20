@@ -3,17 +3,15 @@ package thrap
 import (
 	"context"
 	"errors"
-	"path/filepath"
 
-	"github.com/euforia/kvdb"
 	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/thrapb"
 )
 
-const (
-	deplDBKey    = "deployment"
-	instTableKey = "instance"
-)
+// const (
+// 	deplDBKey    = "deployment"
+// 	instTableKey = "instance"
+// )
 
 var (
 	errDeployDescNotSet = errors.New("deployment descriptor not set")
@@ -21,15 +19,12 @@ var (
 
 // Deployments is used to manage a single projects deployments
 type Deployments struct {
-	// Deployment descriptor i.e config/template used for all deploys across
-	// profiles and instances
-	desc *thrapb.DeploymentDescriptor
-
-	// Project who's deployments are being managed
+	// Project associated to the deployments are being managed
 	proj thrapb.Project
 
-	// Project deployment db
-	db kvdb.DB
+	// Deployment descriptor i.e config/template used for all deploys across
+	// profiles and instances.  in-mem cache
+	desc *thrapb.DeploymentDescriptor
 
 	// Thrap core instance
 	t *Thrap
@@ -37,13 +32,9 @@ type Deployments struct {
 
 // NewDeployments returns a new Deployments instance for a given project
 func NewDeployments(t *Thrap, proj thrapb.Project) *Deployments {
-	// Deployment db
-	pdb := t.ds.GetDB(deplDBKey)
-
 	depl := &Deployments{
 		t:    t,
 		proj: proj,
-		db:   pdb,
 	}
 
 	depl.loadDescriptor()
@@ -53,17 +44,7 @@ func NewDeployments(t *Thrap, proj thrapb.Project) *Deployments {
 
 // List returns a list of all deployments for the project
 func (d *Deployments) List() ([]*thrapb.Deployment, error) {
-	tableKey := filepath.Join(instTableKey, d.proj.ID)
-	table, _ := d.db.GetTableVersion(tableKey, &thrapb.Deployment{}, d.t.hashFunc)
-
-	out := make([]*thrapb.Deployment, 0)
-	err := table.Iter(nil, func(obj kvdb.ObjectVersion) error {
-		depl := obj.(*thrapb.Deployment)
-		out = append(out, depl)
-		return nil
-	})
-
-	return out, err
+	return d.t.deploys.List(d.proj.ID, "")
 }
 
 // Create creates a new deploy for the project with the given profile and instance
@@ -86,13 +67,7 @@ func (d *Deployments) Create(ctx context.Context, profileID, instanceName string
 		return nil, err
 	}
 
-	tableKey := filepath.Join(instTableKey, d.proj.ID)
-	table, _ := d.db.GetTableVersion(tableKey, nd, d.t.hashFunc)
-
-	// key := d.getkey(dpl.Profile.ID, dpl.Name)
-	key := filepath.Join(profileID, instanceName)
-
-	_, err = table.Create([]byte(key), nd)
+	err = d.t.deploys.Create(d.proj.ID, profileID, nd)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +86,7 @@ func (d *Deployments) Create(ctx context.Context, profileID, instanceName string
 
 	// dtable, _ := d.db.GetTableVersion(filepath.Join(instTableKey, d.proj.ID), dpl, d.t.hashFunc)
 
-	return newDeployment(d.proj, d.desc, nd, eng, table), nil
+	return newDeployment(d.proj, d.desc, nd, eng), nil
 }
 
 // Get returns an existing deployment given the profile and instance name,
@@ -122,20 +97,13 @@ func (d *Deployments) Get(ctx context.Context, profID, instance string) (*Deploy
 		return nil, err
 	}
 
-	tableKey := filepath.Join(instTableKey, d.proj.ID)
-
-	td := &thrapb.Deployment{}
-	table, _ := d.db.GetTableVersion(tableKey, td, d.t.hashFunc)
-
-	key := filepath.Join(profID, instance)
-	obj, _, err := table.Get([]byte(key))
+	dp, err := d.t.deploys.Get(d.proj.ID, profID, instance)
 	if err != nil {
 		return nil, err
 	}
-	dp := obj.(*thrapb.Deployment)
 
 	// Table with proj id. diff from above
-	return newDeployment(d.proj, d.desc, dp, eng, table), nil
+	return newDeployment(d.proj, d.desc, dp, eng), nil
 }
 
 // Descriptor returns the current loaded deployment descriptor
@@ -145,29 +113,14 @@ func (d *Deployments) Descriptor() *thrapb.DeploymentDescriptor {
 
 // SetDescriptor sets the deployment descriptor in the store.
 func (d *Deployments) SetDescriptor(desc *thrapb.DeploymentDescriptor) error {
-	table, _ := d.db.GetTable(descTableKey, desc)
-
-	var err error
-	if d.desc == nil {
-		err = table.Create([]byte(d.proj.ID), desc)
-	} else {
-		err = table.Update([]byte(d.proj.ID), desc)
-	}
-
-	if err == nil {
-		d.desc = desc
-	}
-
-	return err
+	return d.t.descs.Set(d.proj.ID, desc)
 }
 
 // loadDescriptor loads the deployment descriptor from hard state
 func (d *Deployments) loadDescriptor() error {
-	// db := d.ds.GetDB(deplDBKey)
-	table, _ := d.db.GetTable(descTableKey, &thrapb.DeploymentDescriptor{})
-	obj, err := table.Get([]byte(d.proj.ID))
+	desc, err := d.t.descs.Get(d.proj.ID)
 	if err == nil {
-		d.desc = obj.(*thrapb.DeploymentDescriptor)
+		d.desc = desc
 	}
 	return err
 }

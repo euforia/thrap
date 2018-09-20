@@ -4,28 +4,24 @@ import (
 	"bytes"
 	"crypto/sha256"
 
-	"github.com/euforia/kvdb"
 	"github.com/euforia/thrap/thrapb"
 )
 
 // Project is used to manage a project
 type Project struct {
-	t *Thrap
-
+	// Project data
 	*thrapb.Project
-	// project data hash
+
+	// Project data hash used to know if a write should be
+	// performed
 	hash []byte
-	// whole datastore passed to deployments
-	ds kvdb.Datastore
-	// underlying db project/{id}
-	db kvdb.DB
+
+	t *Thrap
 }
 
 func newProject(t *Thrap, proj *thrapb.Project) *Project {
 	p := &Project{
 		t:       t,
-		ds:      t.ds,
-		db:      t.ds.GetDB(projDBKey),
 		Project: proj,
 	}
 
@@ -46,9 +42,7 @@ func (p *Project) Sync() error {
 		return nil
 	}
 
-	// Update state
-	table, _ := p.db.GetTable("descriptor", &thrapb.Project{})
-	return table.Update([]byte(p.ID), p.Project)
+	return p.t.projects.Update(p.Project)
 }
 
 // Deployments returns a Deployments instance to manage the project's
