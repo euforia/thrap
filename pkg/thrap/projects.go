@@ -13,6 +13,10 @@ const (
 	projDBKey = "project"
 )
 
+var (
+	ErrProjectSourceRequired = errors.New("project source required")
+)
+
 // ProjectCreateRequest is a request to create a new project
 type ProjectCreateRequest struct {
 	Project *thrapb.Project
@@ -31,7 +35,7 @@ type Projects struct {
 func NewProjects(t *Thrap) *Projects {
 	return &Projects{
 		t:     t,
-		store: t.projects,
+		store: t.store.Project(),
 	}
 }
 
@@ -45,6 +49,9 @@ func (p *Projects) Create(ctx context.Context, req *ProjectCreateRequest) (*Proj
 	proj := req.Project
 	if proj.Name == "" {
 		proj.Name = proj.ID
+	}
+	if proj.Source == "" {
+		return nil, ErrProjectSourceRequired
 	}
 
 	err := p.store.Create(proj)

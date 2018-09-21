@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/euforia/kvdb"
 	"github.com/euforia/thrap/pkg/loader"
 	"github.com/euforia/thrap/pkg/provider/iam"
 	"github.com/euforia/thrap/pkg/provider/orchestrator"
@@ -46,9 +45,12 @@ func (t *Thrap) initStorage(conf *Config) error {
 	}
 
 	var err error
-	t.ds, err = kvdb.NewBadgerDatastore(filepath.Join(conf.DataDir, dbDir), t.log)
+	t.store, err = storage.NewConsulStorage(t.conf.Storage)
+
+	// t.ds, err = kvdb.NewBadgerDatastore(filepath.Join(conf.DataDir, dbDir), t.log)
 
 	return err
+	// return nil
 }
 
 func (t *Thrap) initSecretBackend(id string, creds map[string]string) (secrets.Secrets, error) {

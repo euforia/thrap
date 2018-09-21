@@ -25,12 +25,12 @@ type Config struct {
 	Providers *config.Config
 	// Load creds
 	Credentials *credentials.Credentials
+
 	// Profile storage
 	Profiles storage.ProfileStorage
-	// Projects store
-	Projects storage.ProjectStorage
-	//
-	Deployments storage.DeploymentStorage
+
+	Storage storage.Storage
+
 	// Overall logger
 	Logger *log.Logger
 	// Data directory. This must exist

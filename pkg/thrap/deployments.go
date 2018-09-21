@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/euforia/thrap/pkg/provider"
+	"github.com/euforia/thrap/pkg/storage"
 	"github.com/euforia/thrap/thrapb"
 )
 
@@ -26,6 +27,8 @@ type Deployments struct {
 	// profiles and instances.  in-mem cache
 	desc *thrapb.DeploymentDescriptor
 
+	deploys storage.DeploymentStorage
+	descs   storage.DeployDescStorage
 	// Thrap core instance
 	t *Thrap
 }
@@ -33,8 +36,10 @@ type Deployments struct {
 // NewDeployments returns a new Deployments instance for a given project
 func NewDeployments(t *Thrap, proj thrapb.Project) *Deployments {
 	depl := &Deployments{
-		t:    t,
-		proj: proj,
+		t:       t,
+		proj:    proj,
+		deploys: t.store.Deployment(),
+		descs:   t.store.DeployDesc(),
 	}
 
 	depl.loadDescriptor()
@@ -44,7 +49,7 @@ func NewDeployments(t *Thrap, proj thrapb.Project) *Deployments {
 
 // List returns a list of all deployments for the project
 func (d *Deployments) List() ([]*thrapb.Deployment, error) {
-	return d.t.deploys.List(d.proj.ID, "")
+	return d.deploys.List(d.proj.ID, "")
 }
 
 // Create creates a new deploy for the project with the given profile and instance
@@ -67,7 +72,7 @@ func (d *Deployments) Create(ctx context.Context, profileID, instanceName string
 		return nil, err
 	}
 
-	err = d.t.deploys.Create(d.proj.ID, profileID, nd)
+	err = d.deploys.Create(d.proj.ID, profileID, nd)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +102,7 @@ func (d *Deployments) Get(ctx context.Context, profID, instance string) (*Deploy
 		return nil, err
 	}
 
-	dp, err := d.t.deploys.Get(d.proj.ID, profID, instance)
+	dp, err := d.deploys.Get(d.proj.ID, profID, instance)
 	if err != nil {
 		return nil, err
 	}
@@ -113,12 +118,12 @@ func (d *Deployments) Descriptor() *thrapb.DeploymentDescriptor {
 
 // SetDescriptor sets the deployment descriptor in the store.
 func (d *Deployments) SetDescriptor(desc *thrapb.DeploymentDescriptor) error {
-	return d.t.descs.Set(d.proj.ID, desc)
+	return d.descs.Set(d.proj.ID, desc)
 }
 
 // loadDescriptor loads the deployment descriptor from hard state
 func (d *Deployments) loadDescriptor() error {
-	desc, err := d.t.descs.Get(d.proj.ID)
+	desc, err := d.descs.Get(d.proj.ID)
 	if err == nil {
 		d.desc = desc
 	}

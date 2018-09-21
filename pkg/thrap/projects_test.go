@@ -42,20 +42,24 @@ profiles {
 
 var testProjects = []*thrapb.Project{
 	&thrapb.Project{
-		ID:   "foo",
-		Name: "Foo",
+		ID:     "foo",
+		Name:   "Foo",
+		Source: "foo",
 	},
 	&thrapb.Project{
-		ID:   "bar",
-		Name: "Bar",
+		ID:     "bar",
+		Name:   "Bar",
+		Source: "https://github.com/foo/bar",
 	},
 	&thrapb.Project{
-		ID:   "bas",
-		Name: "Bas",
+		ID:     "bas",
+		Name:   "Bas",
+		Source: "git@github.com:foo/bas",
 	},
 	&thrapb.Project{
-		ID:   "lim",
-		Name: "Lim",
+		ID:     "lim",
+		Name:   "Lim",
+		Source: "foo/bar",
 	},
 }
 

@@ -14,18 +14,20 @@ type ConsulDeployDescStorage struct {
 	prefix string
 }
 
+func NewConsulDeployDescStorageFromClient(client *api.Client, prefix string) *ConsulDeployDescStorage {
+	return &ConsulDeployDescStorage{
+		client: client,
+		prefix: prefix,
+	}
+}
+
 func NewConsulDeployDescStorage(conf *api.Config, prefix string) (*ConsulDeployDescStorage, error) {
 	client, err := newConsulClient(conf)
 	if err != nil {
 		return nil, err
 	}
 
-	s := &ConsulDeployDescStorage{
-		prefix: prefix,
-		client: client,
-	}
-
-	return s, nil
+	return NewConsulDeployDescStorageFromClient(client, prefix), nil
 }
 
 func (s *ConsulDeployDescStorage) Get(projectID string) (*thrapb.DeploymentDescriptor, error) {

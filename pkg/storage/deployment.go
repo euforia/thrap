@@ -15,6 +15,10 @@ type ConsulDeployStorage struct {
 	prefix string
 }
 
+func NewConsulDeployStorageFromClient(client *api.Client, prefix string) *ConsulDeployStorage {
+	return &ConsulDeployStorage{client: client, prefix: prefix}
+}
+
 // NewConsulDeployStorage returns a new instance of ConsulDeployStorage
 func NewConsulDeployStorage(conf *api.Config, prefix string) (*ConsulDeployStorage, error) {
 	client, err := newConsulClient(conf)
@@ -22,12 +26,7 @@ func NewConsulDeployStorage(conf *api.Config, prefix string) (*ConsulDeployStora
 		return nil, err
 	}
 
-	s := &ConsulDeployStorage{
-		prefix: prefix,
-		client: client,
-	}
-
-	return s, nil
+	return NewConsulDeployStorageFromClient(client, prefix), nil
 }
 
 // Create satisfies the DeployStorage interface
@@ -105,13 +104,13 @@ func (s *ConsulDeployStorage) Delete(project, profile, id string) error {
 }
 
 // List satisfies the DeployStorage interface
-func (s *ConsulDeployStorage) List(start string) ([]*thrapb.Deployment, error) {
+func (s *ConsulDeployStorage) List(project, start string) ([]*thrapb.Deployment, error) {
 	kv := s.client.KV()
 	q := &api.QueryOptions{}
 
-	prefix := s.prefix
+	prefix := filepath.Join(s.prefix, project, "instance")
 	if start != "" {
-		prefix = filepath.Join(s.prefix, start)
+		prefix = filepath.Join(prefix, start)
 	}
 
 	kvps, _, err := kv.List(prefix, q)

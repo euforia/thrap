@@ -22,6 +22,10 @@ type ConsulProjectStorage struct {
 	prefix string
 }
 
+func NewConsulProjectStorageFromClient(client *api.Client, prefix string) *ConsulProjectStorage {
+	return &ConsulProjectStorage{client: client, prefix: prefix}
+}
+
 // NewConsulProjectStorage returns a new instance of ConsulProjectStorage
 func NewConsulProjectStorage(conf *api.Config, prefix string) (*ConsulProjectStorage, error) {
 	client, err := newConsulClient(conf)
@@ -29,10 +33,7 @@ func NewConsulProjectStorage(conf *api.Config, prefix string) (*ConsulProjectSto
 		return nil, err
 	}
 
-	return &ConsulProjectStorage{
-		client: client,
-		prefix: prefix,
-	}, nil
+	return NewConsulProjectStorageFromClient(client, prefix), nil
 }
 
 // Iter satisfies the ProjectStorage interface

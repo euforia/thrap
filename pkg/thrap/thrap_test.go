@@ -5,9 +5,7 @@ import (
 	"os"
 
 	"github.com/euforia/thrap/pkg/credentials"
-	"github.com/euforia/thrap/pkg/storage"
 	"github.com/euforia/thrap/utils"
-	"github.com/hashicorp/consul/api"
 )
 
 func loadTestThrap() (*Thrap, *Config, error) {
@@ -26,12 +24,20 @@ func loadTestThrap() (*Thrap, *Config, error) {
 		return nil, nil, err
 	}
 
-	consulConf := api.DefaultConfig()
-	consulConf.Address = "http://127.0.0.1:8500"
-	pstore, err := storage.NewConsulProjectStorage(consulConf, "thrap/project")
+	// store, err := storage.NewConsulStorage(&provider.Config{
+	// 	Addr: "http://127.0.0.1:8500",
+	// })
+	// if err != nil {
+	// 	return nil, nil, err
+	// }
+
+	// consulConf := api.DefaultConfig()
+	// consulConf.Address = "http://127.0.0.1:8500"
+	// pstore, err := storage.NewConsulProjectStorage(consulConf, "thrap/project")
 	conf := &Config{
 		// Providers:   pconf,
-		Projects:    pstore,
+		// Projects:    pstore,
+		// Storage:     store,
 		Credentials: creds,
 		DataDir:     tdir,
 		ConfigDir:   confDir,

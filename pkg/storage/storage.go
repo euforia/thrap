@@ -3,7 +3,9 @@ package storage
 import (
 	"errors"
 
+	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/thrapb"
+	"github.com/hashicorp/consul/api"
 )
 
 var (
@@ -51,4 +53,36 @@ type DeployDescStorage interface {
 	Get(string) (*thrapb.DeploymentDescriptor, error)
 	Set(string, *thrapb.DeploymentDescriptor) error
 	Delete(string) error
+}
+
+type Storage interface {
+	Deployment() DeploymentStorage
+	Project() ProjectStorage
+	DeployDesc() DeployDescStorage
+}
+
+type ConsulStorage struct {
+	client *api.Client
+}
+
+func NewConsulStorage(conf *provider.Config) (*ConsulStorage, error) {
+	cc := api.DefaultConfig()
+	cc.Address = conf.Addr
+	client, err := newConsulClient(cc)
+	if err == nil {
+		return &ConsulStorage{client: client}, nil
+	}
+	return nil, err
+}
+
+func (s *ConsulStorage) Project() ProjectStorage {
+	return NewConsulProjectStorageFromClient(s.client, "thrap/project")
+}
+
+func (s *ConsulStorage) Deployment() DeploymentStorage {
+	return NewConsulDeployStorageFromClient(s.client, "thrap/deployment")
+}
+
+func (s *ConsulStorage) DeployDesc() DeployDescStorage {
+	return NewConsulDeployDescStorageFromClient(s.client, "thrap/deployment")
 }

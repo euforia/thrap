@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 
+	"github.com/euforia/thrap/pkg/storage"
 	"github.com/euforia/thrap/thrapb"
 )
 
@@ -17,12 +18,15 @@ type Project struct {
 	hash []byte
 
 	t *Thrap
+
+	store storage.ProjectStorage
 }
 
 func newProject(t *Thrap, proj *thrapb.Project) *Project {
 	p := &Project{
 		t:       t,
 		Project: proj,
+		store:   t.store.Project(),
 	}
 
 	p.init()
@@ -42,7 +46,7 @@ func (p *Project) Sync() error {
 		return nil
 	}
 
-	return p.t.projects.Update(p.Project)
+	return p.store.Update(p.Project)
 }
 
 // Deployments returns a Deployments instance to manage the project's

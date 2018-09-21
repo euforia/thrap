@@ -104,5 +104,4 @@ func Test_Deployments(t *testing.T) {
 	// dd.eng = newDummyEngine(dd.eng.(*engine))
 	// _, err = dd.Deploy(nil)
 	// assert.Contains(t, err.Error(), "required variable")
-
 }

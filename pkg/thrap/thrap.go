@@ -7,7 +7,6 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/euforia/kvdb"
 	"github.com/pkg/errors"
 
 	"github.com/euforia/thrap/pkg/config"
@@ -66,17 +65,18 @@ type Thrap struct {
 	// Profiles
 	profiles storage.ProfileStorage
 
+	store storage.Storage
 	// Project store
-	projects storage.ProjectStorage
+	// projects storage.ProjectStorage
 
 	// Deployment descriptors
-	descs storage.DeployDescStorage
+	// descs storage.DeployDescStorage
 
 	// Deployments
-	deploys storage.DeploymentStorage
+	// deploys storage.DeploymentStorage
 
 	// Datastore
-	ds kvdb.Datastore
+	// ds kvdb.Datastore
 
 	// hash function
 	hashFunc func() hash.Hash
@@ -96,8 +96,9 @@ func New(conf *Config) (*Thrap, error) {
 		creds:    conf.Credentials,
 		log:      conf.Logger,
 		hashFunc: conf.HashFunc,
-		projects: conf.Projects,
-		deploys:  conf.Deployments,
+		// projects: conf.Projects,
+		// deploys:  conf.Deployments,
+		store: conf.Storage,
 	}
 
 	t.conf, err = config.ReadConfig(filepath.Join(conf.ConfigDir, providersConfigFile))

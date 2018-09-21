@@ -18,6 +18,7 @@ type Config struct {
 	Registry     map[string]*provider.Config `hcl:"registry"`
 	Secrets      map[string]*provider.Config `hcl:"secrets"`
 	IAM          map[string]*provider.Config `hcl:"iam"`
+	Storage      *provider.Config            `hcl:"storage"`
 }
 
 // Clone returns a copy of the config
@@ -32,6 +33,7 @@ func (conf *Config) Clone() *Config {
 		Registry:     make(map[string]*provider.Config, len(conf.Registry)),
 		Secrets:      make(map[string]*provider.Config, len(conf.Secrets)),
 		IAM:          make(map[string]*provider.Config, len(conf.IAM)),
+		Storage:      conf.Storage.Clone(),
 	}
 
 	for k, v := range conf.VCS {
@@ -101,6 +103,9 @@ func (conf *Config) Merge(other *Config) {
 		}
 	}
 
+	if other.Storage != nil {
+		conf.Storage.Merge(other.Storage)
+	}
 }
 
 // DefaultVCS returns the first available vcs
