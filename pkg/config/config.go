@@ -104,7 +104,11 @@ func (conf *Config) Merge(other *Config) {
 	}
 
 	if other.Storage != nil {
-		conf.Storage.Merge(other.Storage)
+		if conf.Storage == nil {
+			conf.Storage = other.Storage
+		} else {
+			conf.Storage.Merge(other.Storage)
+		}
 	}
 }
 

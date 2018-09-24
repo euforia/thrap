@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"os"
 
 	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/thrapb"
@@ -67,7 +68,11 @@ type ConsulStorage struct {
 
 func NewConsulStorage(conf *provider.Config) (*ConsulStorage, error) {
 	cc := api.DefaultConfig()
-	cc.Address = conf.Addr
+	cc.Address = os.Getenv("CONSUL_ADDR")
+	if conf.Addr != "" {
+		cc.Address = conf.Addr
+	}
+
 	client, err := newConsulClient(cc)
 	if err == nil {
 		return &ConsulStorage{client: client}, nil

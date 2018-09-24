@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"os"
 	"testing"
 
 	"github.com/euforia/thrap/thrapb"
@@ -29,7 +30,10 @@ var testProjects = []*thrapb.Project{
 
 func Test_ConsulProjectStorage(t *testing.T) {
 	conf := api.DefaultConfig()
-	conf.Address = "http://127.0.0.1:8500"
+	conf.Address = os.Getenv("CONSUL_ADDR")
+	if conf.Address == "" {
+		conf.Address = "http://127.0.0.1:8500"
+	}
 	s, err := NewConsulProjectStorage(conf, "thrap/project")
 	if err != nil {
 		t.Fatal(err)

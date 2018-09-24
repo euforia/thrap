@@ -4,7 +4,7 @@ name: thrap
 components:
   consul:
     name: consul
-    version: 1.2.0
+    version: 1.2.2
     type: api
     ports:
       http: 8500
@@ -62,6 +62,7 @@ components:
         NOMAD_ADDR: http://${comp.nomad.container.addr.http}
         STACK_VERSION: ${stack.version}
         VAULT_ADDR: http://${comp.vault.container.addr.default}
+        CONSUL_ADDR: http://${comp.consul.container.addr.http}
     cmd: thrap
     args:
     - agent
