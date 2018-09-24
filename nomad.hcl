@@ -94,6 +94,11 @@ job "thrap" {
                         provider = "vault"
                     }
                 }
+
+                storage {
+                    provider = "consul"
+                    addr = "http://consul.service.{{ env "NOMAD_META_TLD" }}:8500"
+                }
                 {{ end }}
                 EOF
                 destination   = "local/conf/config.hcl"
