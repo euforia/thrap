@@ -91,7 +91,7 @@ func (d *Deployments) Create(ctx context.Context, profileID, instanceName string
 
 	// dtable, _ := d.db.GetTableVersion(filepath.Join(instTableKey, d.proj.ID), dpl, d.t.hashFunc)
 
-	return newDeployment(d.proj, d.desc, nd, eng), nil
+	return newDeployment(d.proj, d.desc, nd, eng, d.deploys), nil
 }
 
 // Get returns an existing deployment given the profile and instance name,
@@ -108,7 +108,7 @@ func (d *Deployments) Get(ctx context.Context, profID, instance string) (*Deploy
 	}
 
 	// Table with proj id. diff from above
-	return newDeployment(d.proj, d.desc, dp, eng), nil
+	return newDeployment(d.proj, d.desc, dp, eng, d.deploys), nil
 }
 
 // Descriptor returns the current loaded deployment descriptor
@@ -118,7 +118,11 @@ func (d *Deployments) Descriptor() *thrapb.DeploymentDescriptor {
 
 // SetDescriptor sets the deployment descriptor in the store.
 func (d *Deployments) SetDescriptor(desc *thrapb.DeploymentDescriptor) error {
-	return d.descs.Set(d.proj.ID, desc)
+	err := d.descs.Set(d.proj.ID, desc)
+	if err == nil {
+		d.desc = desc
+	}
+	return err
 }
 
 // loadDescriptor loads the deployment descriptor from hard state

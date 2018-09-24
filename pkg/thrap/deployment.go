@@ -47,14 +47,14 @@ type Deployment struct {
 }
 
 func newDeployment(proj thrapb.Project, desc *thrapb.DeploymentDescriptor,
-	deploy *thrapb.Deployment, eng Engine) *Deployment {
+	deploy *thrapb.Deployment, eng Engine, store storage.DeploymentStorage) *Deployment {
 
 	return &Deployment{
-		proj: proj,
-		desc: desc,
-		depl: *deploy,
-		eng:  eng,
-		// state: state,
+		proj:  proj,
+		desc:  desc,
+		depl:  *deploy,
+		eng:   eng,
+		store: store,
 	}
 }
 

@@ -104,4 +104,15 @@ func Test_Deployments(t *testing.T) {
 	// dd.eng = newDummyEngine(dd.eng.(*engine))
 	// _, err = dd.Deploy(nil)
 	// assert.Contains(t, err.Error(), "required variable")
+
+	// Clear everything before starting
+	pstore := thrap.store.Project()
+	dstore := thrap.store.Deployment()
+	for _, tp := range testProjects {
+		pstore.Delete(tp.ID)
+		for _, dp := range testDeploys {
+			dstore.Delete(tp.ID, dp.Profile.ID, dp.Name)
+		}
+	}
+
 }
