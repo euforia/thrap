@@ -36,7 +36,8 @@ func commandAgent() *cli.Command {
 				return err
 			}
 
-			conf.Credentials, err = credentials.ReadCredentials(filepath.Join(conf.ConfigDir, "creds.hcl"))
+			credsFile := filepath.Join(conf.ConfigDir, "creds.hcl")
+			conf.Credentials, err = credentials.ReadCredentials(credsFile)
 			if err != nil {
 				return err
 			}
