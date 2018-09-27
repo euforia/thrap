@@ -64,10 +64,9 @@ class CreateProject extends Component {
                 this.props.onProjectCreated(data);
             })
             .catch(error => {
-                console.log(error);
-               
+                // console.log(error);
+                // console.log("Create project error", resp);
                 var resp = error.response;
-                console.log("Create project error", resp);
                 this.setState({
                     errorMsg: error.message,
                     btnDisabled: false

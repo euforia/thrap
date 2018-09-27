@@ -33,6 +33,7 @@ class NewInstance extends Component {
             name: '',                 // selected name
             errored: false,
             status: '',
+            btnDisabled: false,
         }
 
     }
@@ -52,14 +53,20 @@ class NewInstance extends Component {
             return 
         }
 
+        this.setState({
+            errored: false,
+            btnDisabled: true,
+        });
         thrap.createDeployment(state.project.ID, state.env.ID, state.name)
             .then(({ data }) => {
+                this.setState({btnDisabled: false});
                 this.props.onDeployableCreated(this.state.name);        
             })
             .catch(error => {
                 var resp = error.response;
                 this.setState({
-                    status: resp.data
+                    status: resp.data,
+                    btnDisabled: false,
                 });
             });
     }
@@ -90,7 +97,10 @@ class NewInstance extends Component {
                         />
                     </FormControl>
                     <div className={classes.buttonPanel}>
-                        <Button variant="contained" color="primary" onClick={this.createDeployable}>Create</Button>
+                        <Button variant="contained" color="primary" 
+                            onClick={this.createDeployable} disabled={this.state.btnDisabled}>
+                            Create
+                        </Button>
                     </div>
                 </div>
             </div>

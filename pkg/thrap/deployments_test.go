@@ -3,7 +3,6 @@ package thrap
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/euforia/thrap/thrapb"
@@ -41,7 +40,7 @@ func Test_Deployments(t *testing.T) {
 
 	ctx := context.WithValue(context.Background(), CredsContextKey, cfg.Credentials)
 
-	defer os.RemoveAll(cfg.DataDir)
+	// defer os.RemoveAll(cfg.DataDir)
 
 	projects := NewProjects(thrap)
 	for _, proj := range testProjects {

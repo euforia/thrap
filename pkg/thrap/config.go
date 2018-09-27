@@ -33,10 +33,10 @@ type Config struct {
 
 	// Overall logger
 	Logger *log.Logger
-	// Data directory. This must exist
-	DataDir string
+
 	// Config directory
 	ConfigDir string
+
 	// Hash function for versioning
 	HashFunc func() hash.Hash
 }
@@ -44,9 +44,6 @@ type Config struct {
 // Validate checks required fields and sets defaults where ever possible.  It
 // returns an error if any fields are missing
 func (conf *Config) Validate() error {
-	if conf.DataDir == "" {
-		return errDataDirMissing
-	}
 	if conf.ConfigDir == "" {
 		return errConfigDirMissing
 	}

@@ -25,11 +25,6 @@ func commandAgent() *cli.Command {
 				Value:   "0.0.0.0:10000",
 			},
 			&cli.StringFlag{
-				Name:  "data-dir",
-				Usage: "data directory",
-				Value: "",
-			},
-			&cli.StringFlag{
 				Name:  "conf-dir",
 				Usage: "configuration directory",
 				Value: "",
@@ -51,21 +46,7 @@ func commandAgent() *cli.Command {
 				return err
 			}
 
-			// pconf, err := config.ReadProjectConfig(".")
-			// if err == nil {
-			// 	conf.Config = pconf
-			// }
-
-			// c, err := core.NewCore(conf)
-			// if err != nil {
-			// 	return err
-			// }
-
 			srv := api.NewServer(thp, conf.Logger)
-
-			// srv := grpc.NewServer()
-			// svc := thrap.NewService(c, conf.Logger)
-			// thrapb.RegisterThrapServer(srv, svc)
 
 			baddr := ctx.String("bind-addr")
 			lis, err := net.Listen("tcp", baddr)
@@ -82,7 +63,6 @@ func commandAgent() *cli.Command {
 
 func buildConfig(ctx *cli.Context) (*thrap.Config, error) {
 	conf := &thrap.Config{
-		DataDir:   ctx.String("data-dir"),
 		ConfigDir: ctx.String("conf-dir"),
 		Logger:    log.New(os.Stderr, "", log.LstdFlags|log.Lmicroseconds),
 	}
