@@ -14,6 +14,7 @@ const (
 )
 
 var (
+	// ErrProjectSourceRequired ...
 	ErrProjectSourceRequired = errors.New("project source required")
 )
 

@@ -9,9 +9,9 @@ schemes:
 
 tags:
   - name: Project
-    description: Project level operations
+    description: Project operations
   - name: Deployment
-    description: Deployment level operations
+    description: Deployment operations
 
 paths:
   /project/{project}:

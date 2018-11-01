@@ -89,8 +89,6 @@ func (d *Deployments) Create(ctx context.Context, profileID, instanceName string
 		d.t.log.Println("Not seeding secrets:", err)
 	}
 
-	// dtable, _ := d.db.GetTableVersion(filepath.Join(instTableKey, d.proj.ID), dpl, d.t.hashFunc)
-
 	return newDeployment(d.proj, d.desc, nd, eng, d.deploys), nil
 }
 
