@@ -3,8 +3,8 @@ package core
 import (
 	"path/filepath"
 
+	"github.com/euforia/thrap/pkg/provider/vcs"
 	"github.com/euforia/thrap/thrapb"
-	"github.com/euforia/thrap/vcs"
 	"github.com/pkg/errors"
 )
 

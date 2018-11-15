@@ -11,6 +11,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 
+	"github.com/euforia/thrap/pkg/provider"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -66,7 +67,7 @@ func Test_GetRepoVersion(t *testing.T) {
 }
 
 func Test_VCS(t *testing.T) {
-	conf := &Config{Provider: "xxx"}
+	conf := &provider.Config{Provider: "xxx"}
 	_, err := New(conf)
 	assert.NotNil(t, err)
 
@@ -138,7 +139,7 @@ func Test_git_remote(t *testing.T) {
 	testdir := "/tmp/test-git0"
 	defer os.RemoveAll(testdir)
 
-	conf := &Config{Provider: "git"}
+	conf := &provider.Config{Provider: "git"}
 	vcs, _ := New(conf)
 
 	// No remote

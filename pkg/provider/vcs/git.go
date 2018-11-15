@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/euforia/thrap/utils"
+	"github.com/euforia/thrap/pkg/provider"
 	"github.com/go-ini/ini"
 	homedir "github.com/mitchellh/go-homedir"
 	"gopkg.in/src-d/go-git.v4"
@@ -67,13 +67,13 @@ func (g *GitVCS) ID() string {
 }
 
 // Init initializes the git provider with the config info in the users home dir
-func (g *GitVCS) Init(conf map[string]interface{}) error {
+func (g *GitVCS) Init(conf *provider.Config) error {
 	fpath, err := homedir.Expand("~/" + gitUserConfigFile)
 	if err != nil {
 		return err
 	}
 
-	if utils.FileExists(fpath) {
+	if _, er := os.Stat(fpath); er == nil {
 		err = g.loadFromGitConfig(fpath)
 	}
 

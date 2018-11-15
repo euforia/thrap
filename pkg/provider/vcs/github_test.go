@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	"github.com/euforia/thrap/pkg/credentials"
+	"github.com/euforia/thrap/pkg/provider"
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_Github(t *testing.T) {
 
 	g := newGithubVCS(nil)
-	err := g.Init(map[string]interface{}{"token": "foo"})
+	err := g.Init(&provider.Config{Config: map[string]interface{}{"token": "foo"}})
 	assert.Nil(t, err)
 
 	assert.Equal(t, g.IgnoresFile(), gitIgnoresFile)
@@ -35,7 +36,7 @@ func Test_Github_calls(t *testing.T) {
 	}
 
 	g := newGithubVCS(nil)
-	g.Init(map[string]interface{}{"token": c["token"]})
+	g.Init(&provider.Config{Config: map[string]interface{}{"token": c["token"]}})
 
 	var opt Option
 	repo := &Repository{Name: "api-test"}

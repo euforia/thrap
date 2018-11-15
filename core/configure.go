@@ -12,9 +12,10 @@ import (
 	"github.com/euforia/thrap/consts"
 	"github.com/euforia/thrap/pkg/config"
 	"github.com/euforia/thrap/pkg/credentials"
+	"github.com/euforia/thrap/pkg/provider"
+	"github.com/euforia/thrap/pkg/provider/vcs"
 	"github.com/euforia/thrap/pkg/storage"
 	"github.com/euforia/thrap/utils"
-	"github.com/euforia/thrap/vcs"
 )
 
 // ConfigureOptions holds options to configure a data directory
@@ -104,7 +105,7 @@ func ConfigureGlobal(opts ConfigureOptions) error {
 }
 
 func configureHomeVars(conf *config.VCSConfig, noprompt bool) {
-	ghvcs, _ := vcs.New(&vcs.Config{Provider: "git"})
+	ghvcs, _ := vcs.New(&provider.Config{Provider: "git"})
 	if conf.Username == "" {
 		conf.Username = ghvcs.GlobalUser()
 	}

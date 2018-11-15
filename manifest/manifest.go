@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/euforia/thrap/consts"
+	"github.com/euforia/thrap/pkg/provider/vcs"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
-	"github.com/euforia/thrap/vcs"
 	"gopkg.in/yaml.v2"
 )
 

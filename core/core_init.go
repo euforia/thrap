@@ -10,9 +10,10 @@ import (
 	"github.com/euforia/thrap/pkg/config"
 	"github.com/euforia/thrap/pkg/credentials"
 	"github.com/euforia/thrap/pkg/loader"
+	"github.com/euforia/thrap/pkg/provider"
+	"github.com/euforia/thrap/pkg/provider/vcs"
 	"github.com/euforia/thrap/store"
 	"github.com/euforia/thrap/utils"
-	"github.com/euforia/thrap/vcs"
 )
 
 // load all thrap configs from the core config.
@@ -90,14 +91,14 @@ func (core *Core) initProviders() (err error) {
 
 func (core *Core) initVCS() (err error) {
 	vc := core.conf.DefaultVCS()
-	vconf := &vcs.Config{
+	vconf := &provider.Config{
 		Provider: vc.ID,
-		Conf:     map[string]interface{}{"username": vc.Username},
+		Config:   map[string]interface{}{"username": vc.Username},
 	}
 
 	vcreds := core.creds.VCSCreds(vc.ID)
 	for k, v := range vcreds {
-		vconf.Conf[k] = v
+		vconf.Config[k] = v
 	}
 
 	core.vcs, err = vcs.New(vconf)

@@ -8,7 +8,7 @@ import (
 	"github.com/euforia/thrap/utils"
 
 	"github.com/euforia/thrap/manifest"
-	"github.com/euforia/thrap/vcs"
+	"github.com/euforia/thrap/pkg/provider/vcs"
 	"gopkg.in/urfave/cli.v2"
 )
 

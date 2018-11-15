@@ -14,8 +14,8 @@ import (
 	"github.com/euforia/thrap/pkg/config"
 	"github.com/euforia/thrap/pkg/credentials"
 	"github.com/euforia/thrap/pkg/provider/registry"
+	"github.com/euforia/thrap/pkg/provider/vcs"
 	"github.com/euforia/thrap/thrapb"
-	"github.com/euforia/thrap/vcs"
 )
 
 var (

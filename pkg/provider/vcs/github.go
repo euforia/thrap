@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/euforia/thrap/pkg/provider"
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 	git "gopkg.in/src-d/go-git.v4"
@@ -39,12 +40,12 @@ func (gh *githubVCS) ID() string {
 
 // Environment Variables:
 // GITHUB_ACCESS_TOKEN
-func (gh *githubVCS) Init(conf map[string]interface{}) error {
+func (gh *githubVCS) Init(conf *provider.Config) error {
 	// Init base git interface
 	err := gh.git.Init(conf)
 	if err == nil {
 		var token string
-		if iface, ok := conf["token"]; ok {
+		if iface, ok := conf.Config["token"]; ok {
 			token, ok = iface.(string)
 			if !ok {
 				return errors.New("'token' must be a string")
