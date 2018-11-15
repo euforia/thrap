@@ -1,11 +1,11 @@
 package provider
 
-import "github.com/euforia/thrap/thrapb"
+import "github.com/euforia/thrap/pkg/pb"
 
 // Request is a raw request for a provider
 type Request struct {
-	Project    thrapb.Project
-	Deployment thrapb.Deployment
+	Project    pb.Project
+	Deployment pb.Deployment
 	// Unmarshalled Deployment.Spec
 	// Spec interface{}
 }

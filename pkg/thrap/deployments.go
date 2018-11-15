@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/pkg/storage"
-	"github.com/euforia/thrap/thrapb"
 )
 
 // const (
@@ -21,11 +21,11 @@ var (
 // Deployments is used to manage a single projects deployments
 type Deployments struct {
 	// Project associated to the deployments are being managed
-	proj thrapb.Project
+	proj pb.Project
 
 	// Deployment descriptor i.e config/template used for all deploys across
 	// profiles and instances.  in-mem cache
-	desc *thrapb.DeploymentDescriptor
+	desc *pb.DeploymentDescriptor
 
 	deploys storage.DeploymentStorage
 	descs   storage.DeployDescStorage
@@ -34,7 +34,7 @@ type Deployments struct {
 }
 
 // NewDeployments returns a new Deployments instance for a given project
-func NewDeployments(t *Thrap, proj thrapb.Project) *Deployments {
+func NewDeployments(t *Thrap, proj pb.Project) *Deployments {
 	depl := &Deployments{
 		t:       t,
 		proj:    proj,
@@ -48,7 +48,7 @@ func NewDeployments(t *Thrap, proj thrapb.Project) *Deployments {
 }
 
 // List returns a list of all deployments for the project
-func (d *Deployments) List() ([]*thrapb.Deployment, error) {
+func (d *Deployments) List() ([]*pb.Deployment, error) {
 	return d.deploys.List(d.proj.ID, "")
 }
 
@@ -57,9 +57,9 @@ func (d *Deployments) List() ([]*thrapb.Deployment, error) {
 // actual deploy can be performed.
 func (d *Deployments) Create(ctx context.Context, profileID, instanceName string) (*Deployment, error) {
 
-	nd := thrapb.NewDeployment(profileID, instanceName)
-	nd.State = thrapb.DeploymentState_CREATE
-	nd.Status = thrapb.DeployStateStatus_OK
+	nd := pb.NewDeployment(profileID, instanceName)
+	nd.State = pb.DeploymentState_CREATE
+	nd.Status = pb.DeployStateStatus_OK
 
 	err := nd.Validate()
 	if err != nil {
@@ -79,9 +79,9 @@ func (d *Deployments) Create(ctx context.Context, profileID, instanceName string
 
 	seedReq := &provider.Request{
 		Project: d.proj,
-		Deployment: thrapb.Deployment{
+		Deployment: pb.Deployment{
 			Name:    instanceName,
-			Profile: &thrapb.Profile{ID: profileID},
+			Profile: &pb.Profile{ID: profileID},
 		},
 	}
 
@@ -110,12 +110,12 @@ func (d *Deployments) Get(ctx context.Context, profID, instance string) (*Deploy
 }
 
 // Descriptor returns the current loaded deployment descriptor
-func (d *Deployments) Descriptor() *thrapb.DeploymentDescriptor {
+func (d *Deployments) Descriptor() *pb.DeploymentDescriptor {
 	return d.desc
 }
 
 // SetDescriptor sets the deployment descriptor in the store.
-func (d *Deployments) SetDescriptor(desc *thrapb.DeploymentDescriptor) error {
+func (d *Deployments) SetDescriptor(desc *pb.DeploymentDescriptor) error {
 	err := d.descs.Set(d.proj.ID, desc)
 	if err == nil {
 		d.desc = desc

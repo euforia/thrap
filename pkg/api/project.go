@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/pkg/thrap"
-	"github.com/euforia/thrap/thrapb"
 
 	"github.com/gorilla/mux"
 )
@@ -28,9 +28,9 @@ import (
 //   500:
 //     description: "Internal Server Error"
 func (api *httpHandler) handleListProjects(w http.ResponseWriter, r *http.Request) {
-	list := make([]*thrapb.Project, 0)
+	list := make([]*pb.Project, 0)
 
-	err := api.projects.Iter("", func(proj *thrapb.Project) error {
+	err := api.projects.Iter("", func(proj *pb.Project) error {
 		list = append(list, proj)
 		return nil
 	})
@@ -42,7 +42,7 @@ func (api *httpHandler) handleProject(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	var (
-		resp *thrapb.Project
+		resp *pb.Project
 		err  error
 	)
 
@@ -117,7 +117,7 @@ func (api *httpHandler) handleProject(w http.ResponseWriter, r *http.Request) {
 	writeJSONResponse(w, resp, err)
 }
 
-func (api *httpHandler) getProject(w http.ResponseWriter, r *http.Request) (*thrapb.Project, error) {
+func (api *httpHandler) getProject(w http.ResponseWriter, r *http.Request) (*pb.Project, error) {
 	projID := mux.Vars(r)["id"]
 	proj, err := api.projects.Get(projID)
 	if err == nil {
@@ -126,7 +126,7 @@ func (api *httpHandler) getProject(w http.ResponseWriter, r *http.Request) (*thr
 	return nil, err
 }
 
-func (api *httpHandler) createProject(w http.ResponseWriter, r *http.Request) (*thrapb.Project, error) {
+func (api *httpHandler) createProject(w http.ResponseWriter, r *http.Request) (*pb.Project, error) {
 	projID := mux.Vars(r)["id"]
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -140,7 +140,7 @@ func (api *httpHandler) createProject(w http.ResponseWriter, r *http.Request) (*
 	}
 
 	if req.Project == nil {
-		req.Project = &thrapb.Project{ID: projID}
+		req.Project = &pb.Project{ID: projID}
 	} else {
 		req.Project.ID = projID
 	}
@@ -153,14 +153,14 @@ func (api *httpHandler) createProject(w http.ResponseWriter, r *http.Request) (*
 	return nil, err
 }
 
-func (api *httpHandler) updateProject(w http.ResponseWriter, r *http.Request) (*thrapb.Project, error) {
+func (api *httpHandler) updateProject(w http.ResponseWriter, r *http.Request) (*pb.Project, error) {
 	projID := mux.Vars(r)["id"]
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	var proj thrapb.Project
+	var proj pb.Project
 	err = json.Unmarshal(body, &proj)
 	if err != nil {
 		return nil, err

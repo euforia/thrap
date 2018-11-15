@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/pkg/storage"
-	"github.com/euforia/thrap/thrapb"
 	"github.com/pkg/errors"
 )
 
@@ -20,7 +20,7 @@ var (
 
 // ProjectCreateRequest is a request to create a new project
 type ProjectCreateRequest struct {
-	Project *thrapb.Project
+	Project *pb.Project
 	// Secrets to add to the project during creation
 	Secrets map[string]interface{}
 }
@@ -41,7 +41,7 @@ func NewProjects(t *Thrap) *Projects {
 }
 
 // Iter iterates over all projects from the start point
-func (p *Projects) Iter(start string, cb func(*thrapb.Project) error) error {
+func (p *Projects) Iter(start string, cb func(*pb.Project) error) error {
 	return p.store.Iter(start, cb)
 }
 

@@ -13,6 +13,7 @@ import (
 	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/pkg/config"
 	"github.com/euforia/thrap/pkg/credentials"
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/pkg/storage"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
@@ -157,7 +158,7 @@ func loadCore(ctx *cli.Context) (*core.Core, error) {
 	return core.NewCore(conf)
 }
 
-func loadProfile(ctx *cli.Context) (*storage.HCLFileProfileStorage, *thrapb.Profile, error) {
+func loadProfile(ctx *cli.Context) (*storage.HCLFileProfileStorage, *pb.Profile, error) {
 	lpath, err := utils.GetLocalPath("")
 	if err != nil {
 		return nil, nil, err

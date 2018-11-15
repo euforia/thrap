@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/pkg/pb"
 )
 
 func (api *httpHandler) handleListProfiles(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +17,7 @@ func (api *httpHandler) handleProfile(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	var (
-		resp *thrapb.Project
+		resp *pb.Project
 		err  error
 	)
 

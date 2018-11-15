@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/hashicorp/consul/api"
 )
 
@@ -30,7 +30,7 @@ func NewConsulDeployDescStorage(conf *api.Config, prefix string) (*ConsulDeployD
 	return NewConsulDeployDescStorageFromClient(client, prefix), nil
 }
 
-func (s *ConsulDeployDescStorage) Get(projectID string) (*thrapb.DeploymentDescriptor, error) {
+func (s *ConsulDeployDescStorage) Get(projectID string) (*pb.DeploymentDescriptor, error) {
 	key := s.keyPath(projectID)
 	kv := s.client.KV()
 	kvp, _, err := kv.Get(key, &api.QueryOptions{})
@@ -41,11 +41,11 @@ func (s *ConsulDeployDescStorage) Get(projectID string) (*thrapb.DeploymentDescr
 		return nil, fmt.Errorf("deployment descriptor not found: %s", projectID)
 	}
 
-	var desc thrapb.DeploymentDescriptor
+	var desc pb.DeploymentDescriptor
 	err = desc.Unmarshal(kvp.Value)
 	return &desc, err
 }
-func (s *ConsulDeployDescStorage) Set(projectID string, desc *thrapb.DeploymentDescriptor) error {
+func (s *ConsulDeployDescStorage) Set(projectID string, desc *pb.DeploymentDescriptor) error {
 	key := s.keyPath(projectID)
 	val, err := desc.Marshal()
 	if err != nil {

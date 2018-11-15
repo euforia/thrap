@@ -9,6 +9,7 @@ import (
 
 	"github.com/euforia/thrap/core"
 	"github.com/euforia/thrap/manifest"
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/pkg/storage"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
@@ -138,7 +139,7 @@ func commandStackLogs() *cli.Command {
 				return err
 			}
 
-			stm, err := cr.Stack(thrapb.DefaultProfile())
+			stm, err := cr.Stack(pb.DefaultProfile())
 			if err != nil {
 				return err
 			}

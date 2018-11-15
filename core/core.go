@@ -13,9 +13,9 @@ import (
 	"github.com/euforia/thrap/packs"
 	"github.com/euforia/thrap/pkg/config"
 	"github.com/euforia/thrap/pkg/credentials"
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/pkg/provider/registry"
 	"github.com/euforia/thrap/pkg/provider/vcs"
-	"github.com/euforia/thrap/thrapb"
 )
 
 var (
@@ -112,7 +112,7 @@ func (core *Core) StackStorage() StackStorage {
 // Stack returns a Stack instance that can be used to perform operations
 // against a stack.  It is loaded pased on the profile provided.  All
 // stack fields or constructed based on the profile
-func (core *Core) Stack(profile *thrapb.Profile) (*Stack, error) {
+func (core *Core) Stack(profile *pb.Profile) (*Stack, error) {
 	orch, ok := core.orchs[profile.Orchestrator]
 	if !ok {
 		return nil, errors.Wrap(errOrchNotLoaded, profile.Orchestrator)

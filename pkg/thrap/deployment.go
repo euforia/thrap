@@ -8,10 +8,10 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/pkg/provider/orchestrator"
 	"github.com/euforia/thrap/pkg/storage"
-	"github.com/euforia/thrap/thrapb"
 )
 
 var (
@@ -32,13 +32,13 @@ type DeployRequest struct {
 // Deployment is used to manage a single deployment instance of a project
 type Deployment struct {
 	// Project being deployed
-	proj thrapb.Project
+	proj pb.Project
 
 	// Deploy template/configuration
-	desc *thrapb.DeploymentDescriptor
+	desc *pb.DeploymentDescriptor
 
 	// User supplied definition for this deploy
-	depl thrapb.Deployment
+	depl pb.Deployment
 
 	// Engine loaded with the deployment profile
 	eng Engine
@@ -46,8 +46,8 @@ type Deployment struct {
 	store storage.DeploymentStorage
 }
 
-func newDeployment(proj thrapb.Project, desc *thrapb.DeploymentDescriptor,
-	deploy *thrapb.Deployment, eng Engine, store storage.DeploymentStorage) *Deployment {
+func newDeployment(proj pb.Project, desc *pb.DeploymentDescriptor,
+	deploy *pb.Deployment, eng Engine, store storage.DeploymentStorage) *Deployment {
 
 	return &Deployment{
 		proj:  proj,
@@ -59,7 +59,7 @@ func newDeployment(proj thrapb.Project, desc *thrapb.DeploymentDescriptor,
 }
 
 // Deployable returns the deploy object tied to this deployment.
-func (d *Deployment) Deployable() thrapb.Deployment {
+func (d *Deployment) Deployable() pb.Deployment {
 	depl := d.depl.Clone()
 	return *depl
 }
@@ -87,7 +87,7 @@ func (d *Deployment) PrepareDeploy(req *DeployRequest) (orchestrator.PreparedDep
 
 	prepared, err := d.eng.PrepareDeploy(orchReq)
 	if err != nil {
-		d.depl.Status = thrapb.DeployStateStatus_FAILED
+		d.depl.Status = pb.DeployStateStatus_FAILED
 		d.depl.StateMessage = err.Error()
 		d.Sync()
 
@@ -97,13 +97,13 @@ func (d *Deployment) PrepareDeploy(req *DeployRequest) (orchestrator.PreparedDep
 	// Write the final spec that is deployed back to the deploy object
 	// in Prepare state
 	d.depl.Spec = prepared.Bytes()
-	d.depl.Status = thrapb.DeployStateStatus_OK
+	d.depl.Status = pb.DeployStateStatus_OK
 
 	return prepared, d.Sync()
 }
 
 // Deploy performs a deployment and updates the internal state
-func (d *Deployment) Deploy(req *DeployRequest) (*thrapb.Deployment, error) {
+func (d *Deployment) Deploy(req *DeployRequest) (*pb.Deployment, error) {
 	// TODO: lock()
 	// TODO: defer unlock()
 	prepared, err := d.PrepareDeploy(req)
@@ -114,16 +114,16 @@ func (d *Deployment) Deploy(req *DeployRequest) (*thrapb.Deployment, error) {
 	ctx := context.Background()
 	opt := orchestrator.RequestOptions{Dryrun: req.Dryrun}
 
-	d.depl.State = thrapb.DeploymentState_DEPLOY
+	d.depl.State = pb.DeploymentState_DEPLOY
 	err = d.eng.Deploy(ctx, prepared, opt)
 	if err != nil {
-		d.depl.Status = thrapb.DeployStateStatus_FAILED
+		d.depl.Status = pb.DeployStateStatus_FAILED
 		d.depl.StateMessage = err.Error()
 		d.Sync()
 		return nil, err
 	}
 
-	d.depl.Status = thrapb.DeployStateStatus_OK
+	d.depl.Status = pb.DeployStateStatus_OK
 
 	err = d.Sync()
 	return &d.depl, err
@@ -140,10 +140,10 @@ func (d *Deployment) isVoid() bool {
 	status := d.depl.Status
 
 	switch state {
-	case thrapb.DeploymentState_CREATE, thrapb.DeploymentState_DEPLOY:
+	case pb.DeploymentState_CREATE, pb.DeploymentState_DEPLOY:
 		return false
-	case thrapb.DeploymentState_PREPARE:
-		if status == thrapb.DeployStateStatus_FAILED {
+	case pb.DeploymentState_PREPARE:
+		if status == pb.DeployStateStatus_FAILED {
 			return false
 		}
 	}
@@ -174,7 +174,7 @@ func (d *Deployment) setupPrepare(vars map[string]string) error {
 		return err
 	}
 
-	d.depl.State = thrapb.DeploymentState_PREPARE
+	d.depl.State = pb.DeploymentState_PREPARE
 
 	// Sync here so another concurrent call would bail
 	return d.Sync()

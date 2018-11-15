@@ -1,15 +1,8 @@
-package thrapb
+package pb
 
 import (
 	"hash"
-
-	"github.com/euforia/kvdb"
 )
-
-// New satisfies the kvdb.Object interface
-func (p *Project) New() kvdb.Object {
-	return &Project{}
-}
 
 // Hash returns the hash of the project data
 func (p *Project) Hash(h hash.Hash) []byte {

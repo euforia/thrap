@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/euforia/hclencoder"
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/pkg/storage"
-	"github.com/euforia/thrap/thrapb"
 
 	"github.com/euforia/thrap/utils"
 	"gopkg.in/urfave/cli.v2"
@@ -48,7 +48,7 @@ func commandProfile() *cli.Command {
 				if prof == nil {
 					return storage.ErrProfileNotFound
 				}
-				display = map[string]*thrapb.Profile{id: prof}
+				display = map[string]*pb.Profile{id: prof}
 				fmt.Println()
 			}
 

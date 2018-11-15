@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/pkg/thrap"
-	"github.com/euforia/thrap/thrapb"
 	nomad "github.com/hashicorp/nomad/api"
 	"github.com/hashicorp/nomad/client/driver/env"
 	"github.com/hashicorp/nomad/jobspec"
@@ -53,7 +53,7 @@ func replaceMetaPlaceholders(data string) string {
 // 	})
 // }
 
-func parseMoldHCLDeployDesc(in []byte) (*thrapb.DeploymentDescriptor, error) {
+func parseMoldHCLDeployDesc(in []byte) (*pb.DeploymentDescriptor, error) {
 	// Replace < > first
 	str := replaceMetaPlaceholders(string(in))
 

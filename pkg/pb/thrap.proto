@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+option go_package = "github.com/euforia/thrap/pkg/pb";
+
+message Profile {
+    string ID                    = 1 [(gogoproto.moretags) = "hcle:\"omit\" yaml:\"-\""];
+    string Name                  = 2 [(gogoproto.moretags) = "hcl:\"name\""];
+    string Orchestrator          = 3 [(gogoproto.moretags) = "hcl:\"orchestrator\""];
+    string Secrets               = 4 [(gogoproto.moretags) = "hcl:\"secrets\""];
+    string Registry              = 5 [(gogoproto.moretags) = "hcl:\"registry\""];
+    string VCS                   = 6 [(gogoproto.moretags) = "hcl:\"vcs\""];
+    map<string,string> Meta      = 7 [(gogoproto.moretags) = "hcl:\"meta\""];
+    map<string,string> Variables = 8 [(gogoproto.moretags) = "hcl:\"variables\""];
+}
+
+message Project {
+    string ID                  = 1;
+    string Name                = 2;
+    string Description         = 3;
+    string Source              = 4;
+    string Owner               = 5;
+    string Maintainer          = 6;
+    repeated string Developers = 7;
+}
+
+enum DeploymentState {
+    UNKNOWN = 0;
+    CREATE = 1;
+    PREPARE = 2;
+    DEPLOY = 3;
+}
+
+enum DeployStateStatus {
+    INPROGRESS = 0;
+    OK = 1;
+    FAILED = 2;
+}
+
+message Deployment {
+    // Unique deployment instance name
+    string Name = 1; 
+    
+    // Incremented on each deploy 
+    uint64 Version = 2;
+    
+    // Action marshalled & normalized deploy job
+    bytes Spec = 3; 
+    
+    // Profile for this deployment
+    Profile Profile  = 4;
+    
+    // State the deployment is in
+    DeploymentState State = 5;
+    
+    // Status of the given state 
+    DeployStateStatus Status = 6;
+    
+    // When the deploy object was created
+    int64 CreatedAt = 7;
+
+    // Last modified time of update
+    int64 ModifiedAt = 8;
+    
+    // Nonce set when deploy is created
+    uint64 Nonce = 9;
+
+    // Digest of previous deployment object
+    string Previous = 10 [(gogoproto.casttype) = "github.com/opencontainers/go-digest.Digest"];
+
+    // Additional info about the current state
+    string StateMessage = 11;
+}
+
+message DeploymentDescriptor {
+    // Deploy spec. This is the spec used to generate the actual
+    // runtime Spec in the Deployment object i.e. a template
+    bytes Spec = 2; 
+    
+    // Mime type of the stored spec
+    string Mime = 3;
+}

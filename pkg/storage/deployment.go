@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/hashicorp/consul/api"
 )
 
@@ -30,7 +30,7 @@ func NewConsulDeployStorage(conf *api.Config, prefix string) (*ConsulDeployStora
 }
 
 // Create satisfies the DeployStorage interface
-func (s *ConsulDeployStorage) Create(project, profile string, depl *thrapb.Deployment) error {
+func (s *ConsulDeployStorage) Create(project, profile string, depl *pb.Deployment) error {
 	key := s.keyPath(project, profile, depl.Name)
 	val, err := depl.Marshal()
 	if err != nil {
@@ -51,7 +51,7 @@ func (s *ConsulDeployStorage) Create(project, profile string, depl *thrapb.Deplo
 }
 
 // Get satisfies the DeployStorage interface
-func (s *ConsulDeployStorage) Get(project, profile, id string) (*thrapb.Deployment, error) {
+func (s *ConsulDeployStorage) Get(project, profile, id string) (*pb.Deployment, error) {
 	kv := s.client.KV()
 	q := &api.QueryOptions{}
 	kvp, _, err := kv.Get(s.keyPath(project, profile, id), q)
@@ -63,14 +63,14 @@ func (s *ConsulDeployStorage) Get(project, profile, id string) (*thrapb.Deployme
 		return nil, fmt.Errorf("deployment not found: %s", id)
 	}
 
-	var depl thrapb.Deployment
+	var depl pb.Deployment
 	err = depl.Unmarshal(kvp.Value)
 	return &depl, err
 
 }
 
 // Update satisfies the DeployStorage interface
-func (s *ConsulDeployStorage) Update(project, profile string, depl *thrapb.Deployment) error {
+func (s *ConsulDeployStorage) Update(project, profile string, depl *pb.Deployment) error {
 	key := s.keyPath(project, profile, depl.Name)
 	val, err := depl.Marshal()
 	if err != nil {
@@ -104,7 +104,7 @@ func (s *ConsulDeployStorage) Delete(project, profile, id string) error {
 }
 
 // List satisfies the DeployStorage interface
-func (s *ConsulDeployStorage) List(project, start string) ([]*thrapb.Deployment, error) {
+func (s *ConsulDeployStorage) List(project, start string) ([]*pb.Deployment, error) {
 	kv := s.client.KV()
 	q := &api.QueryOptions{}
 
@@ -118,9 +118,9 @@ func (s *ConsulDeployStorage) List(project, start string) ([]*thrapb.Deployment,
 		return nil, err
 	}
 
-	out := make([]*thrapb.Deployment, 0, len(kvps))
+	out := make([]*pb.Deployment, 0, len(kvps))
 	for _, kvp := range kvps {
-		var depl thrapb.Deployment
+		var depl pb.Deployment
 		err = depl.Unmarshal(kvp.Value)
 		if err == nil {
 			out = append(out, &depl)

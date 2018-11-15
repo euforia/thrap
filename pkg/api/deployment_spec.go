@@ -7,8 +7,8 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/pkg/thrap"
-	"github.com/euforia/thrap/thrapb"
 	"github.com/gorilla/mux"
 )
 
@@ -99,7 +99,7 @@ func (api *httpHandler) setDeploymentSpec(r *http.Request, dpl *thrap.Deployment
 	}
 
 	var (
-		desc        *thrapb.DeploymentDescriptor
+		desc        *pb.DeploymentDescriptor
 		contentType = r.Header.Get("Content-Type")
 	)
 

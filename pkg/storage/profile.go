@@ -9,7 +9,7 @@ import (
 
 	"github.com/euforia/hclencoder"
 	"github.com/euforia/thrap/consts"
-	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/hashicorp/hcl"
 )
 
@@ -22,11 +22,11 @@ var (
 type InmemProfileStorage struct {
 	Default string
 	// Needed to unmarshal.  Should not be used otherwise
-	Profiles map[string]*thrapb.Profile
+	Profiles map[string]*pb.Profile
 }
 
 // Get returns the profile by id.  It returns nil if it is not found
-func (db *InmemProfileStorage) Get(id string) (*thrapb.Profile, error) {
+func (db *InmemProfileStorage) Get(id string) (*pb.Profile, error) {
 	if val, ok := db.Profiles[id]; ok {
 		return val.Clone(), nil
 	}
@@ -35,13 +35,13 @@ func (db *InmemProfileStorage) Get(id string) (*thrapb.Profile, error) {
 }
 
 // List returns a list of all loaded profiles
-func (db *InmemProfileStorage) List() []*thrapb.Profile {
-	out := make([]*thrapb.Profile, 0, len(db.Profiles))
+func (db *InmemProfileStorage) List() []*pb.Profile {
+	out := make([]*pb.Profile, 0, len(db.Profiles))
 
 	for _, v := range db.Profiles {
 		if v.ID == db.Default {
 			// Default is the first in the list
-			out = append([]*thrapb.Profile{v.Clone()}, out...)
+			out = append([]*pb.Profile{v.Clone()}, out...)
 		} else {
 			out = append(out, v.Clone())
 		}
@@ -52,7 +52,7 @@ func (db *InmemProfileStorage) List() []*thrapb.Profile {
 
 // Add adds a new profile to the store.  it returns an error if it already
 // exists or required files are missing.
-func (db *InmemProfileStorage) Add(profile *thrapb.Profile) error {
+func (db *InmemProfileStorage) Add(profile *pb.Profile) error {
 	err := profile.Validate()
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func (db *InmemProfileStorage) Add(profile *thrapb.Profile) error {
 
 // GetDefault returns the default profile.  It returns nil if one has not been
 // previously declared
-func (db *InmemProfileStorage) GetDefault() *thrapb.Profile {
+func (db *InmemProfileStorage) GetDefault() *pb.Profile {
 	if val, ok := db.Profiles[db.Default]; ok {
 		return val.Clone()
 	}
@@ -92,12 +92,12 @@ type HCLFileProfileStorage struct {
 
 // NewHCLFileProfileStorage returns a new store with the default profile loaded
 func NewHCLFileProfileStorage(fpath string) *HCLFileProfileStorage {
-	def := thrapb.DefaultProfile()
+	def := pb.DefaultProfile()
 
 	return &HCLFileProfileStorage{
 		InmemProfileStorage: &InmemProfileStorage{
 			Default: def.ID,
-			Profiles: map[string]*thrapb.Profile{
+			Profiles: map[string]*pb.Profile{
 				def.ID: def,
 			},
 		},

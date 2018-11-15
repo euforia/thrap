@@ -28,15 +28,19 @@ deps:
 test:
 	go test -cover $(SOURCE_PACKAGES)
 	
+# Generate swagger docs
 ui/build/swagger.json:
 	swagger generate spec -i swagger.yml -o ./ui/build/swagger.json
 
+# Build react app
 ui/build:
 	cd ./ui/ && yarn --verbose build
-	
+
+# Bindata the ui
 bindata:
 	cd ./ui/ && go-bindata -pkg api -o ../pkg/api/ui.go build/...
 
+# Build complete ui
 ui: ui/build ui/build/swagger.json bindata
 
 $(NAME):

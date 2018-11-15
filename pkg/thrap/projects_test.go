@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -40,23 +40,23 @@ profiles {
     }
 }`
 
-var testProjects = []*thrapb.Project{
-	&thrapb.Project{
+var testProjects = []*pb.Project{
+	&pb.Project{
 		ID:     "foo",
 		Name:   "Foo",
 		Source: "foo",
 	},
-	&thrapb.Project{
+	&pb.Project{
 		ID:     "bar",
 		Name:   "Bar",
 		Source: "https://github.com/foo/bar",
 	},
-	&thrapb.Project{
+	&pb.Project{
 		ID:     "bas",
 		Name:   "Bas",
 		Source: "git@github.com:foo/bas",
 	},
-	&thrapb.Project{
+	&pb.Project{
 		ID:     "lim",
 		Name:   "Lim",
 		Source: "foo/bar",
@@ -85,7 +85,7 @@ func Test_Projects(t *testing.T) {
 	}
 
 	var c int
-	err = projects.Iter("", func(p *thrapb.Project) error {
+	err = projects.Iter("", func(p *pb.Project) error {
 		c++
 		return nil
 	})

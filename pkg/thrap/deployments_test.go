@@ -5,30 +5,30 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/stretchr/testify/assert"
 )
 
-var testDeploys = []*thrapb.Deployment{
-	&thrapb.Deployment{
+var testDeploys = []*pb.Deployment{
+	&pb.Deployment{
 		Name:    "dev1",
-		Profile: &thrapb.Profile{ID: "dev"},
+		Profile: &pb.Profile{ID: "dev"},
 	},
-	&thrapb.Deployment{
+	&pb.Deployment{
 		Name:    "dev2",
-		Profile: &thrapb.Profile{ID: "dev"},
+		Profile: &pb.Profile{ID: "dev"},
 	},
-	&thrapb.Deployment{
+	&pb.Deployment{
 		Name:    "int1",
-		Profile: &thrapb.Profile{ID: "live"},
+		Profile: &pb.Profile{ID: "live"},
 	},
-	&thrapb.Deployment{
+	&pb.Deployment{
 		Name:    "uat1",
-		Profile: &thrapb.Profile{ID: "live"},
+		Profile: &pb.Profile{ID: "live"},
 	},
-	&thrapb.Deployment{
+	&pb.Deployment{
 		Name:    "stg1",
-		Profile: &thrapb.Profile{ID: "live"},
+		Profile: &pb.Profile{ID: "live"},
 	},
 }
 
@@ -54,7 +54,7 @@ func Test_Deployments(t *testing.T) {
 	}
 
 	deploys := proj.Deployments()
-	deploys.SetDescriptor(&thrapb.DeploymentDescriptor{
+	deploys.SetDescriptor(&pb.DeploymentDescriptor{
 		Spec: []byte(`{}`),
 	})
 
@@ -62,7 +62,7 @@ func Test_Deployments(t *testing.T) {
 	for _, d := range testDeploys {
 		r, err := deploys.Create(ctx, d.Profile.ID, d.Name)
 		assert.Nil(t, err)
-		assert.Equal(t, thrapb.ZeroSHA256Digest, r.Deployable().Previous)
+		assert.Equal(t, pb.ZeroSHA256Digest, r.Deployable().Previous)
 	}
 	// Get
 	for _, d := range testDeploys {

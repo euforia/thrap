@@ -1,4 +1,4 @@
-package thrapb
+package pb
 
 import (
 	"encoding/binary"
@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/opencontainers/go-digest"
-
-	"github.com/euforia/kvdb"
 )
 
 const (
@@ -55,9 +53,9 @@ func (d *Deployment) Clone() *Deployment {
 	return n
 }
 
-func (d *Deployment) PreviousDigest() digest.Digest {
-	return d.Previous
-}
+// func (d *Deployment) PreviousDigest() digest.Digest {
+// 	return d.Previous
+// }
 
 // Hash satisfies the ObjectVersion interface
 func (d *Deployment) Hash(h hash.Hash) {
@@ -75,10 +73,10 @@ func (d *Deployment) Hash(h hash.Hash) {
 	d.Profile.Hash(h)
 }
 
-// New satisfies the ObjectVersion interface
-func (d *Deployment) New() kvdb.ObjectVersion {
-	return &Deployment{}
-}
+// // New satisfies the ObjectVersion interface
+// func (d *Deployment) New() kvdb.ObjectVersion {
+// 	return &Deployment{}
+// }
 
 // Validate validates the deployment settings
 func (d *Deployment) Validate() error {
@@ -91,7 +89,7 @@ func (d *Deployment) Validate() error {
 	return nil
 }
 
-// New satisfies the Object interface
-func (desc *DeploymentDescriptor) New() kvdb.Object {
-	return &DeploymentDescriptor{}
-}
+// // New satisfies the Object interface
+// func (desc *DeploymentDescriptor) New() kvdb.Object {
+// 	return &DeploymentDescriptor{}
+// }

@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"crypto/sha256"
 
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/pkg/storage"
-	"github.com/euforia/thrap/thrapb"
 )
 
 // Project is used to manage a project
 type Project struct {
 	// Project data
-	*thrapb.Project
+	*pb.Project
 
 	// Project data hash used to know if a write should be
 	// performed
@@ -22,7 +22,7 @@ type Project struct {
 	store storage.ProjectStorage
 }
 
-func newProject(t *Thrap, proj *thrapb.Project) *Project {
+func newProject(t *Thrap, proj *pb.Project) *Project {
 	p := &Project{
 		t:       t,
 		Project: proj,

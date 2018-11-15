@@ -14,6 +14,7 @@ import (
 	"github.com/euforia/thrap/manifest"
 	"github.com/euforia/thrap/packs"
 	"github.com/euforia/thrap/pkg/config"
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
 	"github.com/euforia/thrap/vars"
@@ -116,7 +117,7 @@ func commandStackInit() *cli.Command {
 
 			fmt.Println()
 
-			stm, err := cr.Stack(thrapb.DefaultProfile())
+			stm, err := cr.Stack(pb.DefaultProfile())
 			if err != nil {
 				return err
 			}

@@ -1,4 +1,4 @@
-package thrapb
+package pb
 
 import (
 	"errors"

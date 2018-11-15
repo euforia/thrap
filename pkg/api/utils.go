@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/pkg/pb"
 	nomad "github.com/hashicorp/nomad/api"
 	"github.com/hashicorp/nomad/jobspec"
 )
@@ -42,19 +42,19 @@ func writeJSONResponse(w http.ResponseWriter, resp interface{}, err error) {
 }
 
 // JSON Marshal nomad job, store in descriptor. It returns aDeploymentDescriptor
-func makeNomadJSONDeployDesc(job *nomad.Job) (*thrapb.DeploymentDescriptor, error) {
+func makeNomadJSONDeployDesc(job *nomad.Job) (*pb.DeploymentDescriptor, error) {
 	nb, err := json.Marshal(job)
 	if err != nil {
 		return nil, err
 	}
 
-	return &thrapb.DeploymentDescriptor{
+	return &pb.DeploymentDescriptor{
 		Spec: nb,
 		Mime: DescContentTypeNomadJSON,
 	}, nil
 }
 
-func parseNomadHCLDescriptor(b []byte) (*thrapb.DeploymentDescriptor, error) {
+func parseNomadHCLDescriptor(b []byte) (*pb.DeploymentDescriptor, error) {
 	job, err := jobspec.Parse(bytes.NewBuffer(b))
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func parseNomadHCLDescriptor(b []byte) (*thrapb.DeploymentDescriptor, error) {
 	return makeNomadJSONDeployDesc(job)
 }
 
-func parseNomadJSONDescriptor(b []byte) (*thrapb.DeploymentDescriptor, error) {
+func parseNomadJSONDescriptor(b []byte) (*pb.DeploymentDescriptor, error) {
 	var job nomad.Job
 	err := json.Unmarshal(b, &job)
 	if err == nil {

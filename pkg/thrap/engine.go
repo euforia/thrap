@@ -9,11 +9,11 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/pkg/provider/orchestrator"
 	"github.com/euforia/thrap/pkg/provider/registry"
 	"github.com/euforia/thrap/pkg/provider/secrets"
-	"github.com/euforia/thrap/thrapb"
 )
 
 var (
@@ -38,7 +38,7 @@ const (
 
 // Engine interface implements an engine to run deployments
 type Engine interface {
-	Profile() thrapb.Profile
+	Profile() pb.Profile
 	PrepareDeploy(*provider.Request) (orchestrator.PreparedDeployment, error)
 	SetupSecrets(project string, data map[string]interface{}) error
 	// Returns the secrets path given the project and instance name
@@ -49,7 +49,7 @@ type Engine interface {
 
 type engine struct {
 	// Profile used to load the engine
-	profile *thrapb.Profile
+	profile *pb.Profile
 
 	// Orchestrator based on profile
 	o orchestrator.Orchestrator
@@ -66,7 +66,7 @@ type engine struct {
 	log *log.Logger
 }
 
-func (eng *engine) Profile() thrapb.Profile {
+func (eng *engine) Profile() pb.Profile {
 	return *eng.profile.Clone()
 }
 

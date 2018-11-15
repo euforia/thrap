@@ -6,6 +6,7 @@ import (
 
 	"github.com/euforia/hclencoder"
 	"github.com/euforia/thrap/manifest"
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/thrapb"
 	"github.com/euforia/thrap/utils"
 	"gopkg.in/urfave/cli.v2"
@@ -48,7 +49,7 @@ func commandStackRegister() *cli.Command {
 					return err
 				}
 
-				stk, err := cr.Stack(thrapb.DefaultProfile())
+				stk, err := cr.Stack(pb.DefaultProfile())
 				if err != nil {
 					return err
 				}

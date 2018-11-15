@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/hashicorp/consul/api"
 )
 
@@ -22,6 +22,7 @@ type ConsulProjectStorage struct {
 	prefix string
 }
 
+// NewConsulProjectStorageFromClient returns a new instance using the given client
 func NewConsulProjectStorageFromClient(client *api.Client, prefix string) *ConsulProjectStorage {
 	return &ConsulProjectStorage{client: client, prefix: prefix}
 }
@@ -37,7 +38,7 @@ func NewConsulProjectStorage(conf *api.Config, prefix string) (*ConsulProjectSto
 }
 
 // Iter satisfies the ProjectStorage interface
-func (s *ConsulProjectStorage) Iter(start string, cb func(*thrapb.Project) error) error {
+func (s *ConsulProjectStorage) Iter(start string, cb func(*pb.Project) error) error {
 	kv := s.client.KV()
 	q := &api.QueryOptions{}
 	prefix := s.keyPath(start)
@@ -47,7 +48,7 @@ func (s *ConsulProjectStorage) Iter(start string, cb func(*thrapb.Project) error
 		return err
 	}
 	for _, kvp := range kvps {
-		proj := &thrapb.Project{}
+		proj := &pb.Project{}
 		err = proj.Unmarshal(kvp.Value)
 		if err != nil {
 			log.Println("ERR", err)
@@ -61,7 +62,7 @@ func (s *ConsulProjectStorage) Iter(start string, cb func(*thrapb.Project) error
 }
 
 // Create satisfies the ProjectStorage interface
-func (s *ConsulProjectStorage) Create(proj *thrapb.Project) error {
+func (s *ConsulProjectStorage) Create(proj *pb.Project) error {
 	key := s.keyPath(proj.ID)
 	val, err := proj.Marshal()
 	if err != nil {
@@ -82,7 +83,7 @@ func (s *ConsulProjectStorage) Create(proj *thrapb.Project) error {
 }
 
 // Update satisfies the ProjectStorage interface
-func (s *ConsulProjectStorage) Update(proj *thrapb.Project) error {
+func (s *ConsulProjectStorage) Update(proj *pb.Project) error {
 	key := s.keyPath(proj.ID)
 	val, err := proj.Marshal()
 	if err != nil {
@@ -103,7 +104,7 @@ func (s *ConsulProjectStorage) Update(proj *thrapb.Project) error {
 }
 
 // Get satisfies the ProjectStorage interface
-func (s *ConsulProjectStorage) Get(id string) (*thrapb.Project, error) {
+func (s *ConsulProjectStorage) Get(id string) (*pb.Project, error) {
 	kv := s.client.KV()
 	q := &api.QueryOptions{}
 	kvp, _, err := kv.Get(s.keyPath(id), q)
@@ -113,7 +114,7 @@ func (s *ConsulProjectStorage) Get(id string) (*thrapb.Project, error) {
 	if kvp == nil {
 		return nil, fmt.Errorf("project not found: %s", id)
 	}
-	var proj thrapb.Project
+	var proj pb.Project
 	err = proj.Unmarshal(kvp.Value)
 	return &proj, err
 }
