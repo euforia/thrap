@@ -37,7 +37,7 @@ func (orch *nomadOrchestrator) Init(c *provider.Config) error {
 	return err
 }
 
-func (orch *nomadOrchestrator) PrepareDeploy(req *provider.Request) (p PreparedDeployment, err error) {
+func (orch *nomadOrchestrator) PrepareDeploy(ctx context.Context, req *provider.Request) (p PreparedDeployment, err error) {
 	// job, err := jobspec.Parse(bytes.NewBuffer(req.Deployment.Spec))
 
 	var apiJob nomad.Job

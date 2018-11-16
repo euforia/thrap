@@ -64,7 +64,7 @@ class Thrap {
   requestHeaders() {
     return {
       [PROFILE_HEADER]: this.auth.profile,
-      [TOKEN_HEADER]: this.auth.data.id,
+      [TOKEN_HEADER]:  this.auth.data.id,
     };
   }
 

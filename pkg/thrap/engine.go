@@ -39,12 +39,13 @@ const (
 // Engine interface implements an engine to run deployments
 type Engine interface {
 	Profile() pb.Profile
-	PrepareDeploy(*provider.Request) (orchestrator.PreparedDeployment, error)
 	SetupSecrets(project string, data map[string]interface{}) error
+	// Prepare a given deploy
+	PrepareDeploy(context.Context, *provider.Request) (orchestrator.PreparedDeployment, error)
+	Deploy(context.Context, orchestrator.PreparedDeployment, orchestrator.RequestOptions) error
 	// Returns the secrets path given the project and instance name
 	SecretsPath(project string, instance string) string
 	SeedSecrets(*provider.Request) error
-	Deploy(context.Context, orchestrator.PreparedDeployment, orchestrator.RequestOptions) error
 }
 
 type engine struct {
@@ -113,6 +114,7 @@ func (eng *engine) SeedSecrets(req *provider.Request) error {
 
 	eng.log.Printf("Seeding secrets from=%s ---> to=%s", tmplKey, instKey)
 
+	var c int
 	for k, v := range mm {
 		if len(v) == 0 {
 			continue
@@ -126,18 +128,21 @@ func (eng *engine) SeedSecrets(req *provider.Request) error {
 		if er != nil {
 			eng.log.Printf("Error seeding secret=%s: %v", newKey, er)
 			err = er
+		} else {
+			c++
 		}
 	}
+	eng.log.Printf("Seeded secrets project=%s instance=%s count=%d", projID, instID, c)
 
 	return err
 }
 
-func (eng *engine) PrepareDeploy(req *provider.Request) (orchestrator.PreparedDeployment, error) {
+func (eng *engine) PrepareDeploy(ctx context.Context, req *provider.Request) (orchestrator.PreparedDeployment, error) {
 	if regName := eng.r.Name(); regName != "" {
 		req.Deployment.Profile.Meta[RegistryVarName] = regName
 	}
 
-	prepared, err := eng.o.PrepareDeploy(req)
+	prepared, err := eng.o.PrepareDeploy(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -150,6 +155,7 @@ func (eng *engine) PrepareDeploy(req *provider.Request) (orchestrator.PreparedDe
 	err = eng.checkSecrets(req.Project.ID, req.Deployment.Name)
 
 	//
+	// TODO:
 	// All other checks go here
 	//
 
@@ -170,7 +176,6 @@ func (eng *engine) checkSecrets(projID, instID string) error {
 		projID, instID, path)
 
 	_, err := eng.sec.Get(path)
-
 	return err
 }
 

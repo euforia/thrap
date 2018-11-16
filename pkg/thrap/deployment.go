@@ -66,7 +66,7 @@ func (d *Deployment) Deployable() pb.Deployment {
 
 // PrepareDeploy prepares a deployment.  This must be called before a
 // call to Deploy can be made
-func (d *Deployment) PrepareDeploy(req *DeployRequest) (orchestrator.PreparedDeployment, error) {
+func (d *Deployment) PrepareDeploy(ctx context.Context, req *DeployRequest) (orchestrator.PreparedDeployment, error) {
 	if d.desc == nil || len(d.desc.Spec) == 0 {
 		return nil, errDeployDescNotSet
 	}
@@ -85,7 +85,7 @@ func (d *Deployment) PrepareDeploy(req *DeployRequest) (orchestrator.PreparedDep
 		Deployment: d.depl,
 	}
 
-	prepared, err := d.eng.PrepareDeploy(orchReq)
+	prepared, err := d.eng.PrepareDeploy(ctx, orchReq)
 	if err != nil {
 		d.depl.Status = pb.DeployStateStatus_FAILED
 		d.depl.StateMessage = err.Error()
@@ -103,15 +103,14 @@ func (d *Deployment) PrepareDeploy(req *DeployRequest) (orchestrator.PreparedDep
 }
 
 // Deploy performs a deployment and updates the internal state
-func (d *Deployment) Deploy(req *DeployRequest) (*pb.Deployment, error) {
+func (d *Deployment) Deploy(ctx context.Context, req *DeployRequest) (*pb.Deployment, error) {
 	// TODO: lock()
 	// TODO: defer unlock()
-	prepared, err := d.PrepareDeploy(req)
+	prepared, err := d.PrepareDeploy(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx := context.Background()
 	opt := orchestrator.RequestOptions{Dryrun: req.Dryrun}
 
 	d.depl.State = pb.DeploymentState_DEPLOY

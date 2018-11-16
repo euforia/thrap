@@ -27,3 +27,10 @@ func loadTestThrap() (*Thrap, *Config, error) {
 	th, err := New(conf)
 	return th, conf, err
 }
+
+func newProjects(t *Thrap) *Projects {
+	return &Projects{
+		t:     t,
+		store: t.store.Project(),
+	}
+}

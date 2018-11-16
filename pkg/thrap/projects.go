@@ -31,15 +31,6 @@ type Projects struct {
 	store storage.ProjectStorage
 }
 
-// NewProjects returns a Projects instance backed by the given
-// datastore
-func NewProjects(t *Thrap) *Projects {
-	return &Projects{
-		t:     t,
-		store: t.store.Project(),
-	}
-}
-
 // Iter iterates over all projects from the start point
 func (p *Projects) Iter(start string, cb func(*pb.Project) error) error {
 	return p.store.Iter(start, cb)

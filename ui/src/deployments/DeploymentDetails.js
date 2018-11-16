@@ -60,6 +60,7 @@ class DeploymentDetails extends Component{
         if (this.state.deployment.State > 1) {
             env = this.state.deployment.Profile;
         }
+        console.log(env);
 
         return Object.keys(env.Meta).map(key => {
             var value = env.Meta[key];

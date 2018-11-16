@@ -62,7 +62,7 @@ type Orchestrator interface {
 
 	// Prepares a deployment.  The output of this is used to call deploy. This
 	// should check the state of the deploy and not re-prepare if it is already prepared.
-	PrepareDeploy(req *provider.Request) (PreparedDeployment, error)
+	PrepareDeploy(ctx context.Context, req *provider.Request) (PreparedDeployment, error)
 
 	// Deploy should deploy the stack returning the response, deploy object
 	// based on the orchestrator or an error

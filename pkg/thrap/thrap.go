@@ -110,6 +110,14 @@ func (t *Thrap) Profiles() storage.ProfileStorage {
 	return t.profiles
 }
 
+// Projects returns an object to manage projects
+func (t *Thrap) Projects() *Projects {
+	return &Projects{
+		t:     t,
+		store: t.store.Project(),
+	}
+}
+
 // Engine returns a runnable engine with the profile specified.
 func (t *Thrap) Engine(ctx context.Context, profileID string) (Engine, error) {
 	profile, err := t.profiles.Get(profileID)

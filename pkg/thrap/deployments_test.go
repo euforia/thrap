@@ -42,7 +42,7 @@ func Test_Deployments(t *testing.T) {
 
 	// defer os.RemoveAll(cfg.DataDir)
 
-	projects := NewProjects(thrap)
+	projects := newProjects(thrap)
 	for _, proj := range testProjects {
 		_, err := projects.Create(ctx, &ProjectCreateRequest{Project: proj})
 		assert.Nil(t, err)
@@ -79,7 +79,7 @@ func Test_Deployments(t *testing.T) {
 		}
 		fmt.Println(dd.Deployable())
 		dd.eng = newDummyEngine(dd.eng.(*engine))
-		_, err = dd.Deploy(&DeployRequest{Variables: vars})
+		_, err = dd.Deploy(ctx, &DeployRequest{Variables: vars})
 		assert.Nil(t, err, "deploy: %s", dd.Deployable().Name)
 	}
 
@@ -93,7 +93,7 @@ func Test_Deployments(t *testing.T) {
 	// Re-deploy
 	dd, _ := deploys.Get(ctx, testDeploys[0].Profile.ID, testDeploys[0].Name)
 	dd.eng = newDummyEngine(dd.eng.(*engine))
-	_, err = dd.Deploy(&DeployRequest{Variables: vars})
+	_, err = dd.Deploy(ctx, &DeployRequest{Variables: vars})
 	assert.Nil(t, err)
 
 	dd, err = deploys.Get(ctx, "dev", "dev1")

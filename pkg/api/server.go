@@ -36,7 +36,7 @@ func NewServer(t *thrap.Thrap, logger *log.Logger) *Server {
 		log:    logger,
 		handler: &httpHandler{
 			t:        t,
-			projects: thrap.NewProjects(t),
+			projects: t.Projects(),
 			uiPrefix: "/ui",
 		},
 	}

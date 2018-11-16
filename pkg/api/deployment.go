@@ -10,22 +10,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// swagger:operation GET /project/{projectId}/deployments listDeployments
-//
-// Returns a list of project deployments
-//
-// Returns a list of project deployments
-//
-// ---
-// responses:
-//   200:
-//     description: "OK"
-//     schema:
-//       type: array
-//   404:
-//     description: "project not found"
-//   500:
-//     description: "Internal Server Error"
 func (api *httpHandler) handleListDeployments(w http.ResponseWriter, r *http.Request) {
 	projID := mux.Vars(r)["pid"]
 	proj, err := api.projects.Get(projID)
@@ -63,54 +47,13 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 	ctx := r.Context()
 
 	switch r.Method {
-	// swagger:operation GET /project/{projectId}/deployment/{environmentId}/{instanceId} getDeployment
-	//
-	// Returns information about a deployment
-	//
-	// Returns information about a deployment
-	//
-	// ---
-	// responses:
-	//   200:
-	//     description: "OK"
-	//   404:
-	//     description: "deployment not found"
-	//   500:
-	//     description: "Internal Server Error"
+
 	case "GET":
 		d, err = dpl.Get(ctx, envID, instID)
 
-		// swagger:operation POST /project/{projectId}/deployment/{environmentId}/{instanceId} createDeployment
-		//
-		// Create a new deployment for a project
-		//
-		// Create a new deployment for a project
-		//
-		// ---
-		// responses:
-		//   200:
-		//     description: "OK"
-		//   400:
-		//     description: "failed to create deployment"
-		//   500:
-		//     description: "Internal Server Error"
 	case "POST":
 		d, err = dpl.Create(ctx, envID, instID)
 
-		// swagger:operation PUT /project/{projectId}/deployment/{environmentId}/{instanceId} deploy
-		//
-		// Deploy
-		//
-		// Deploy
-		//
-		// ---
-		// responses:
-		//   200:
-		//     description: "OK"
-		//   400:
-		//     description: "failed to deploy"
-		//   500:
-		//     description: "Internal Server Error"
 	case "PUT":
 		defer r.Body.Close()
 
@@ -148,6 +91,6 @@ func (api *httpHandler) handleDeploy(d *thrap.Deployment, r *http.Request) error
 		return err
 	}
 
-	_, err = d.Deploy(&thrap.DeployRequest{Variables: vars})
+	_, err = d.Deploy(r.Context(), &thrap.DeployRequest{Variables: vars})
 	return err
 }

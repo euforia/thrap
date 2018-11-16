@@ -49,8 +49,9 @@ func (d *nomadPreparedDeployment) Artifacts() []string {
 	for _, g := range d.job.TaskGroups {
 		for _, t := range g.Tasks {
 			if i, ok := t.Config["image"]; ok {
-				image := i.(string)
-				out = append(out, image)
+				if image, ok := i.(string); ok {
+					out = append(out, image)
+				}
 			}
 		}
 	}

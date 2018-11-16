@@ -32,7 +32,7 @@ class Project extends Component {
         pid = pid ? pid : this.props.projectID;
 
         this.fetchProject(pid);
-        this.fetchEnvironments()
+        this.fetchProfiles()
     }
 
     fetchProject(id) {
@@ -45,9 +45,17 @@ class Project extends Component {
             });
     }
 
-    fetchEnvironments() {
+    fetchProfiles() {
         thrap.environments()
             .then(({data}) => {
+                for (var i = 0; i<data.length; i++) {
+                    if (data[i].Meta === null || data[i].Meta === undefined)  {
+                        data[i].Meta = {};
+                    }
+                    if (data[i].Variables === null || data[i].Variables === undefined)  {
+                        data[i].Variables = {};
+                    }
+                }
                 this.setState({environments: data});
             })
             .catch(error => {
