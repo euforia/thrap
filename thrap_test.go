@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/euforia/thrap/pkg/provider/vcs"
 	"github.com/euforia/thrap/utils"
-	"github.com/euforia/thrap/vcs"
 	"gopkg.in/src-d/go-git.v4"
 )
 

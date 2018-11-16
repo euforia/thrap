@@ -4,25 +4,25 @@ import (
 	"os"
 	"testing"
 
-	"github.com/euforia/thrap/thrapb"
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/hashicorp/consul/api"
 	"github.com/stretchr/testify/assert"
 )
 
-var testProjects = []*thrapb.Project{
-	&thrapb.Project{
+var testProjects = []*pb.Project{
+	&pb.Project{
 		ID:   "foo",
 		Name: "Foo",
 	},
-	&thrapb.Project{
+	&pb.Project{
 		ID:   "bar",
 		Name: "Bar",
 	},
-	&thrapb.Project{
+	&pb.Project{
 		ID:   "bas",
 		Name: "Bas",
 	},
-	&thrapb.Project{
+	&pb.Project{
 		ID:   "lim",
 		Name: "Lim",
 	},
@@ -49,7 +49,7 @@ func Test_ConsulProjectStorage(t *testing.T) {
 	}
 
 	var c int
-	err = s.Iter("", func(proj *thrapb.Project) error {
+	err = s.Iter("", func(proj *pb.Project) error {
 		c++
 		return nil
 	})
