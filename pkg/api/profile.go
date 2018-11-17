@@ -3,7 +3,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/euforia/thrap/pkg/pb"
+	"github.com/euforia/thrap/pkg/storage"
+	"github.com/gorilla/mux"
 )
 
 func (api *httpHandler) handleListProfiles(w http.ResponseWriter, r *http.Request) {
@@ -16,14 +17,16 @@ func (api *httpHandler) handleListProfiles(w http.ResponseWriter, r *http.Reques
 func (api *httpHandler) handleProfile(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	var (
-		resp *pb.Project
-		err  error
-	)
-
 	switch r.Method {
 	case "GET":
-		resp, err = api.getProject(w, r)
+		profs := api.t.Profiles()
+		prof := mux.Vars(r)["id"]
+		resp, err := profs.Get(prof)
+		if err == storage.ErrProfileNotFound {
+			w.WriteHeader(404)
+			return
+		}
+		writeJSONResponse(w, resp, err)
 
 	case "OPTIONS":
 		setAccessControlHeaders(w)
@@ -36,5 +39,4 @@ func (api *httpHandler) handleProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSONResponse(w, resp, err)
 }
