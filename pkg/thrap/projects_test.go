@@ -69,7 +69,7 @@ func Test_Projects(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	projects := newProjects(thrap)
+	projects := &Projects{t: thrap, store: thrap.store.Project()}
 
 	ctx := context.WithValue(context.Background(), CredsContextKey, cfg.Credentials)
 	for _, p := range testProjects {

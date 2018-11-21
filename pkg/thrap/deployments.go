@@ -9,11 +9,6 @@ import (
 	"github.com/euforia/thrap/pkg/storage"
 )
 
-// const (
-// 	deplDBKey    = "deployment"
-// 	instTableKey = "instance"
-// )
-
 var (
 	errDeployDescNotSet = errors.New("deployment descriptor not set")
 )
@@ -27,8 +22,12 @@ type Deployments struct {
 	// profiles and instances.  in-mem cache
 	desc *pb.DeploymentDescriptor
 
+	// Store with current deployables
 	deploys storage.DeploymentStorage
-	descs   storage.DeployDescStorage
+
+	// Store holding deploy descriptors
+	descs storage.DeployDescStorage
+
 	// Thrap core instance
 	t *Thrap
 }

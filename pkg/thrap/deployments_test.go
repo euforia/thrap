@@ -42,7 +42,7 @@ func Test_Deployments(t *testing.T) {
 
 	// defer os.RemoveAll(cfg.DataDir)
 
-	projects := newProjects(thrap)
+	projects := &Projects{t: thrap, store: thrap.store.Project()}
 	for _, proj := range testProjects {
 		_, err := projects.Create(ctx, &ProjectCreateRequest{Project: proj})
 		assert.Nil(t, err)

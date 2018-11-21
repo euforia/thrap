@@ -119,6 +119,11 @@ job "thrap" {
                         secret = "{{.Data.SharedRegistrySecret}}"
                     }
                 }
+                vcs {
+                    github {
+                        token = ""
+                    }
+                }
                 {{ end }}
                 EOF
                 destination   = "local/conf/creds.hcl"
