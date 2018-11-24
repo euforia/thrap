@@ -15,6 +15,7 @@ type ConsulDeployStorage struct {
 	prefix string
 }
 
+// NewConsulDeployStorageFromClient returns a new ConsulDeployStorage with the given client
 func NewConsulDeployStorageFromClient(client *api.Client, prefix string) *ConsulDeployStorage {
 	return &ConsulDeployStorage{client: client, prefix: prefix}
 }

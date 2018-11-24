@@ -24,6 +24,8 @@ func NewDeployment(profID, name string) *Deployment {
 		Nonce:     rand.Uint64(),
 		Version:   1,
 		Previous:  ZeroSHA256Digest,
+		State:     DeploymentState_CREATE,
+		Status:    DeployStateStatus_OK,
 	}
 }
 

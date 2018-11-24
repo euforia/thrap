@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -31,6 +32,8 @@ func (orch *nomadOrchestrator) Init(c *provider.Config) error {
 	if c.Addr != "" {
 		nomadClientConf.Address = c.Addr
 	}
+
+	nomadClientConf.SetTimeout(3 * time.Second)
 
 	orch.client, err = nomad.NewClient(nomadClientConf)
 

@@ -55,11 +55,7 @@ func (d *Deployments) List() ([]*pb.Deployment, error) {
 // name. This is simply an initialization record. This must called before an
 // actual deploy can be performed.
 func (d *Deployments) Create(ctx context.Context, profileID, instanceName string) (*Deployment, error) {
-
 	nd := pb.NewDeployment(profileID, instanceName)
-	nd.State = pb.DeploymentState_CREATE
-	nd.Status = pb.DeployStateStatus_OK
-
 	err := nd.Validate()
 	if err != nil {
 		return nil, err
@@ -100,12 +96,11 @@ func (d *Deployments) Get(ctx context.Context, profID, instance string) (*Deploy
 	}
 
 	dp, err := d.deploys.Get(d.proj.ID, profID, instance)
-	if err != nil {
-		return nil, err
+	if err == nil {
+		return newDeployment(d.proj, d.desc, dp, eng, d.deploys), nil
 	}
 
-	// Table with proj id. diff from above
-	return newDeployment(d.proj, d.desc, dp, eng, d.deploys), nil
+	return nil, err
 }
 
 // Descriptor returns the current loaded deployment descriptor

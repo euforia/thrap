@@ -15,7 +15,9 @@ type ConsulStorage struct {
 // NewConsulStorage returns a new ConsulStorage instance
 func NewConsulStorage(conf *provider.Config) (*ConsulStorage, error) {
 	cc := api.DefaultConfig()
+	// Set env as default
 	cc.Address = os.Getenv("CONSUL_ADDR")
+	// Override only if supplied
 	if conf.Addr != "" {
 		cc.Address = conf.Addr
 	}
@@ -27,14 +29,17 @@ func NewConsulStorage(conf *provider.Config) (*ConsulStorage, error) {
 	return nil, err
 }
 
+// Project satisfies the Storage interface
 func (s *ConsulStorage) Project() ProjectStorage {
 	return NewConsulProjectStorageFromClient(s.client, "thrap/project")
 }
 
+// Deployment satisfies the Storage interface
 func (s *ConsulStorage) Deployment() DeploymentStorage {
 	return NewConsulDeployStorageFromClient(s.client, "thrap/deployment")
 }
 
+// DeployDesc satisfies the Storage interface
 func (s *ConsulStorage) DeployDesc() DeployDescStorage {
 	return NewConsulDeployDescStorageFromClient(s.client, "thrap/deployment")
 }

@@ -197,7 +197,6 @@ func (eng *engine) checkArtifacts(p orchestrator.PreparedDeployment) error {
 			_, err = eng.getImageManifest(regName, parts[0], parts[1])
 
 		default:
-			// return errors.New("invalid image format: " + art)
 			err = errInvalidImageFormat
 		}
 

@@ -63,6 +63,8 @@ func Test_Deployments(t *testing.T) {
 		r, err := deploys.Create(ctx, d.Profile.ID, d.Name)
 		assert.Nil(t, err)
 		assert.Equal(t, pb.ZeroSHA256Digest, r.Deployable().Previous)
+		assert.Equal(t, r.depl.State, pb.DeploymentState_CREATE)
+		assert.Equal(t, r.depl.Status, pb.DeployStateStatus_OK)
 	}
 	// Get
 	for _, d := range testDeploys {
