@@ -42,9 +42,10 @@ func (p *Projects) Create(ctx context.Context, req *ProjectCreateRequest) (*Proj
 	if proj.Name == "" {
 		proj.Name = proj.ID
 	}
-	if proj.Source == "" {
-		return nil, ErrProjectSourceRequired
-	}
+	// Temp.
+	// if proj.Source == "" {
+	// 	return nil, ErrProjectSourceRequired
+	// }
 
 	err := p.store.Create(proj)
 	if err != nil {
