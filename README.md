@@ -48,7 +48,7 @@ Once the project is initialized, you can make code changes as needed.  When read
 be built using the following command:
 
 ```shell
-$ thrap stack build
+$ thrap stack -p <profile> build
 ```
 
 This starts all necessary services, builds all containers, exiting after all head containers have 
@@ -59,7 +59,7 @@ completed building.
 Once built, deploy your project:
 
 ```shell
-$ thrap stack deploy
+$ thrap stack -p <profile> deploy
 ```
 
 ### Check project status
