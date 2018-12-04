@@ -31,4 +31,4 @@ EXPOSE 10000
 RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 
 COPY --from=build /go/src/github.com/euforia/thrap/dist/thrap-linux /usr/bin/thrap
-CMD ["thrap", "agent", "-b=:10000", "--data-dir=/thrap/data", "--conf-dir=/thrap/conf"]
+CMD ["thrap", "agent", "-b=:10000", "--conf-dir=/thrap/conf"]
