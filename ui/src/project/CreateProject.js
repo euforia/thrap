@@ -120,9 +120,7 @@ class CreateProject extends Component {
                             FormHelperTextProps={{className:classes.helperText}}
                             helperText="source code url"
                             margin="normal"
-                            required
                             fullWidth
-                            error={proj.Source === '' && this.state.errored}
                         />
                         <TextField
                             id="project-owner"
@@ -146,9 +144,7 @@ class CreateProject extends Component {
                             FormHelperTextProps={{className:classes.helperText}}
                             helperText="maintainer of the project"
                             margin="normal"
-                            required
                             fullWidth
-                            error={proj.Maintainer === '' && this.state.errored}
                         />
                     </FormControl>
                 
