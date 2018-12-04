@@ -40,14 +40,14 @@ class CreateProject extends Component {
             this.setState({errored:true});
             return;
         }
-        if (project.Maintainer === '') {
-            this.setState({errored:true});
-            return;
-        }
-        if (project.Source === '') {
-            this.setState({errored:true});
-            return;
-        }
+        // if (project.Maintainer === '') {
+        //     this.setState({errored:true});
+        //     return;
+        // }
+        // if (project.Source === '') {
+        //     this.setState({errored:true});
+        //     return;
+        // }
 
         // disabled button
         this.setState({

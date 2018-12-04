@@ -60,6 +60,7 @@ Once built, deploy your project:
 
 ```shell
 $ thrap stack -p <profile> deploy
+...
 ```
 
 ### Check project status
@@ -68,6 +69,7 @@ Check the status of your stack:
 
 ```shell
 $ thrap stack status
+...
 ```
 
 ## Development
@@ -76,18 +78,21 @@ $ thrap stack status
 
 ```shell
 $ make deps
+...
 ```
 
 #### Run tests
 
 ```shell
 $ make test
+...
 ```
 
 #### Make binary
 
 ```shell
 $ make thrap
+...
 ```
 
 Binary called `thrap` (built to be compatible with the system it was run on)
