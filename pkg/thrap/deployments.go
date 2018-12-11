@@ -2,11 +2,11 @@ package thrap
 
 import (
 	"context"
-	"errors"
 
 	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/pkg/provider"
 	"github.com/euforia/thrap/pkg/storage"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -33,7 +33,7 @@ type Deployments struct {
 }
 
 // NewDeployments returns a new Deployments instance for a given project
-func NewDeployments(t *Thrap, proj pb.Project) *Deployments {
+func NewDeployments(t *Thrap, proj pb.Project, version string) *Deployments {
 	depl := &Deployments{
 		t:       t,
 		proj:    proj,
@@ -41,7 +41,7 @@ func NewDeployments(t *Thrap, proj pb.Project) *Deployments {
 		descs:   t.store.DeployDesc(),
 	}
 
-	depl.loadDescriptor()
+	depl.loadDescriptor(version)
 
 	return depl
 }
@@ -103,23 +103,47 @@ func (d *Deployments) Get(ctx context.Context, profID, instance string) (*Deploy
 	return nil, err
 }
 
+func (d *Deployments) GetVersion(ctx context.Context, profID, instance, version string) (*Deployment, error) {
+	eng, err := d.t.Engine(ctx, profID)
+	if err != nil {
+		return nil, err
+	}
+
+	spec, err := d.descs.GetVersion(d.proj.ID, version)
+	if err != nil {
+		return nil, errors.Wrap(err, "get spec version")
+	}
+
+	dp, err := d.deploys.Get(d.proj.ID, profID, instance)
+	if err == nil {
+		return newDeployment(d.proj, spec, dp, eng, d.deploys), nil
+	}
+
+	return nil, err
+}
+
 // Descriptor returns the current loaded deployment descriptor
 func (d *Deployments) Descriptor() *pb.DeploymentDescriptor {
 	return d.desc
 }
 
 // SetDescriptor sets the deployment descriptor in the store.
-func (d *Deployments) SetDescriptor(desc *pb.DeploymentDescriptor) error {
-	err := d.descs.Set(d.proj.ID, desc)
+func (d *Deployments) SetDescriptor(desc *pb.DeploymentDescriptor, version string) error {
+	err := d.descs.SetVersion(d.proj.ID, version, desc)
 	if err == nil {
 		d.desc = desc
 	}
 	return err
 }
 
-// loadDescriptor loads the deployment descriptor from hard state
-func (d *Deployments) loadDescriptor() error {
-	desc, err := d.descs.Get(d.proj.ID)
+// ListDescriptors lists all descriptors available in project
+func (d *Deployments) ListDescriptors() ([]string, error) {
+	return d.descs.ListVersions(d.proj.ID)
+}
+
+// loadDescriptor loads the default deployment descriptor from hard state
+func (d *Deployments) loadDescriptor(version string) error {
+	desc, err := d.descs.GetVersion(d.proj.ID, version)
 	if err == nil {
 		d.desc = desc
 	}

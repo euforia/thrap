@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/euforia/thrap/pkg/storage"
 	"github.com/euforia/thrap/pkg/thrap"
 
 	"github.com/gorilla/mux"
@@ -19,7 +20,7 @@ func (api *httpHandler) handleListDeployments(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	d := proj.Deployments()
+	d := proj.Deployments(storage.DefaultSpecVersion)
 	deploys, err := d.List()
 
 	writeJSONResponse(w, deploys, err)
@@ -43,7 +44,7 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	dpl := proj.Deployments()
+	dpl := proj.Deployments(storage.DefaultSpecVersion)
 	ctx := r.Context()
 
 	switch r.Method {

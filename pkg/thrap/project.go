@@ -51,6 +51,6 @@ func (p *Project) Sync() error {
 
 // Deployments returns a Deployments instance to manage the project's
 // deployments
-func (p *Project) Deployments() *Deployments {
-	return NewDeployments(p.t, *p.Clone())
+func (p *Project) Deployments(version string) *Deployments {
+	return NewDeployments(p.t, *p.Clone(), version)
 }

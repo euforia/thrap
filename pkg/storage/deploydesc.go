@@ -8,6 +8,11 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
+const (
+	// DefaultSpecVersion defines the default spec version
+	DefaultSpecVersion = "default"
+)
+
 // ConsulDeployDescStorage implements a consul backed DeployDescStorage
 type ConsulDeployDescStorage struct {
 	client *api.Client
@@ -36,7 +41,25 @@ func NewConsulDeployDescStorage(conf *api.Config, prefix string) (*ConsulDeployD
 
 // Get satisfies the DeployDescStorage interface
 func (s *ConsulDeployDescStorage) Get(projectID string) (*pb.DeploymentDescriptor, error) {
-	key := s.keyPath(projectID)
+	key := filepath.Join(s.keyPath(projectID), "specs", DefaultSpecVersion)
+	kv := s.client.KV()
+	kvp, _, err := kv.Get(key, &api.QueryOptions{})
+	if err != nil {
+		return nil, err
+	}
+	if kvp == nil {
+		return nil, errors.New("deployment descriptor not found: " + projectID)
+	}
+
+	var desc pb.DeploymentDescriptor
+	err = desc.Unmarshal(kvp.Value)
+	return &desc, err
+}
+
+// GetVersion satisfies the DeployDescStorage interface
+func (s *ConsulDeployDescStorage) GetVersion(projectID string, version string) (*pb.DeploymentDescriptor, error) {
+	key := filepath.Join(s.keyPath(projectID), "specs", version)
+
 	kv := s.client.KV()
 	kvp, _, err := kv.Get(key, &api.QueryOptions{})
 	if err != nil {
@@ -53,12 +76,23 @@ func (s *ConsulDeployDescStorage) Get(projectID string) (*pb.DeploymentDescripto
 
 // Set satisfies the DeployDescStorage interface
 func (s *ConsulDeployDescStorage) Set(projectID string, desc *pb.DeploymentDescriptor) error {
-	key := s.keyPath(projectID)
+	key := filepath.Join(s.keyPath(projectID), "specs", DefaultSpecVersion)
 	val, err := desc.Marshal()
 	if err != nil {
 		return err
 	}
 
+	kv := s.client.KV()
+	return putKV(kv, key, val)
+}
+
+// SetVersion satisfies the DeployDescStorage interface
+func (s *ConsulDeployDescStorage) SetVersion(projectID string, version string, desc *pb.DeploymentDescriptor) error {
+	key := filepath.Join(s.keyPath(projectID), "specs", version)
+	val, err := desc.Marshal()
+	if err != nil {
+		return err
+	}
 	kv := s.client.KV()
 	return putKV(kv, key, val)
 }
@@ -69,6 +103,37 @@ func (s *ConsulDeployDescStorage) Delete(projectID string) error {
 	kv := s.client.KV()
 	_, err := kv.Delete(key, &api.WriteOptions{})
 	return err
+}
+
+// DeleteVersion satisfies the DeployDescStorage interface
+func (s *ConsulDeployDescStorage) DeleteVersion(projectID, version string) error {
+	key := filepath.Join(s.keyPath(projectID), "specs", version)
+	kv := s.client.KV()
+	_, err := kv.Delete(key, &api.WriteOptions{})
+	return err
+}
+
+func (s *ConsulDeployDescStorage) ListVersions(projectID string) ([]string, error) {
+	key := filepath.Join(s.keyPath(projectID), "specs")
+
+	kv := s.client.KV()
+	kvps, _, err := kv.List(key, &api.QueryOptions{})
+	if err != nil {
+		return nil, err
+	}
+	if kvps == nil {
+		return nil, errors.New("no versions found: " + projectID)
+	}
+
+	versions := []string{}
+	for _, kvp := range kvps {
+		if kvp.Key == filepath.Join(s.keyPath(projectID), "specs") {
+			continue
+		}
+		versions = append(versions, filepath.Base(kvp.Key))
+	}
+
+	return versions, nil
 }
 
 func (s *ConsulDeployDescStorage) keyPath(projectID string) string {
