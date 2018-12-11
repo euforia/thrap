@@ -50,8 +50,12 @@ type DeploymentStorage interface {
 // DeployDescStorage implements storage to persist deployment descriptors
 type DeployDescStorage interface {
 	Get(string) (*pb.DeploymentDescriptor, error)
+	GetVersion(string, string) (*pb.DeploymentDescriptor, error)
 	Set(string, *pb.DeploymentDescriptor) error
+	SetVersion(string, string, *pb.DeploymentDescriptor) error
 	Delete(string) error
+	DeleteVersion(string, string) error
+	ListVersions(string) ([]string, error)
 }
 
 // Storage implements an all encompasing storage

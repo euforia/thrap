@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/euforia/thrap/pkg/storage"
+
 	"github.com/euforia/thrap/pkg/pb"
 	"github.com/stretchr/testify/assert"
 )
@@ -53,10 +55,10 @@ func Test_Deployments(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	deploys := proj.Deployments()
+	deploys := proj.Deployments(storage.DefaultSpecVersion)
 	deploys.SetDescriptor(&pb.DeploymentDescriptor{
 		Spec: []byte(`{}`),
-	})
+	}, storage.DefaultSpecVersion)
 
 	// Create
 	for _, d := range testDeploys {
