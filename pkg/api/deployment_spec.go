@@ -26,14 +26,14 @@ func (api *httpHandler) handleDeploymentSpecDefault(w http.ResponseWriter, r *ht
 	}
 
 	var (
-		dpl  = proj.Deployments(storage.DefaultSpecVersion)
+		dpl  = proj.Deployments()
 		resp []byte
 	)
 
 	switch r.Method {
 
 	case "GET":
-		desc := dpl.Descriptor()
+		desc := dpl.Descriptor(storage.DefaultSpecVersion)
 		if desc == nil || len(desc.Spec) == 0 {
 			w.WriteHeader(404)
 			return
@@ -114,7 +114,7 @@ func (api *httpHandler) handleDeploymentSpecs(w http.ResponseWriter, r *http.Req
 	}
 
 	var (
-		dpl  = proj.Deployments(storage.DefaultSpecVersion)
+		dpl  = proj.Deployments()
 		resp []byte
 	)
 
@@ -170,14 +170,14 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 	version := mux.Vars(r)["version"]
 
 	var (
-		dpl  = proj.Deployments(version)
+		dpl  = proj.Deployments()
 		resp []byte
 	)
 
 	switch r.Method {
 
 	case "GET":
-		desc := dpl.Descriptor()
+		desc := dpl.Descriptor(version)
 		if desc == nil || len(desc.Spec) == 0 {
 			w.WriteHeader(404)
 			return
@@ -185,6 +185,14 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 		resp = desc.Spec
 
 	case "POST":
+		resp, err = api.setDeploymentSpec(r, dpl, version)
+
+	case "PUT":
+		desc := dpl.Descriptor(version)
+		if desc == nil || len(desc.Spec) == 0 {
+			w.WriteHeader(404)
+			return
+		}
 		resp, err = api.setDeploymentSpec(r, dpl, version)
 
 	case http.MethodOptions:
