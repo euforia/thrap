@@ -41,5 +41,5 @@ func (s *ConsulStorage) Deployment() DeploymentStorage {
 
 // DeployDesc satisfies the Storage interface
 func (s *ConsulStorage) DeployDesc() DeployDescStorage {
-	return NewConsulDeployDescStorageFromClient(s.client, "thrap/deployment")
+	return NewConsulDeployDescStorageFromClient(s.client, "thrap/deployment-specs")
 }

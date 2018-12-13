@@ -41,7 +41,7 @@ func NewConsulDeployDescStorage(conf *api.Config, prefix string) (*ConsulDeployD
 
 // Get satisfies the DeployDescStorage interface
 func (s *ConsulDeployDescStorage) Get(projectID string) (*pb.DeploymentDescriptor, error) {
-	key := filepath.Join(s.keyPath(projectID), "specs", DefaultSpecVersion)
+	key := s.versionPath(projectID, DefaultSpecVersion)
 	kv := s.client.KV()
 	kvp, _, err := kv.Get(key, &api.QueryOptions{})
 	if err != nil {
@@ -58,7 +58,7 @@ func (s *ConsulDeployDescStorage) Get(projectID string) (*pb.DeploymentDescripto
 
 // GetVersion satisfies the DeployDescStorage interface
 func (s *ConsulDeployDescStorage) GetVersion(projectID string, version string) (*pb.DeploymentDescriptor, error) {
-	key := filepath.Join(s.keyPath(projectID), "specs", version)
+	key := s.versionPath(projectID, version)
 
 	kv := s.client.KV()
 	kvp, _, err := kv.Get(key, &api.QueryOptions{})
@@ -76,7 +76,7 @@ func (s *ConsulDeployDescStorage) GetVersion(projectID string, version string) (
 
 // Set satisfies the DeployDescStorage interface
 func (s *ConsulDeployDescStorage) Set(projectID string, desc *pb.DeploymentDescriptor) error {
-	key := filepath.Join(s.keyPath(projectID), "specs", DefaultSpecVersion)
+	key := s.versionPath(projectID, DefaultSpecVersion)
 	val, err := desc.Marshal()
 	if err != nil {
 		return err
@@ -88,7 +88,7 @@ func (s *ConsulDeployDescStorage) Set(projectID string, desc *pb.DeploymentDescr
 
 // SetVersion satisfies the DeployDescStorage interface
 func (s *ConsulDeployDescStorage) SetVersion(projectID string, version string, desc *pb.DeploymentDescriptor) error {
-	key := filepath.Join(s.keyPath(projectID), "specs", version)
+	key := s.versionPath(projectID, version)
 	val, err := desc.Marshal()
 	if err != nil {
 		return err
@@ -107,14 +107,14 @@ func (s *ConsulDeployDescStorage) Delete(projectID string) error {
 
 // DeleteVersion satisfies the DeployDescStorage interface
 func (s *ConsulDeployDescStorage) DeleteVersion(projectID, version string) error {
-	key := filepath.Join(s.keyPath(projectID), "specs", version)
+	key := s.versionPath(projectID, version)
 	kv := s.client.KV()
 	_, err := kv.Delete(key, &api.WriteOptions{})
 	return err
 }
 
 func (s *ConsulDeployDescStorage) ListVersions(projectID string) ([]string, error) {
-	key := filepath.Join(s.keyPath(projectID), "specs")
+	key := s.keyPath(projectID)
 
 	kv := s.client.KV()
 	kvps, _, err := kv.List(key, &api.QueryOptions{})
@@ -127,7 +127,7 @@ func (s *ConsulDeployDescStorage) ListVersions(projectID string) ([]string, erro
 
 	versions := []string{}
 	for _, kvp := range kvps {
-		if kvp.Key == filepath.Join(s.keyPath(projectID), "specs") {
+		if kvp.Key == s.keyPath(projectID) {
 			continue
 		}
 		versions = append(versions, filepath.Base(kvp.Key))
@@ -136,6 +136,10 @@ func (s *ConsulDeployDescStorage) ListVersions(projectID string) ([]string, erro
 	return versions, nil
 }
 
+func (s *ConsulDeployDescStorage) versionPath(projectID, version string) string {
+	return filepath.Join(s.keyPath(projectID), version)
+}
+
 func (s *ConsulDeployDescStorage) keyPath(projectID string) string {
-	return filepath.Join(s.prefix, projectID, "descriptor")
+	return filepath.Join(s.prefix, projectID)
 }
