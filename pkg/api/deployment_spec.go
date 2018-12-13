@@ -95,7 +95,7 @@ func (api *httpHandler) setDeploymentSpec(r *http.Request, dpl *thrap.Deployment
 	}
 
 	if err == nil {
-		if err = dpl.SetDescriptor(desc, version); err == nil {
+		if err = dpl.SetDescriptor(version, desc); err == nil {
 			return desc.Spec, nil
 		}
 	}
