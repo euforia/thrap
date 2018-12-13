@@ -138,7 +138,7 @@ func (d *Deployments) Descriptor(version string) *pb.DeploymentDescriptor {
 }
 
 // SetDescriptor sets the deployment descriptor in the store.
-func (d *Deployments) SetDescriptor(desc *pb.DeploymentDescriptor, version string) error {
+func (d *Deployments) SetDescriptor(version string, desc *pb.DeploymentDescriptor) error {
 	err := d.descs.SetVersion(d.proj.ID, version, desc)
 	if err == nil {
 		d.desc = desc
