@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/euforia/thrap/pkg/storage"
+
 	"github.com/euforia/thrap/pkg/thrap"
 
 	"github.com/gorilla/mux"
@@ -20,7 +21,7 @@ func (api *httpHandler) handleListDeployments(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	d := proj.Deployments(storage.DefaultSpecVersion)
+	d := proj.Deployments()
 	deploys, err := d.List()
 
 	writeJSONResponse(w, deploys, err)
@@ -44,7 +45,7 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	dpl := proj.Deployments(storage.DefaultSpecVersion)
+	dpl := proj.Deployments()
 	ctx := r.Context()
 
 	switch r.Method {
@@ -53,7 +54,7 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 		d, err = dpl.Get(ctx, envID, instID)
 
 	case "POST":
-		d, err = dpl.Create(ctx, envID, instID)
+		d, err = dpl.Create(ctx, envID, instID, storage.DefaultSpecVersion)
 
 	case "PUT":
 		defer r.Body.Close()

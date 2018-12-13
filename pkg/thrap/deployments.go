@@ -33,7 +33,7 @@ type Deployments struct {
 }
 
 // NewDeployments returns a new Deployments instance for a given project
-func NewDeployments(t *Thrap, proj pb.Project, version string) *Deployments {
+func NewDeployments(t *Thrap, proj pb.Project) *Deployments {
 	depl := &Deployments{
 		t:       t,
 		proj:    proj,
@@ -41,7 +41,7 @@ func NewDeployments(t *Thrap, proj pb.Project, version string) *Deployments {
 		descs:   t.store.DeployDesc(),
 	}
 
-	depl.loadDescriptor(version)
+	depl.loadDescriptor()
 
 	return depl
 }
@@ -54,7 +54,7 @@ func (d *Deployments) List() ([]*pb.Deployment, error) {
 // Create creates a new deploy for the project with the given profile and instance
 // name. This is simply an initialization record. This must called before an
 // actual deploy can be performed.
-func (d *Deployments) Create(ctx context.Context, profileID, instanceName string) (*Deployment, error) {
+func (d *Deployments) Create(ctx context.Context, profileID, instanceName, version string) (*Deployment, error) {
 	nd := pb.NewDeployment(profileID, instanceName)
 	err := nd.Validate()
 	if err != nil {
@@ -83,6 +83,12 @@ func (d *Deployments) Create(ctx context.Context, profileID, instanceName string
 	if err := eng.SeedSecrets(seedReq); err != nil {
 		d.t.log.Println("Not seeding secrets:", err)
 	}
+
+	desc, err := d.descs.GetVersion(d.proj.ID, version)
+	if err != nil {
+		return nil, err
+	}
+	d.desc = desc
 
 	return newDeployment(d.proj, d.desc, nd, eng, d.deploys), nil
 }
@@ -123,8 +129,12 @@ func (d *Deployments) GetVersion(ctx context.Context, profID, instance, version 
 }
 
 // Descriptor returns the current loaded deployment descriptor
-func (d *Deployments) Descriptor() *pb.DeploymentDescriptor {
-	return d.desc
+func (d *Deployments) Descriptor(version string) *pb.DeploymentDescriptor {
+	desc, err := d.descs.GetVersion(d.proj.ID, version)
+	if err != nil {
+		return nil
+	}
+	return desc
 }
 
 // SetDescriptor sets the deployment descriptor in the store.
@@ -142,8 +152,8 @@ func (d *Deployments) ListDescriptors() ([]string, error) {
 }
 
 // loadDescriptor loads the default deployment descriptor from hard state
-func (d *Deployments) loadDescriptor(version string) error {
-	desc, err := d.descs.GetVersion(d.proj.ID, version)
+func (d *Deployments) loadDescriptor() error {
+	desc, err := d.descs.Get(d.proj.ID)
 	if err == nil {
 		d.desc = desc
 	}
