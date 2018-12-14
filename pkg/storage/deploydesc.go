@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 
 	"github.com/euforia/thrap/pkg/pb"
@@ -48,7 +49,7 @@ func (s *ConsulDeployDescStorage) Get(projectID string) (*pb.DeploymentDescripto
 		return nil, err
 	}
 	if kvp == nil {
-		return nil, errors.New("deployment descriptor not found: " + projectID)
+		return nil, errors.New("default deployment descriptor not found: " + projectID)
 	}
 
 	var desc pb.DeploymentDescriptor
@@ -66,7 +67,8 @@ func (s *ConsulDeployDescStorage) GetVersion(projectID string, version string) (
 		return nil, err
 	}
 	if kvp == nil {
-		return nil, errors.New("deployment descriptor not found: " + projectID)
+		return nil, fmt.Errorf("deployment descriptor not found project=%s version=%s",
+			projectID, version)
 	}
 
 	var desc pb.DeploymentDescriptor
@@ -113,6 +115,7 @@ func (s *ConsulDeployDescStorage) DeleteVersion(projectID, version string) error
 	return err
 }
 
+// ListVersions satisfies the DeployDescStorage interface
 func (s *ConsulDeployDescStorage) ListVersions(projectID string) ([]string, error) {
 	key := s.keyPath(projectID)
 

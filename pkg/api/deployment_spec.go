@@ -6,64 +6,12 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/euforia/thrap/pkg/storage"
-
 	"github.com/pkg/errors"
 
 	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/pkg/thrap"
 	"github.com/gorilla/mux"
 )
-
-func (api *httpHandler) handleDeploymentSpecDefault(w http.ResponseWriter, r *http.Request) {
-	projID := mux.Vars(r)["pid"]
-	proj, err := api.projects.Get(projID)
-	if err != nil {
-		err = errors.Wrapf(err, "project %s", projID)
-		w.WriteHeader(404)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	var (
-		dpl  = proj.Deployments()
-		resp []byte
-	)
-
-	switch r.Method {
-
-	case "GET":
-		desc := dpl.Descriptor(storage.DefaultSpecVersion)
-		if desc == nil || len(desc.Spec) == 0 {
-			w.WriteHeader(404)
-			return
-		}
-		resp = desc.Spec
-
-	case "POST":
-		resp, err = api.setDeploymentSpec(r, dpl, storage.DefaultSpecVersion)
-
-	case http.MethodOptions:
-		setAccessControlHeaders(w)
-		w.Header().Set("Access-Control-Allow-Methods", "GET,POST")
-		w.WriteHeader(200)
-		return
-
-	default:
-		w.WriteHeader(405)
-		return
-	}
-
-	if err != nil {
-		setAccessControlHeaders(w)
-		w.WriteHeader(400)
-		w.Write([]byte(err.Error()))
-	} else {
-		setAccessControlHeaders(w)
-		w.WriteHeader(200)
-		w.Write(resp)
-	}
-}
 
 func (api *httpHandler) setDeploymentSpec(r *http.Request, dpl *thrap.Deployments, version string) ([]byte, error) {
 	defer r.Body.Close()
@@ -103,7 +51,7 @@ func (api *httpHandler) setDeploymentSpec(r *http.Request, dpl *thrap.Deployment
 	return nil, err
 }
 
-func (api *httpHandler) handleDeploymentSpecs(w http.ResponseWriter, r *http.Request) {
+func (api *httpHandler) handleListDeploymentSpecs(w http.ResponseWriter, r *http.Request) {
 	projID := mux.Vars(r)["pid"]
 	proj, err := api.projects.Get(projID)
 	if err != nil {
@@ -121,7 +69,7 @@ func (api *httpHandler) handleDeploymentSpecs(w http.ResponseWriter, r *http.Req
 	switch r.Method {
 
 	case "GET":
-		descs, err := dpl.ListDescriptors()
+		descs, err := dpl.Descriptors()
 		if err != nil {
 			w.WriteHeader(500)
 			return
@@ -177,9 +125,10 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 	switch r.Method {
 
 	case "GET":
-		desc := dpl.Descriptor(version)
-		if desc == nil || len(desc.Spec) == 0 {
+		desc, err := dpl.Descriptor(version)
+		if err != nil {
 			w.WriteHeader(404)
+			w.Write([]byte(err.Error()))
 			return
 		}
 		resp = desc.Spec
@@ -188,9 +137,10 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 		resp, err = api.setDeploymentSpec(r, dpl, version)
 
 	case "PUT":
-		desc := dpl.Descriptor(version)
-		if desc == nil || len(desc.Spec) == 0 {
+		_, err = dpl.Descriptor(version)
+		if err != nil {
 			w.WriteHeader(404)
+			w.Write([]byte(err.Error()))
 			return
 		}
 		resp, err = api.setDeploymentSpec(r, dpl, version)

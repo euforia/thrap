@@ -25,8 +25,9 @@ var (
 
 // DeployRequest is the user facing request
 type DeployRequest struct {
-	Variables map[string]string
-	Dryrun    bool
+	Descriptor string
+	Vars       map[string]string
+	Dryrun     bool
 }
 
 // Deployment is used to manage a single deployment instance of a project
@@ -34,7 +35,7 @@ type Deployment struct {
 	// Project being deployed
 	proj pb.Project
 
-	// Deploy template/configuration
+	// Template/configuration tied to the deployment
 	desc *pb.DeploymentDescriptor
 
 	// User supplied definition for this deploy
@@ -43,18 +44,21 @@ type Deployment struct {
 	// Engine loaded with the deployment profile
 	eng Engine
 
-	store storage.DeploymentStorage
+	deploys storage.DeploymentStorage
+	descs   storage.DeployDescStorage
 }
 
-func newDeployment(proj pb.Project, desc *pb.DeploymentDescriptor,
-	deploy *pb.Deployment, eng Engine, store storage.DeploymentStorage) *Deployment {
+func newDeployment(proj pb.Project, deploy *pb.Deployment,
+	eng Engine,
+	descs storage.DeployDescStorage,
+	deploys storage.DeploymentStorage) *Deployment {
 
 	return &Deployment{
-		proj:  proj,
-		desc:  desc,
-		depl:  *deploy,
-		eng:   eng,
-		store: store,
+		proj:    proj,
+		depl:    *deploy,
+		eng:     eng,
+		deploys: deploys,
+		descs:   descs,
 	}
 }
 
@@ -67,8 +71,14 @@ func (d *Deployment) Deployable() pb.Deployment {
 // PrepareDeploy prepares a deployment.  This must be called before a
 // call to Deploy can be made
 func (d *Deployment) PrepareDeploy(ctx context.Context, req *DeployRequest) (orchestrator.PreparedDeployment, error) {
-	if d.desc == nil || len(d.desc.Spec) == 0 {
-		return nil, errDeployDescNotSet
+	var err error
+	if len(req.Descriptor) == 0 {
+		d.desc, err = d.descs.Get(d.proj.ID)
+	} else {
+		d.desc, err = d.descs.GetVersion(d.proj.ID, req.Descriptor)
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	if d.isVoid() {
@@ -76,7 +86,7 @@ func (d *Deployment) PrepareDeploy(ctx context.Context, req *DeployRequest) (orc
 			d.depl.State.String(), d.depl.Status.String())
 	}
 
-	if err := d.setupPrepare(req.Variables); err != nil {
+	if err := d.setupPrepare(req.Vars); err != nil {
 		return nil, err
 	}
 
@@ -131,7 +141,7 @@ func (d *Deployment) Deploy(ctx context.Context, req *DeployRequest) (*pb.Deploy
 // Sync persists the current deployment to the store
 func (d *Deployment) Sync() error {
 	d.depl.ModifiedAt = time.Now().UnixNano()
-	return d.store.Update(d.proj.ID, d.depl.Profile.ID, &d.depl)
+	return d.deploys.Update(d.proj.ID, d.depl.Profile.ID, &d.depl)
 }
 
 func (d *Deployment) isVoid() bool {
