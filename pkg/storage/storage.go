@@ -49,13 +49,20 @@ type DeploymentStorage interface {
 
 // DeployDescStorage implements storage to persist deployment descriptors
 type DeployDescStorage interface {
-	Get(string) (*pb.DeploymentDescriptor, error)
-	GetVersion(string, string) (*pb.DeploymentDescriptor, error)
-	Set(string, *pb.DeploymentDescriptor) error
-	SetVersion(string, string, *pb.DeploymentDescriptor) error
-	Delete(string) error
-	DeleteVersion(string, string) error
-	ListVersions(string) ([]string, error)
+	// Return the default descriptor for the project
+	Get(project string) (*pb.DeploymentDescriptor, error)
+	// Return a specific version of the descriptor for the project
+	GetVersion(project, version string) (*pb.DeploymentDescriptor, error)
+	// Set the descriptor to default version for the project
+	Set(project string, desc *pb.DeploymentDescriptor) error
+	// Set the descript to a specific version for the project
+	SetVersion(project string, version string, desc *pb.DeploymentDescriptor) error
+	// Deletes the default descriptor version for the project
+	Delete(project string) error
+	// Deletes a specific descriptor version for the project
+	DeleteVersion(project, version string) error
+	// Returns all descriptors for a project for the project
+	ListVersions(project string) ([]string, error)
 }
 
 // Storage implements an all encompasing storage
