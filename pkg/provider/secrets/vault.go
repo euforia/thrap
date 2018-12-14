@@ -15,7 +15,7 @@ const defaultPolicy = `{
 	capabilities = ["create", "read", "update", "delete", "list"]
 }`
 
-const defaultTimeout = 3 * time.Second
+const defaultTimeout = 2 * time.Second
 
 var (
 	vmap = map[uint8]map[string]string{
@@ -43,6 +43,7 @@ type VaultSecrets struct {
 	client *vault.Client
 }
 
+// Init initializes the instance
 // Envionment Variables:
 // VAULT_ADDR
 // VAULT_TOKEN (required)
@@ -131,6 +132,7 @@ func (sec *VaultSecrets) Authenticate(token string) (*vault.Secret, error) {
 	return secret, nil
 }
 
+// RecursiveGet gets all keys under the given startPath
 func (sec *VaultSecrets) RecursiveGet(startPath string) (map[string]map[string]interface{}, error) {
 	return sec.recursiveGet(startPath)
 }

@@ -42,6 +42,18 @@ func Test_Deployments(t *testing.T) {
 
 	ctx := context.WithValue(context.Background(), CredsContextKey, cfg.Credentials)
 
+	defer func() {
+		// Clear everything before starting
+		pstore := thrap.store.Project()
+		dstore := thrap.store.Deployment()
+		for _, tp := range testProjects {
+			pstore.Delete(tp.ID)
+			for _, dp := range testDeploys {
+				dstore.Delete(tp.ID, dp.Profile.ID, dp.Name)
+			}
+		}
+	}()
+
 	// defer os.RemoveAll(cfg.DataDir)
 
 	projects := &Projects{t: thrap, store: thrap.store.Project()}
@@ -55,10 +67,10 @@ func Test_Deployments(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	deploys := proj.Deployments(storage.DefaultSpecVersion)
-	deploys.SetDescriptor(&pb.DeploymentDescriptor{
+	deploys := proj.Deployments()
+	deploys.SetDescriptor(storage.DefaultSpecVersion, &pb.DeploymentDescriptor{
 		Spec: []byte(`{}`),
-	}, storage.DefaultSpecVersion)
+	})
 
 	// Create
 	for _, d := range testDeploys {
@@ -83,7 +95,7 @@ func Test_Deployments(t *testing.T) {
 		}
 		fmt.Println(dd.Deployable())
 		dd.eng = newDummyEngine(dd.eng.(*engine))
-		_, err = dd.Deploy(ctx, &DeployRequest{Variables: vars})
+		_, err = dd.Deploy(ctx, &DeployRequest{Vars: vars, Descriptor: storage.DefaultSpecVersion})
 		assert.Nil(t, err, "deploy: %s", dd.Deployable().Name)
 	}
 
@@ -97,7 +109,7 @@ func Test_Deployments(t *testing.T) {
 	// Re-deploy
 	dd, _ := deploys.Get(ctx, testDeploys[0].Profile.ID, testDeploys[0].Name)
 	dd.eng = newDummyEngine(dd.eng.(*engine))
-	_, err = dd.Deploy(ctx, &DeployRequest{Variables: vars})
+	_, err = dd.Deploy(ctx, &DeployRequest{Vars: vars, Descriptor: storage.DefaultSpecVersion})
 	assert.Nil(t, err)
 
 	dd, err = deploys.Get(ctx, "dev", "dev1")
@@ -107,15 +119,5 @@ func Test_Deployments(t *testing.T) {
 	// dd.eng = newDummyEngine(dd.eng.(*engine))
 	// _, err = dd.Deploy(nil)
 	// assert.Contains(t, err.Error(), "required variable")
-
-	// Clear everything before starting
-	pstore := thrap.store.Project()
-	dstore := thrap.store.Deployment()
-	for _, tp := range testProjects {
-		pstore.Delete(tp.ID)
-		for _, dp := range testDeploys {
-			dstore.Delete(tp.ID, dp.Profile.ID, dp.Name)
-		}
-	}
 
 }

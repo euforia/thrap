@@ -18,10 +18,6 @@ type Deployments struct {
 	// Project associated to the deployments are being managed
 	proj pb.Project
 
-	// Deployment descriptor i.e config/template used for all deploys across
-	// profiles and instances.  in-mem cache
-	desc *pb.DeploymentDescriptor
-
 	// Store with current deployables
 	deploys storage.DeploymentStorage
 
@@ -34,16 +30,12 @@ type Deployments struct {
 
 // NewDeployments returns a new Deployments instance for a given project
 func NewDeployments(t *Thrap, proj pb.Project) *Deployments {
-	depl := &Deployments{
+	return &Deployments{
 		t:       t,
 		proj:    proj,
 		deploys: t.store.Deployment(),
 		descs:   t.store.DeployDesc(),
 	}
-
-	depl.loadDescriptor()
-
-	return depl
 }
 
 // List returns a list of all deployments for the project
@@ -54,7 +46,7 @@ func (d *Deployments) List() ([]*pb.Deployment, error) {
 // Create creates a new deploy for the project with the given profile and instance
 // name. This is simply an initialization record. This must called before an
 // actual deploy can be performed.
-func (d *Deployments) Create(ctx context.Context, profileID, instanceName, version string) (*Deployment, error) {
+func (d *Deployments) Create(ctx context.Context, profileID, instanceName string) (*Deployment, error) {
 	nd := pb.NewDeployment(profileID, instanceName)
 	err := nd.Validate()
 	if err != nil {
@@ -84,13 +76,7 @@ func (d *Deployments) Create(ctx context.Context, profileID, instanceName, versi
 		d.t.log.Println("Not seeding secrets:", err)
 	}
 
-	desc, err := d.descs.GetVersion(d.proj.ID, version)
-	if err != nil {
-		return nil, err
-	}
-	d.desc = desc
-
-	return newDeployment(d.proj, d.desc, nd, eng, d.deploys), nil
+	return newDeployment(d.proj, nd, eng, d.descs, d.deploys), nil
 }
 
 // Get returns an existing deployment given the profile and instance name,
@@ -103,59 +89,23 @@ func (d *Deployments) Get(ctx context.Context, profID, instance string) (*Deploy
 
 	dp, err := d.deploys.Get(d.proj.ID, profID, instance)
 	if err == nil {
-		return newDeployment(d.proj, d.desc, dp, eng, d.deploys), nil
-	}
-
-	return nil, err
-}
-
-func (d *Deployments) GetVersion(ctx context.Context, profID, instance, version string) (*Deployment, error) {
-	eng, err := d.t.Engine(ctx, profID)
-	if err != nil {
-		return nil, err
-	}
-
-	spec, err := d.descs.GetVersion(d.proj.ID, version)
-	if err != nil {
-		return nil, errors.Wrap(err, "get spec version")
-	}
-
-	dp, err := d.deploys.Get(d.proj.ID, profID, instance)
-	if err == nil {
-		return newDeployment(d.proj, spec, dp, eng, d.deploys), nil
+		return newDeployment(d.proj, dp, eng, d.descs, d.deploys), nil
 	}
 
 	return nil, err
 }
 
 // Descriptor returns the current loaded deployment descriptor
-func (d *Deployments) Descriptor(version string) *pb.DeploymentDescriptor {
-	desc, err := d.descs.GetVersion(d.proj.ID, version)
-	if err != nil {
-		return nil
-	}
-	return desc
+func (d *Deployments) Descriptor(version string) (*pb.DeploymentDescriptor, error) {
+	return d.descs.GetVersion(d.proj.ID, version)
 }
 
 // SetDescriptor sets the deployment descriptor in the store.
 func (d *Deployments) SetDescriptor(version string, desc *pb.DeploymentDescriptor) error {
-	err := d.descs.SetVersion(d.proj.ID, version, desc)
-	if err == nil {
-		d.desc = desc
-	}
-	return err
+	return d.descs.SetVersion(d.proj.ID, version, desc)
 }
 
-// ListDescriptors lists all descriptors available in project
-func (d *Deployments) ListDescriptors() ([]string, error) {
+// Descriptors lists all descriptors available in project
+func (d *Deployments) Descriptors() ([]string, error) {
 	return d.descs.ListVersions(d.proj.ID)
-}
-
-// loadDescriptor loads the default deployment descriptor from hard state
-func (d *Deployments) loadDescriptor() error {
-	desc, err := d.descs.Get(d.proj.ID)
-	if err == nil {
-		d.desc = desc
-	}
-	return err
 }

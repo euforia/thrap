@@ -5,8 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/euforia/thrap/pkg/storage"
-
 	"github.com/euforia/thrap/pkg/thrap"
 
 	"github.com/gorilla/mux"
@@ -54,7 +52,7 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 		d, err = dpl.Get(ctx, envID, instID)
 
 	case "POST":
-		d, err = dpl.Create(ctx, envID, instID, storage.DefaultSpecVersion)
+		d, err = dpl.Create(ctx, envID, instID)
 
 	case "PUT":
 		defer r.Body.Close()
@@ -93,6 +91,6 @@ func (api *httpHandler) handleDeploy(d *thrap.Deployment, r *http.Request) error
 		return err
 	}
 
-	_, err = d.Deploy(r.Context(), &thrap.DeployRequest{Variables: vars})
+	_, err = d.Deploy(r.Context(), &thrap.DeployRequest{Vars: vars})
 	return err
 }

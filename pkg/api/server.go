@@ -78,9 +78,8 @@ func (server *Server) registerHandlers() {
 	server.registerHandler("/v1/project/{id}", server.handler.handleProject)
 
 	server.registerHandler("/v1/project/{pid}/deployments", server.handler.handleListDeployments)
-	server.registerHandler("/v1/project/{pid}/deployment/spec", server.handler.handleDeploymentSpecDefault)
 	server.registerHandler("/v1/project/{pid}/deployment/spec/{version}", server.handler.handleDeploymentSpec)
-	server.registerHandler("/v1/project/{pid}/deployment/specs", server.handler.handleDeploymentSpecs)
+	server.registerHandler("/v1/project/{pid}/deployment/specs", server.handler.handleListDeploymentSpecs)
 	server.registerHandler("/v1/project/{pid}/deployment/{eid}/{iid}", server.handler.handleDeployment)
 }
 
