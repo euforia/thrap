@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/euforia/thrap/pkg/thrap"
@@ -51,10 +50,10 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 	case "GET":
 		d, err = dpl.Get(ctx, envID, instID)
 
-	case "POST":
+	case "PUT":
 		d, err = dpl.Create(ctx, envID, instID)
 
-	case "PUT":
+	case "POST":
 		defer r.Body.Close()
 
 		d, err = dpl.Get(ctx, envID, instID)
@@ -81,16 +80,13 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 }
 
 func (api *httpHandler) handleDeploy(d *thrap.Deployment, r *http.Request) error {
-	b, err := ioutil.ReadAll(r.Body)
+	dec := json.NewDecoder(r.Body)
+
+	var req thrap.DeployRequest
+	err := dec.Decode(&req)
 	if err != nil {
 		return err
 	}
-
-	var vars map[string]string
-	if err = json.Unmarshal(b, &vars); err != nil {
-		return err
-	}
-
-	_, err = d.Deploy(r.Context(), &thrap.DeployRequest{Vars: vars})
+	_, err = d.Deploy(r.Context(), &req)
 	return err
 }

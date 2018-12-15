@@ -43,7 +43,8 @@ func (api *httpHandler) setDeploymentSpec(r *http.Request, dpl *thrap.Deployment
 	}
 
 	if err == nil {
-		if err = dpl.SetDescriptor(version, desc); err == nil {
+		desc.ID = version
+		if err = dpl.SetDescriptor(desc); err == nil {
 			return desc.Spec, nil
 		}
 	}
@@ -69,18 +70,10 @@ func (api *httpHandler) handleListDeploymentSpecs(w http.ResponseWriter, r *http
 	switch r.Method {
 
 	case "GET":
-		descs, err := dpl.Descriptors()
-		if err != nil {
-			w.WriteHeader(500)
-			return
-		} else if len(descs) == 0 {
-			w.WriteHeader(404)
-			return
-		}
-		resp, err = json.Marshal(descs)
-		if err != nil {
-			w.WriteHeader(500)
-			resp = []byte(err.Error())
+		var descs []string
+		descs, err = dpl.Descriptors()
+		if err == nil {
+			resp, err = json.Marshal(descs)
 		}
 
 	case http.MethodOptions:
@@ -116,6 +109,10 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 	}
 
 	version := mux.Vars(r)["version"]
+	if len(version) == 0 {
+		w.WriteHeader(404)
+		return
+	}
 
 	var (
 		dpl  = proj.Deployments()
@@ -133,21 +130,12 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 		}
 		resp = desc.Spec
 
-	case "POST":
-		resp, err = api.setDeploymentSpec(r, dpl, version)
-
 	case "PUT":
-		_, err = dpl.Descriptor(version)
-		if err != nil {
-			w.WriteHeader(404)
-			w.Write([]byte(err.Error()))
-			return
-		}
 		resp, err = api.setDeploymentSpec(r, dpl, version)
 
 	case http.MethodOptions:
 		setAccessControlHeaders(w)
-		w.Header().Set("Access-Control-Allow-Methods", "GET,POST")
+		w.Header().Set("Access-Control-Allow-Methods", "GET,PUT")
 		w.WriteHeader(200)
 		return
 

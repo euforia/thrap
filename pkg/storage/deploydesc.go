@@ -78,23 +78,16 @@ func (s *ConsulDeployDescStorage) GetVersion(projectID string, version string) (
 
 // Set satisfies the DeployDescStorage interface
 func (s *ConsulDeployDescStorage) Set(projectID string, desc *pb.DeploymentDescriptor) error {
-	key := s.versionPath(projectID, DefaultSpecVersion)
+	if len(desc.ID) == 0 {
+		desc.ID = DefaultSpecVersion
+	}
+
+	key := s.versionPath(projectID, desc.ID)
 	val, err := desc.Marshal()
 	if err != nil {
 		return err
 	}
 
-	kv := s.client.KV()
-	return putKV(kv, key, val)
-}
-
-// SetVersion satisfies the DeployDescStorage interface
-func (s *ConsulDeployDescStorage) SetVersion(projectID string, version string, desc *pb.DeploymentDescriptor) error {
-	key := s.versionPath(projectID, version)
-	val, err := desc.Marshal()
-	if err != nil {
-		return err
-	}
 	kv := s.client.KV()
 	return putKV(kv, key, val)
 }
@@ -124,11 +117,13 @@ func (s *ConsulDeployDescStorage) ListVersions(projectID string) ([]string, erro
 	if err != nil {
 		return nil, err
 	}
+
+	versions := make([]string, 0, len(kvps))
 	if kvps == nil {
-		return nil, errors.New("no versions found: " + projectID)
+		// return nil, errors.New("no versions found: " + projectID)
+		return versions, nil
 	}
 
-	versions := []string{}
 	for _, kvp := range kvps {
 		if kvp.Key == s.keyPath(projectID) {
 			continue

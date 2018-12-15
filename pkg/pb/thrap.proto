@@ -74,6 +74,7 @@ message Deployment {
 }
 
 message DeploymentDescriptor {
+    string ID = 1;
     // Deploy spec. This is the spec used to generate the actual
     // runtime Spec in the Deployment object i.e. a template
     bytes Spec = 2; 

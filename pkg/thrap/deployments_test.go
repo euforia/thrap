@@ -68,7 +68,7 @@ func Test_Deployments(t *testing.T) {
 	}
 
 	deploys := proj.Deployments()
-	deploys.SetDescriptor(storage.DefaultSpecVersion, &pb.DeploymentDescriptor{
+	deploys.SetDescriptor(&pb.DeploymentDescriptor{
 		Spec: []byte(`{}`),
 	})
 
