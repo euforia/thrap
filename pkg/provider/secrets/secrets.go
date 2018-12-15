@@ -46,9 +46,6 @@ func New(conf *provider.Config) (Secrets, error) {
 	case "mock":
 		sec = &Mock{}
 
-	// case "file":
-	// 	sec = NewFileSecrets()
-
 	default:
 		err = fmt.Errorf("unsupported secrets provider: '%s'", conf.Provider)
 
