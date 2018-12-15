@@ -101,8 +101,8 @@ func (d *Deployments) Descriptor(version string) (*pb.DeploymentDescriptor, erro
 }
 
 // SetDescriptor sets the deployment descriptor in the store.
-func (d *Deployments) SetDescriptor(version string, desc *pb.DeploymentDescriptor) error {
-	return d.descs.SetVersion(d.proj.ID, version, desc)
+func (d *Deployments) SetDescriptor(desc *pb.DeploymentDescriptor) error {
+	return d.descs.Set(d.proj.ID, desc)
 }
 
 // Descriptors lists all descriptors available in project

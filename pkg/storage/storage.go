@@ -55,8 +55,6 @@ type DeployDescStorage interface {
 	GetVersion(project, version string) (*pb.DeploymentDescriptor, error)
 	// Set the descriptor to default version for the project
 	Set(project string, desc *pb.DeploymentDescriptor) error
-	// Set the descript to a specific version for the project
-	SetVersion(project string, version string, desc *pb.DeploymentDescriptor) error
 	// Deletes the default descriptor version for the project
 	Delete(project string) error
 	// Deletes a specific descriptor version for the project

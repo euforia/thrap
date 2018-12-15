@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"path/filepath"
+	"sort"
 
 	"github.com/euforia/kvdb"
 
@@ -25,6 +26,21 @@ type InmemProfileStorage struct {
 	Profiles map[string]*pb.Profile
 }
 
+// Profiles holds a set of profiles to support sorting
+type Profiles []*pb.Profile
+
+func (p Profiles) Less(i, j int) bool {
+	return p[i].ID < p[j].ID
+}
+
+func (p Profiles) Len() int {
+	return len(p)
+}
+
+func (p Profiles) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
 // Get returns the profile by id.  It returns nil if it is not found
 func (db *InmemProfileStorage) Get(id string) (*pb.Profile, error) {
 	if val, ok := db.Profiles[id]; ok {
@@ -36,7 +52,7 @@ func (db *InmemProfileStorage) Get(id string) (*pb.Profile, error) {
 
 // List returns a list of all loaded profiles
 func (db *InmemProfileStorage) List() []*pb.Profile {
-	out := make([]*pb.Profile, 0, len(db.Profiles))
+	out := make(Profiles, 0, len(db.Profiles))
 
 	for _, v := range db.Profiles {
 		if v.ID == db.Default {
@@ -46,6 +62,7 @@ func (db *InmemProfileStorage) List() []*pb.Profile {
 			out = append(out, v.Clone())
 		}
 	}
+	sort.Sort(out)
 
 	return out
 }
