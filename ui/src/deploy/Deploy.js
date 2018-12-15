@@ -113,7 +113,6 @@ class Deploy extends Component {
             })
             .catch(error => {
                 this.setState({disabled:false});
-               
                 var resp = error.response;
                 this.setState({
                     errMsg: resp.data,
@@ -148,10 +147,7 @@ class Deploy extends Component {
         const { classes } = this.props;
         const { project, profile, instance } = this.props.match.params;
         const { disabled, specName, specErr } = this.state;
-        // only pass in initial vars
-        // const pairs = getKVPairs(this.state.profile.Variables);
         const pairs = this.state.vars;
-        // const vars = this.state.profile.Variables;
 
         return (
             <div>
@@ -163,7 +159,7 @@ class Deploy extends Component {
                             </Typography>
                         </Grid>
                         <Grid item xs={1} style={{textAlign:'right'}}>
-                            <IconButton component={Link} 
+                            <IconButton component={Link}
                                 to={'/project/'+project+'/deploy/'+profile+'/'+instance}
                             >
                                 <CloseIcon/>

@@ -42,7 +42,7 @@ class Descriptors extends Component {
         thrap.Specs(project)
         .then(resp => {
             var data = resp.data;
-            var specs = [];;
+            var specs = [];
             for (var i=0;i<data.length;i++) {
                 specs.push({name:data[i], id:data[i]});
             }
@@ -102,7 +102,8 @@ class Descriptors extends Component {
 
         return (
             <div>
-                <TextField label="Descriptor"
+                {specs.length > 0
+                ? <TextField label="Descriptor"
                     value={this.state.specName}
                     onChange={this.handleSelect}
                     select
@@ -112,17 +113,25 @@ class Descriptors extends Component {
                     disabled={disabled}
                 >
                     {specs.map(option => (
-                        <MenuItem key={option.id} value={option.id} 
-                            disabled={option.disabled}
-                        >
-                            {option.name}
-                        </MenuItem>
+                    <MenuItem key={option.id} value={option.id} disabled={option.disabled}>
+                        {option.name}
+                    </MenuItem>
                     ))}
                     <Divider/>
-                    <MenuItem value="_add">
-                        Add descriptor
-                    </MenuItem>
+                    <MenuItem value="_add">Add descriptor</MenuItem>
                 </TextField>
+                : <TextField label="Descriptor"
+                    value={this.state.specName}
+                    onChange={this.handleSelect}
+                    select
+                    error={error}
+                    fullWidth
+                    required
+                    disabled={disabled}
+                >
+                    <MenuItem value="_add">Add descriptor</MenuItem>
+                </TextField>
+                }
                 <Typography color="secondary">{errMsg}</Typography>
                 <div className={classes.jsonViewer}>
                     <ReactJson  name={specName}

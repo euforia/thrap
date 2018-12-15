@@ -13,6 +13,8 @@ const styles = theme => ({
         paddingRight: theme.spacing.unit*3,
         marginLeft: theme.spacing.unit,
         marginRight:theme.spacing.unit,
+        marginTop: theme.spacing.unit,
+        marginBottom:theme.spacing.unit,
     },
     status: {
         textAlign:'right',

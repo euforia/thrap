@@ -11,6 +11,11 @@ const styles = theme => ({
   appbarTitle: {
     flexGrow: 1,
   },
+  anchor: {
+    '&:hover': {
+      color: theme.palette.primary.main,
+    }
+}
 });
 
 class GlobalBar extends Component {
@@ -51,11 +56,17 @@ class GlobalBar extends Component {
     return (
         <AppBar position="static" className={classes.appbar} color="default">
           <Toolbar>
-            <Typography variant="h5"><Link to={'/'}>thrap</Link></Typography>
+            <Typography variant="h5">
+              <Link className={classes.anchor} to={'/'}>thrap</Link>
+            </Typography>
             <Typography style={{padding:'10px'}}> | </Typography>
-            <Typography variant="h5"><Link to="/projects">projects</Link></Typography>
+            <Typography variant="h5">
+              <Link className={classes.anchor} to="/projects">projects</Link>
+            </Typography>
             <Typography style={{padding:'10px'}}> | </Typography>
-            <Typography variant="h5"><Link to={'/docs'}>docs</Link></Typography>
+            <Typography variant="h5">
+              <Link className={classes.anchor} to={'/docs'}>docs</Link>
+            </Typography>
             <Typography className={classes.appbarTitle}></Typography>
             <IconButton color="inherit"
                 aria-owns={menuOpen ? 'menu-globalbar' : undefined}

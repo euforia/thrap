@@ -61,7 +61,7 @@ class Thrap {
   constructor() {
     this.auth = {};
 
-    var jsonData = sessionStorage.getItem('iam')
+    var jsonData = sessionStorage.getItem(AUTH_STORE_KEY)
     if (jsonData !== null) {
       var data = JSON.parse(jsonData);
       this.auth = data;

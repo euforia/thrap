@@ -27,6 +27,11 @@ const styles = theme => ({
     sections: {
         // borderRight: '1px solid #ddd',
         borderLeft: '1px solid #ddd',
+    },
+    anchor: {
+        '&:hover': {
+            color: theme.palette.primary.main,
+        }
     }
 });
 
@@ -70,7 +75,7 @@ class Project extends Component {
         return (
             <div>
                 <Typography variant="h4" className={classes.title}>
-                    <Link to={'/project/'+project.ID}>{project.Name}</Link>
+                    <Link to={'/project/'+project.ID} className={classes.anchor}>{project.Name}</Link>
                 </Typography>
                 <Grid container>
                     <Grid item xs={12}>

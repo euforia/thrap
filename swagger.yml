@@ -324,6 +324,7 @@ definitions:
         type: object
       Descriptor:
         type: string
+        description: "deployment descriptor / spec"
   Project:
     type: object
     properties:
