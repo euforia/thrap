@@ -109,10 +109,20 @@ paths:
       - Project
       responses:
         200:
-          description: "OK"
+          description: OK
           type: array
-  /project/{project}/deployment/spec:
-    post: 
+  /project/{project}/deployment/specs:
+    get:
+      summary: List descriptors
+      description: Returns a list of all descriptors
+      tags:
+      - Deployment
+      responses:
+        200:
+          description: OK
+          type: array
+  /project/{project}/deployment/spec/{version}:
+    put: 
       summary: Create/Update spec
       description: Creates or updates a deployment specification for a project
       tags:
@@ -123,6 +133,11 @@ paths:
           required: true
           type: string
           description: "project id"
+        - name: version
+          in: path
+          required: true
+          type: string
+          description: "spec version"  
         - name: Thrap-Profile
           in: header
           required: true
@@ -160,9 +175,20 @@ paths:
       description: Returns the registered deployment specification
       tags:
       - Deployment
+      parameters:
+        - name: project
+          in: path
+          required: true
+          type: string
+          description: "project id"
+        - name: version
+          in: path
+          required: true
+          type: string
+          description: "spec version"  
       responses:
         200:
-          description: "OK"
+          description: OK
           type: object
         404:
           description: Specification not found
@@ -204,7 +230,7 @@ paths:
           description: OK
           schema:
             $ref: "#/definitions/Deployment"
-    post:
+    put:
       summary: Create deployment
       description: Creates a new deployment instanace for a project in an environment
       tags:
@@ -241,9 +267,9 @@ paths:
           description: OK
           schema:
             $ref: "#/definitions/Deployment"
-    put:
+    post:
       summary: Deploy
-      description: Deploys an existing deployment bundle
+      description: Deploy an existing deployment bundle
       tags:
         - Deployment
       parameters:
@@ -262,6 +288,12 @@ paths:
           required: true
           type: string
           description: "instance id"
+        - in: body
+          name: deploy
+          type: object
+          description: "deploy data"
+          schema:
+            $ref: '#/definitions/Deploy'
         - name: Thrap-Profile
           in: header
           required: true
@@ -273,6 +305,11 @@ paths:
           schema:
             type: string
             format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#definitions/Deploy'
       responses:
         200:
           description: OK
@@ -280,6 +317,13 @@ paths:
             $ref: "#/definitions/Deployment"
 
 definitions:
+  Deploy:
+    type: object
+    properties:
+      Vars:
+        type: object
+      Descriptor:
+        type: string
   Project:
     type: object
     properties:
@@ -302,3 +346,10 @@ definitions:
         type: string
       Version:
         type: integer
+      Spec:
+        type: string
+        format: binary
+      Profile:
+        type: object
+      StateMessage:
+        type: string

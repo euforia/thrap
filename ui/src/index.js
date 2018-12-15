@@ -1,40 +1,36 @@
 import React from 'react';
-
 import ReactDOM from 'react-dom';
+
 import { BrowserRouter } from 'react-router-dom';
+import { MuiThemeProvider, createMuiTheme } from '@material-ui/core';
+// import blue from '@material-ui/core/colors/blue';
 
 import './index.css';
 import App from './App';
-// import registerServiceWorker from './registerServiceWorker';
 
-import { MuiThemeProvider, createMuiTheme } from '@material-ui/core';
+const basePath = "/ui/";
 
 const theme = createMuiTheme({
-    palette: {
-        type: 'dark', 
-        primary: { 
-            main: '#6958a0',
-        },
-        //secondary: { main: '#11cb5f' }
-    },
-    overrides: {
-        MuiInput: {
-            underline: {
-                color: '#abbbc6',
-                '&:before': {
-                    borderBottom: '1px solid #668295',// when input is not touched
-                },
-            },
-        },
-    },
+    // palette: {
+        // primary: { 
+        //     main: '#6958a0',
+        // },
+        // secondary: {
+        //     main: '#ec6565',
+        // }
+    // },
+    // anchor: {
+		// main: blue[500],
+		// selected: blue[700]
+	// },
 });
 
-ReactDOM.render((
-    <BrowserRouter basename={'/ui'}>
+ReactDOM.render(
+    <BrowserRouter basename={basePath}>
         <MuiThemeProvider theme={theme}>
             <App />
         </MuiThemeProvider>
-    </BrowserRouter>
-    ), document.getElementById('root'));
+    </BrowserRouter>, 
+    document.getElementById('root')
+);
 
-// registerServiceWorker();
