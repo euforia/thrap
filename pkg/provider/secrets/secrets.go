@@ -43,6 +43,9 @@ func New(conf *provider.Config) (Secrets, error) {
 	case "vault":
 		sec = &VaultSecrets{}
 
+	case "mock":
+		sec = &Mock{}
+
 	// case "file":
 	// 	sec = NewFileSecrets()
 
