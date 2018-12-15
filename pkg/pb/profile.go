@@ -44,6 +44,7 @@ func (p *Profile) Hash(h hash.Hash) {
 	h.Write([]byte(p.Secrets))
 	h.Write([]byte(p.Registry))
 	h.Write([]byte(p.VCS))
+	h.Write([]byte(p.IAM))
 
 	keys := make([]string, 0, len(p.Meta))
 	for k := range p.Meta {
@@ -78,6 +79,7 @@ func (p *Profile) Clone() *Profile {
 		Registry:     p.Registry,
 		Secrets:      p.Secrets,
 		VCS:          p.VCS,
+		IAM:          p.IAM,
 	}
 
 	if p.Meta != nil {

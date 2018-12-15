@@ -13,6 +13,7 @@ message Profile {
     string VCS                   = 6 [(gogoproto.moretags) = "hcl:\"vcs\""];
     map<string,string> Meta      = 7 [(gogoproto.moretags) = "hcl:\"meta\""];
     map<string,string> Variables = 8 [(gogoproto.moretags) = "hcl:\"variables\""];
+    string IAM                   = 9 [(gogoproto.moretags) = "hcl:\"iam\""];   
 }
 
 message Project {

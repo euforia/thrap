@@ -15,6 +15,12 @@ type Credentials struct {
 	VCS          map[string]map[string]string `hcl:"vcs"`
 	Secrets      map[string]map[string]string `hcl:"secrets"`
 	Orchestrator map[string]map[string]string `hcl:"orchestrator"`
+	IAM          map[string]map[string]string `hcl:"iam"`
+}
+
+// IAMCreds returns cres for an iam provider by the id
+func (cc *Credentials) IAMCreds(id string) map[string]string {
+	return cc.IAM[id]
 }
 
 // RegistryCreds returns creds for the registry by the id

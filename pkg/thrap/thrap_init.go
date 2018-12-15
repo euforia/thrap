@@ -46,11 +46,7 @@ func (t *Thrap) initStorage(conf *Config) error {
 
 	var err error
 	t.store, err = storage.NewConsulStorage(t.conf.Storage)
-
-	// t.ds, err = kvdb.NewBadgerDatastore(filepath.Join(conf.DataDir, dbDir), t.log)
-
 	return err
-	// return nil
 }
 
 func (t *Thrap) initSecretBackend(id string, creds map[string]string) (secrets.Secrets, error) {
@@ -70,7 +66,7 @@ func (t *Thrap) initIAM() error {
 	iams := make(map[string]iam.IAM)
 
 	for k, conf := range t.conf.IAM {
-		creds := t.creds.SecretsCreds(k)
+		creds := t.creds.IAMCreds(k)
 		if !loader.AddCredsToProviderConfig(conf, creds) {
 			t.log.Printf("No credentials for IAM: %s", k)
 		}

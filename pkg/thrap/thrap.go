@@ -156,12 +156,25 @@ func (t *Thrap) IAMEnabled() bool {
 
 // Authenticate authenticates against the profile with the credentials supplied.
 func (t *Thrap) Authenticate(profile, token string) (interface{}, error) {
+	// Check if iam has been configured
 	if !t.IAMEnabled() {
 		return nil, errIAMNotEnabled
 	}
-	ia, ok := t.iams[profile]
+
+	prof, err := t.profiles.Get(profile)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if profile supports IAM
+	if prof.IAM == "" {
+		return nil, errIAMNotEnabled
+	}
+
+	ia, ok := t.iams[prof.IAM]
 	if !ok {
 		return nil, fmt.Errorf("profile not found: %s", profile)
 	}
+
 	return ia.Authenticate(token)
 }
