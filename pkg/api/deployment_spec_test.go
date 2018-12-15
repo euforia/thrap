@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/euforia/thrap/pkg/credentials"
@@ -15,15 +14,14 @@ import (
 
 func newTestThrap() (*thrap.Thrap, error) {
 	conf := &thrap.Config{
-		ConfigDir: "../../.thrap",
+		ConfigDir: "../../test-fixtures",
 	}
 	if err := conf.Validate(); err != nil {
 		return nil, errors.Wrap(err, "new test server")
 	}
 
 	var err error
-	credsFile := filepath.Join(conf.ConfigDir, "creds.hcl")
-	conf.Credentials, err = credentials.ReadCredentials(credsFile)
+	conf.Credentials, err = credentials.ReadCredentials("../../.thrap/creds.hcl")
 	if err != nil {
 		return nil, err
 	}
