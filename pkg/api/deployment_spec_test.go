@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -12,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func newTestServer() (*Server, error) {
+func newTestThrap() (*thrap.Thrap, error) {
 	conf := &thrap.Config{
 		ConfigDir: "../../.thrap",
 	}
@@ -32,7 +33,11 @@ func newTestServer() (*Server, error) {
 		return nil, errors.Wrap(err, "new test server")
 	}
 
-	return NewServer(thp, &log.Logger{}), nil
+	return thp, nil
+}
+
+func newTestServer(thp *thrap.Thrap) *Server {
+	return NewServer(thp, log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds))
 }
 
 func executeRequest(srv *Server, req *http.Request) *httptest.ResponseRecorder {
@@ -44,17 +49,18 @@ func executeRequest(srv *Server, req *http.Request) *httptest.ResponseRecorder {
 
 func checkResponseCode(t *testing.T, expected, actual int) {
 	if expected != actual {
-		t.Errorf("Expected response code %d. Got %d\n", expected, actual)
+		t.Errorf("expected response code %d. got %d\n", expected, actual)
 	}
 }
 
 func TestListNoSpecs(t *testing.T) {
-	srv, err := newTestServer()
+	thp, err := newTestThrap()
 	if err != nil {
 		t.Fatal(err)
 	}
+	srv := newTestServer(thp)
 
-	req, _ := http.NewRequest("GET", "/v1/project/vfs/deployment/spec", nil)
+	req, _ := http.NewRequest("GET", "/v1/project/test_proj/deployment/specs", nil)
 	resp := executeRequest(srv, req)
 
 	checkResponseCode(t, http.StatusNotFound, resp.Code)
