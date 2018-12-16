@@ -5,7 +5,7 @@ import { Typography, Chip, Grid, Button, withStyles, Tooltip } from '@material-u
 
 import KVList from '../common/KVList';
 
-import thrap from '../api/thrap';
+import {thrap} from '../api/thrap';
 
 function getKVPairs(m) {
     if (m === null || m === undefined) return [];
@@ -83,20 +83,8 @@ class Deployment extends Component {
         });
     }
 
-    handleKVChange = pairs => {
-        this.setState({vars: pairs});
-    }
-
-    // handleKeyValueChange = (key, val) => {
-
-    // }
-
-    // handleKeyAdd = (key) => {
-        
-    // }
-
-    // handleKeyRemove = (key) => {
-        
+    // handleKVChange = pairs => {
+    //     this.setState({vars: pairs});
     // }
 
     updateSpec = code => {
@@ -143,13 +131,13 @@ class Deployment extends Component {
                         <KVList
                             readOnly={true}
                             pairs={varsPairs} 
-                            onKVChange={this.handleKVChange}
+                            // onKVChange={this.handleKVChange}
                         />
                         <Typography variant="h6" className={classes.heading}>Meta</Typography>
                         <KVList
                             readOnly={true}
                             pairs={metaPairs} 
-                            onKVChange={this.handleKVChange}
+                            // onKVChange={this.handleKVChange}
                         />
                     </Grid>
                     <Grid item xs={6}>

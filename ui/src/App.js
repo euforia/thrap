@@ -9,13 +9,14 @@ import Projects from './project/Projects';
 import APIDocs from './docs/Docs';
 import GlobalBar from './common/GlobalBar';
 
-import thrap from './api/thrap';
+import {thrap} from './api/thrap';
+import { Divider } from '@material-ui/core';
 
 const defaultRedirect = "/";
 const styles = theme => ({
   stageCont: {
-    paddingLeft: theme.spacing.unit * 20,
-    paddingRight: theme.spacing.unit * 20,
+    paddingLeft: theme.spacing.unit * 15,
+    paddingRight: theme.spacing.unit * 15,
   }
 });
 
@@ -26,7 +27,6 @@ class App extends Component {
     
     this.state = {
       profiles: [],
-      authd: thrap.isAuthd(),
     };
     
     this.fetchProfiles();
@@ -41,8 +41,6 @@ class App extends Component {
   }
 
   onLoginSucceeded = (data, event) => {
-    this.setState({authd:true});
-
     var nextPath = this.props.location.hash;
     if (nextPath === '') nextPath = defaultRedirect;
     else nextPath = nextPath.replace('#', '');
@@ -52,7 +50,6 @@ class App extends Component {
 
   handleLogout = (event) => {
     thrap.Deauthenticate();
-    this.setState({authd:false});
   }
 
   redirectToLogin = () => {
@@ -61,8 +58,9 @@ class App extends Component {
   }
 
   render() {
-    const { profiles, authd } = this.state;
+    const { profiles } = this.state;
     const { classes } = this.props;
+    const authd = thrap.isAuthd();
 
     return (
       <div>
@@ -71,11 +69,15 @@ class App extends Component {
           onLogout={this.handleLogout} 
           authd={authd}
         />
+        <Divider/>
         <Switch>
           <Route path="/docs" 
             render={(props) => <APIDocs {...props} />} 
           />
-          <Route path="/login" 
+          <Route path="/login/:profile"
+            render={(props) => <Login {...props} profiles={profiles} onLogin={this.onLoginSucceeded} />}
+          />
+          <Route path="/login"
             render={(props) => <Login {...props} profiles={profiles} onLogin={this.onLoginSucceeded} />}
           />
           <Route path="/projects" exact 
@@ -99,7 +101,7 @@ class App extends Component {
               </div>
             } 
           />
-          <Route path="/" 
+          <Route path="/" exact
             render={(props) => <Redirect to="/projects" {...props} />} 
           />
         </Switch>

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { withStyles, Typography, Grid, Button } from '@material-ui/core';
 import { Link } from 'react-router-dom';
-import thrap from '../api/thrap';
+import {thrap} from '../api/thrap';
 import KVList from '../common/KVList';
 import Descriptors from '../descriptor/Descriptors';
 import { IconButton } from '@material-ui/core';
@@ -41,17 +41,19 @@ class Deploy extends Component {
         super(props);
         this.state = {
             vars: [],
-            // metas: [],
             profile: {Variables:{}},
             errMsg: '',
             specName: '',
             specErr: false,
             disabled: false,
         };
+    }
 
-        if (!thrap.isAuthd()) {
-            const {project, profile, instance} = this.props.match.params;
-            var path = `/login#/project/${project}/deploy/${profile}/${instance}/deploy`;
+    componentDidMount() {
+        const { profile } = this.props.match.params;
+        if (!thrap.isAuthd(profile)) {
+            const {project, instance} = this.props.match.params;
+            var path = `/login/${profile}#/project/${project}/deploy/${profile}/${instance}/deploy`;
             this.props.history.push(path);
         } else {
             this.fetchProfile();
@@ -154,7 +156,7 @@ class Deploy extends Component {
                 <div style={{paddingTop: 20, paddingBottom:40}}>
                     <Grid container justify="space-between" alignItems="center">
                         <Grid item xs={8}>
-                            <Typography variant="h6">
+                            <Typography variant="h5">
                                 Deploy <b>{instance}</b> to <b>{profile}</b>
                             </Typography>
                         </Grid>

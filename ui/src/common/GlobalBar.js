@@ -12,10 +12,16 @@ const styles = theme => ({
     flexGrow: 1,
   },
   anchor: {
-    '&:hover': {
+    color: theme.palette.primary.main,
+    transition: '0.7s ease',
+    borderTop: '1px solid transparent',
+    '&:visited': {
       color: theme.palette.primary.main,
+    },
+    '&:hover': {
+      textShadow: '1px 1px ' + theme.palette.primary.light,
     }
-}
+  }
 });
 
 class GlobalBar extends Component {
@@ -54,7 +60,7 @@ class GlobalBar extends Component {
     const menuOpen = Boolean(anchorEl);
 
     return (
-        <AppBar position="static" className={classes.appbar} color="default">
+        <AppBar position="static" className={classes.appbar} color="inherit">
           <Toolbar>
             <Typography variant="h5">
               <Link className={classes.anchor} to={'/'}>thrap</Link>

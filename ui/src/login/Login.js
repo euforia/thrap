@@ -1,13 +1,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
-
 import Button from '@material-ui/core/Button';
 import { Paper, FormControl, TextField, MenuItem } from '@material-ui/core';
 import Typography from '@material-ui/core/Typography';
 import { Grid } from '@material-ui/core';
-// import API from '../api/api';
-import thrap from '../api/thrap';
+
+import {thrap} from '../api/thrap';
 
 const styles = theme => ({
   paper: {
@@ -30,8 +29,11 @@ class Login extends Component {
     constructor(props) {
         super(props);
 
+        const {profile} = this.props.match.params;
+        
         this.state = {
-            profile: 'dev',
+            profile: profile ? profile : 'dev',
+            profileDisabled: profile ? true : false,
             providers: {},
             provider: 'vault',
             authType: 'token',
@@ -43,10 +45,12 @@ class Login extends Component {
             tokenErr: false,
             errorMessage: '',
         }
+    }
 
+    componentWillMount() {
         this.fetchAuthProviders();
-        if (thrap.isAuthd()) {
-            props.onLogin();
+        if (thrap.isAuthd(this.state.profile)) {
+            this.props.onLogin();
         }
     }
 
@@ -116,24 +120,27 @@ class Login extends Component {
     render() {
         const { classes } = this.props;
         const profiles = this.props.profiles;
-        const providers = this.state.providers;
+        const { providers, profileDisabled, profile } = this.state;
 
         return (
             <Grid container>
                 <Grid item xs={12}>
                     <Paper className={classes.paper}>
-                        <Typography margin="normal" color="secondary" className={classes.errorMessage}>
+                        <Typography margin="normal" color="secondary" 
+                            className={classes.errorMessage}
+                        >
                             {this.state.errorMessage}
                         </Typography>
                         <FormControl fullWidth margin="normal">
                             <TextField label="Profile"
-                                value={this.state.profile}
+                                value={profile}
                                 onChange={this.handleChange('profile')}
                                 variant="outlined"
                                 margin="normal"
                                 select
                                 fullWidth
                                 required
+                                disabled={profileDisabled}
                             >
                                 {profiles.map(option => (
                                     <MenuItem key={option.ID} value={option.ID}>

@@ -4,7 +4,7 @@ import { IconButton } from '@material-ui/core';
 import CloseIcon from '@material-ui/icons/Close'; 
 import { Link } from 'react-router-dom';
 
-import thrap from '../api/thrap';
+import {thrap, validateName} from '../api/thrap';
 
 const styles = theme => ({
     footer: {
@@ -21,36 +21,59 @@ const styles = theme => ({
 class NewDeployment extends Component {
     constructor(props) {
         super(props);
+
+        var profile = props.match.params.profile ? props.match.params.profile : '';
         this.state = {
-            profile: '',
+            profile: profile,
+            profileDisabled: profile !== '',
             instance: '',
             profErr: false,
-            instErr: false,
+            instErr: '',
             disabled: false,
             errMsg: '',
         };
 
-        if (!thrap.isAuthd()) {
-            this.props.history.push(`/login#/project/${props.project}/deploys/new`);
+        if (!thrap.isAuthd(profile)) {
+            var path = profile === ''
+                ? `/login#/project/${props.project}/deploys/new`
+                : `/login/${profile}#/project/${props.project}/deploy/${profile}/new`;
+            this.props.history.push(path);
         }
     }
 
-    handleChange = name => event => {
-        var e = name.substr(0,4)+'Err',
-            val = event.target.value;
+    handleInstanceNameChange = (event) => {
+        var val = event.target.value;
+        
         this.setState({
-            [name]: val,
-            [e]: false,
-        });
+            instance: val,
+            instErr: validateName(val),
+        })
+    }
+
+    handleProfileChange = (event) => {
+        var val = event.target.value,
+            props = this.props;
+
+        // Make sure we are authd to the profile
+        if (!thrap.isAuthd(val)) {
+            var path = `/login/${val}#/project/${props.project}/deploy/${val}/new`;
+            props.history.push(path);
+            return;
+        }
+
+        this.setState({
+            profile: val,
+            profErr: false,
+        })
     }
 
     handleCreateDeploy = event => {
         var s = {
             profErr: this.state.profile === '',
-            instErr: this.state.instance === '',
+            instErr: validateName(this.state.instance),
         }
 
-        if (s.profErr||s.instErr) {
+        if (s.profErr||s.instErr!=='') {
             this.setState(s);
             return;
         }
@@ -78,7 +101,7 @@ class NewDeployment extends Component {
 
     render() {
         const { project, profiles } = this.props;
-        const { profile, disabled } = this.state;
+        const { profile, profErr, instance, instErr, disabled, profileDisabled } = this.state;
         const { classes } = this.props;
         
         return (
@@ -101,13 +124,13 @@ class NewDeployment extends Component {
                 <FormControl fullWidth>
                     <TextField label="Profile"
                         value={profile}
-                        onChange={this.handleChange('profile')}
+                        onChange={this.handleProfileChange}
                         margin="normal"
                         select
-                        error={this.state.profErr}
+                        error={profErr}
                         fullWidth
                         required
-                        disabled={disabled}
+                        disabled={disabled || profileDisabled}
                     >
                         {profiles.map(option => (
                             <MenuItem key={option.ID} value={option.ID}>
@@ -117,13 +140,13 @@ class NewDeployment extends Component {
                     </TextField>
                     <TextField 
                         label="Instance" 
-                        value={this.state.instance}
-                        onChange={this.handleChange('instance')}
-                        helperText=''
+                        value={instance}
+                        onChange={this.handleInstanceNameChange}
                         required
                         margin="normal"
                         fullWidth
-                        error={this.state.instErr}
+                        error={instErr!==''}
+                        helperText={instErr!=='' ? instErr : 'Name of new instance'}
                         disabled={disabled}
                     />
                 </FormControl>

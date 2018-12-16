@@ -1,8 +1,10 @@
 import React, { Component } from 'react';
-import {withStyles, Paper, Typography, Chip, Grid, List, ListItem, ListItemText, ListItemSecondaryAction} from '@material-ui/core';
+import {withStyles, Paper, Typography, Chip, Grid, IconButton, Tooltip} from '@material-ui/core';
+import { List, ListItem, ListItemText, ListItemSecondaryAction } from '@material-ui/core';
 import {Divider} from '@material-ui/core';
+import AddIcon from '@material-ui/icons/Add';
 import { Link } from 'react-router-dom';
-import thrap from '../api/thrap';
+import {thrap} from '../api/thrap';
 
 
 const styles = theme => ({
@@ -67,7 +69,14 @@ class DeploysBrief extends Component {
                                 <Typography variant="h5"><b>{obj.name}</b></Typography>
                             </Grid>
                             <Grid item xs={2} style={{textAlign:'right'}}>
-                                <Chip variant="outlined" label={obj.list.length}/>
+                                <Tooltip title={`New ${obj.name} deployment`} placement="right">
+                                    <IconButton
+                                        component={Link} 
+                                        to={`/project/${project}/deploy/${obj.name}/new`}
+                                    >
+                                        <AddIcon/>
+                                    </IconButton>
+                                </Tooltip>
                             </Grid>
                         </Grid>
                         <Divider className={classes.divider}></Divider>

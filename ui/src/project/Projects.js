@@ -2,12 +2,15 @@ import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import { List, ListItem, ListItemText, TextField, Button, Grid } from '@material-ui/core';
-import thrap from '../api/thrap';
+import {thrap} from '../api/thrap';
 
 const styles = theme => ({
   search: {
     paddingLeft: theme.spacing.unit * 2,
     paddingRight: theme.spacing.unit * 2,
+  },
+  header: {
+    paddingTop: theme.spacing.unit,
   }
 });
 
@@ -20,13 +23,16 @@ class Projects extends Component {
       projects: [],
       filter: '',
     }
-    this.fetchProjects();
   }
 
   fetchProjects() {
     thrap.Projects().then(projs => {
       this.setState({projects: projs.data});
     });
+  }
+
+  componentWillMount() {
+    this.fetchProjects();
   }
 
   handleFilterChange = event => {
@@ -55,8 +61,8 @@ class Projects extends Component {
 
     return (
       <div>
-        <Grid container alignItems="center" justify="space-between">
-            <Grid item xs={10}>
+        <Grid container alignItems="center" className={classes.header}>
+            <Grid item xs={11}>
               <div className={classes.search}>
                 <TextField label="Search"
                   value={this.state.filter}

@@ -5,7 +5,7 @@ import { Button, MenuItem, TextField, FormControl, InputAdornment } from '@mater
 import { Typography} from '@material-ui/core';
 import { CloudUploadOutlined } from '@material-ui/icons';
 
-import thrap from '../api/thrap';
+import {thrap, validateName} from '../api/thrap';
 
 const styles = theme => ({
     helperText: {
@@ -55,7 +55,7 @@ class ImportSpec extends Component {
             selectedSpecFile: '',
             invalidSpecFile: false,
             specName: '',
-            invalidSpecName: false,
+            specNameErr: '',
         }
 
         this.fileInput = React.createRef();
@@ -94,15 +94,10 @@ class ImportSpec extends Component {
         }
 
         var {specName} = this.state;
-        if (specName === '' || specName.includes(" ")) {
-            s.invalidSpecName = true;
-        } else {
-            s.invalidSpecName = false;
-        }
-
+        s.specNameErr = validateName(specName);
         this.setState(s);
 
-        if (s.invalidContentType||s.invalidSpecFile||s.invalidSpecName) {
+        if (s.invalidContentType||s.invalidSpecFile||s.specNameErr!=='') {
             return;
         }
 
@@ -133,35 +128,36 @@ class ImportSpec extends Component {
     handleNameChange = (event) => {
         var val = event.currentTarget.value;
         this.setState({
-            specName:val,
-            invalidSpecName: val==='' || val.includes(" ")
+            specName: val,
+            specNameErr: validateName(val),
         });
     }
 
     render() {
 
         const { classes } = this.props;
+        const { specName, specNameErr } = this.state;
 
         return (
             <div className={classes.container}>
                 <div>
                     <Typography variant="h6">New Descriptor</Typography>
                     <TextField
-                        value={this.state.specName}
+                        value={specName}
                         onChange={this.handleNameChange}
                         fullWidth
                         margin="normal"
                         required
                         label="Name"
-                        error={this.state.invalidSpecName}
+                        helperText={specNameErr !=='' ? specNameErr : 'Unique desciptor name'}
+                        error={specNameErr !== ''}
                     />
                     <FormControl style={{width: '100%'}}>
                         
                         <TextField
                             id="input-with-icon-textfield"
-                            label="Specification"
+                            label="Descriptor"
                             value={this.state.selectedSpecFile}
-                            // placeholder="Choose File"
                             margin="normal"
                             InputProps={{
                                 readOnly: true,
@@ -171,32 +167,25 @@ class ImportSpec extends Component {
                                     </InputAdornment>
                                 ),
                             }}
-                            // FormHelperTextProps={{className:classes.helperText}}
-                            helperText="deployment specification file"
+                            helperText="Deployment file"
                             error={this.state.invalidSpecFile}
                         />
                         <input type="file" className={classes.fileUploadInput}
                             ref={this.fileInput} onChange={this.onFileSelected} />
-                        {/* <br /> */}
                     </FormControl>
                         <TextField 
                             id="desc-content-type"
                             name="Type"
                             label="Content Type"
                             select
-                            // SelectProps={{
-                            //     native: true,
-                            // }}
                             value={this.state.selectedType}
                             onChange={this.onDescContentTypeChange}
                             margin="normal"
-                            // FormHelperTextProps={{className:classes.helperText}}
-                            helperText="descriptor content type"
+                            helperText="Descriptor content type"
                             required
                             fullWidth
                             error={this.state.invalidContentType}
                         >
-                            {/* <option value=""></option> */}
                             {descContentTypes.map(option => (
                                 <MenuItem key={option.value} value={option.value}>
                                     {option.label}

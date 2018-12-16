@@ -34,6 +34,8 @@ const deployState = {
   },
 };
 
+const nameRe = /^[a-z0-9\-_]+$/i;
+
 const deployStateColors = {
   0: {
     0: 'default',
@@ -72,12 +74,17 @@ class Thrap {
     return `${THRAP_HOST}`;
   }
 
-  // setURLPath(path) {
-  //   window.history.pushState("", "", UI_BASE_PATH+path);
-  // }
-
-  isAuthd() {
-    var a = this.auth;
+  isAuthd(profile) {
+    // Any auth'd profile if profile not supplied
+    if (profile === undefined || profile === '' || profile === null) {
+      var arr = Object.keys(this.auth);
+      if (arr.length > 0) {
+        return true
+      }
+      return false
+    }
+    var a = this.auth[profile];
+    if (a === undefined || a === null) return false
     return a.data !== undefined && a.data.id !== undefined;
   }
 
@@ -101,11 +108,14 @@ class Thrap {
     ));
 }
 
-  requestHeaders() {
-    return {
-      [PROFILE_HEADER]: this.auth.profile,
-      [TOKEN_HEADER]:  this.auth.data.id,
+  requestHeaders(profile) {
+    // TODO:check profile exists
+    var obj = {
+      [PROFILE_HEADER]: profile,
+      [TOKEN_HEADER]:  this.auth[profile].data.id,
     };
+    console.log('headers', obj);
+    return obj;
   }
 
   Profiles() {
@@ -125,12 +135,13 @@ class Thrap {
 
   CreateProject(payload) {
     const path = `${THRAP_BASE}/project/${payload.Project.ID}`;
+    const profiles = Object.keys(this.auth);
 
     return axios({
       method: 'POST',
       url: path,
       data: payload,
-      headers: this.requestHeaders(),
+      headers: this.requestHeaders(profiles[0]),
     });
   }
 
@@ -141,23 +152,22 @@ class Thrap {
 
   Deployments(project) {
     const path = `${THRAP_BASE}/project/${project}/deployments`;
-    
     return axios.get(path);
   }
 
-  CreateDeployment(project, environment, instance) {
-    const path = `${THRAP_BASE}/project/${project}/deployment/${environment}/${instance}`;
+  CreateDeployment(project, profile, instance) {
+    const path = `${THRAP_BASE}/project/${project}/deployment/${profile}/${instance}`;
     
     return axios({
       method: 'put',
       url: path,
       data: {Name: instance},
-      headers: this.requestHeaders(),
+      headers: this.requestHeaders(profile),
     });
   }
 
-  Deployment(project, environment, instance) {
-    const path = `${THRAP_BASE}/project/${project}/deployment/${environment}/${instance}`;
+  Deployment(project, profile, instance) {
+    const path = `${THRAP_BASE}/project/${project}/deployment/${profile}/${instance}`;
     return axios.get(path);
   }
 
@@ -173,10 +183,11 @@ class Thrap {
 
   PutSpec(project, specName, specFormat, spec) {
     const path = `${THRAP_BASE}/project/${project}/deployment/spec/${specName}`;
+    const profiles = Object.keys(this.auth);
 
-    var headers = this.requestHeaders()
+    var headers = this.requestHeaders(profiles[0]);
     headers['Content-Type'] = specFormat;
-
+  
     return axios({
       method: 'put',
       url: path,
@@ -185,13 +196,13 @@ class Thrap {
     });
   }
 
-  DeployInstance(project, environment, instance, payload) {
-    const path = `${THRAP_BASE}/project/${project}/deployment/${environment}/${instance}`;
+  DeployInstance(project, profile, instance, payload) {
+    const path = `${THRAP_BASE}/project/${project}/deployment/${profile}/${instance}`;
     return axios({
       method: 'post',
       url: path,
       data: payload,
-      headers: this.requestHeaders(),
+      headers: this.requestHeaders(profile),
     });
   }
 
@@ -220,7 +231,6 @@ class Thrap {
   
   Deauthenticate() {
     this.auth = {};
-    this.authProfile = '';
     sessionStorage.removeItem(AUTH_STORE_KEY);
   }
 
@@ -235,14 +245,13 @@ class Thrap {
         [PROFILE_HEADER]: profile,
       },
     });
+    console.log(token);
 
     return new Promise((resolve, reject) => {
       req
         .then(({data}) => {
-          data.profile = profile;
-          this.auth = data;
-          
-          sessionStorage.setItem(AUTH_STORE_KEY, JSON.stringify(data));
+          this.auth[profile] = data;
+          sessionStorage.setItem(AUTH_STORE_KEY, JSON.stringify(this.auth));
           resolve(data);
         })
         .catch(error => {
@@ -255,5 +264,14 @@ class Thrap {
 
 const thrap = new Thrap();
 
-export default thrap;
+function validateName(val) {
+  var match = nameRe.exec(val)
+  return match ? '' 
+      : 'Only alpha-numeric characters, -, and _ allowed'
+}
+
+export {
+  thrap,
+  validateName,
+};
 

@@ -4,7 +4,7 @@ import CloseIcon from '@material-ui/icons/Close';
 
 import { Link } from 'react-router-dom';
 
-import thrap from '../api/thrap';
+import { thrap, validateName } from '../api/thrap';
 
 const styles = theme => ({
   footer: {
@@ -27,7 +27,7 @@ class NewProject extends Component {
         this.state = {
             id: '',
             name: '',
-            nameErr: false,
+            nameErr: '',
             errMsg: '',
             disabled: false,
         }
@@ -40,7 +40,7 @@ class NewProject extends Component {
         var val = event.target.value;
         this.setState({
             [name]: val,
-            nameErr: val.includes(" "),
+            nameErr: validateName(val),
             id: val.toLowerCase(),
         })
     }
@@ -48,10 +48,10 @@ class NewProject extends Component {
     handleCreateProject = event => {
         var {name}  = this.state;
         var s = {
-            nameErr: name === ''
+            nameErr: validateName(name)
         }
         this.setState(s);
-        if (s.nameErr) return;
+        if (s.nameErr!=='') return;
 
 
         this.setState({disabled:true});
@@ -77,7 +77,7 @@ class NewProject extends Component {
 
     render() {
         const { classes } = this.props;
-        const { disabled } = this.state;
+        const { disabled, nameErr } = this.state;
         return (
             <div>
                 <Grid container alignItems="center" justify="space-between">
@@ -110,7 +110,8 @@ class NewProject extends Component {
                         required
                         margin="normal"
                         fullWidth
-                        error={this.state.nameErr}
+                        error={nameErr!==''}
+                        helperText={nameErr!=='' ? nameErr : 'Unique project name'}
                         disabled={disabled}
                     />
                 </FormControl>

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Route } from 'react-router-dom';
 
-import { Typography, Grid } from '@material-ui/core';
+import { Typography } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 import { Link, Switch, Redirect } from 'react-router-dom';
 import ConfirmDelete from '../common/ConfirmDelete';
@@ -10,14 +10,12 @@ import Deployment from '../deploy/Deployment';
 import NewDeployment from '../deploy/NewDeployment';
 import Deploy from '../deploy/Deploy';
 
-import thrap from '../api/thrap';
+import {thrap} from '../api/thrap';
 
 const styles = theme => ({
     title: {
         paddingTop: theme.spacing.unit * 3,
         paddingBottom: theme.spacing.unit * 3,
-        // paddingLeft: theme.spacing.unit * 4,
-        // paddingRight: theme.spacing.unit * 4,
     },
     footer: {
         paddingTop: theme.spacing.unit * 2,
@@ -25,12 +23,16 @@ const styles = theme => ({
         textAlign: 'right',
     },
     sections: {
-        // borderRight: '1px solid #ddd',
         borderLeft: '1px solid #ddd',
     },
     anchor: {
-        '&:hover': {
+        color: theme.palette.primary.main,
+        transition: '0.7s ease',
+        '&:visited': {
             color: theme.palette.primary.main,
+        },
+        '&:hover': {
+            textShadow: '1px 1px ' + theme.palette.primary.light,
         }
     }
 });
@@ -62,44 +64,41 @@ class Project extends Component {
     }
     
     handleDelete = event => {
-        // API.DeleteProject(this.state.project.ID).then(resp => {
-        //     this.props.history.push('/projects');
-        // });
     }
 
     render() {
-        const { classes } = this.props;
-        const profiles = this.props.profiles;
+        const { classes, profiles } = this.props;
         const project = this.state.project;
-
         return (
             <div>
                 <Typography variant="h4" className={classes.title}>
-                    <Link to={'/project/'+project.ID} className={classes.anchor}>{project.Name}</Link>
+                    <Link to={'/project/'+project.ID} className={classes.anchor}>
+                        {project.Name}
+                    </Link>
                 </Typography>
-                <Grid container>
-                    <Grid item xs={12}>
-                        <Switch>
-                            <Route exact 
-                                path="/project/:project/deploys" 
-                                render={(props) => <Deployments {...props} project={project.ID} />} 
-                            />
-                            <Route exact
-                                path="/project/:project/deploys/new" 
-                                render={(props) => <NewDeployment {...props} project={project.ID} profiles={profiles} /> } 
-                            />
-                            <Route exact 
-                                path="/project/:project/deploy/:profile/:instance" 
-                                render={(props) => <Deployment {...props} />} 
-                            />
-                            <Route exact 
-                                path="/project/:project/deploy/:profile/:instance/deploy" 
-                                render={(props) => <Deploy {...props} />} 
-                            />
-                            <Redirect to="/project/:project/deploys" />
-                        </Switch>
-                    </Grid>
-                </Grid>
+                <Switch>
+                    <Route exact 
+                        path="/project/:project/deploys" 
+                        render={(props) => <Deployments {...props} project={project.ID} />} 
+                    />
+                    <Route exact
+                        path="/project/:project/deploys/new" 
+                        render={(props) => <NewDeployment {...props} project={project.ID} profiles={profiles} /> } 
+                    />
+                    <Route exact
+                        path="/project/:project/deploy/:profile/new" 
+                        render={(props) => <NewDeployment {...props} project={project.ID} profiles={profiles} /> } 
+                    />
+                    <Route exact 
+                        path="/project/:project/deploy/:profile/:instance" 
+                        render={(props) => <Deployment {...props} />} 
+                    />
+                    <Route exact 
+                        path="/project/:project/deploy/:profile/:instance/deploy" 
+                        render={(props) => <Deploy {...props} />} 
+                    />
+                    <Redirect to="/project/:project/deploys" />
+                </Switch>
                 <div className={classes.footer}>
                     {/* <Button color="secondary" onClick={this.showDelConfirm}>Delete</Button> */}
                 </div>

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { withStyles, MenuItem, TextField, Paper, Divider } from '@material-ui/core';
-import thrap from '../api/thrap';
+import {thrap} from '../api/thrap';
 import ImportSpec from './ImportSpec';
 import ReactJson from 'react-json-view';
 import { Modal, Typography } from '@material-ui/core';
@@ -15,6 +15,7 @@ const styles = theme => ({
         paddingBottom:theme.spacing.unit*2,
     },
     modalCenter: {
+        width: 500,
         position: 'absolute',
         top: '50%',
         left: "50%",

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Chip, withStyles, TableSortLabel } from '@material-ui/core';
 import { Table, TableHead, TableRow, TableCell, TableBody } from '@material-ui/core';
 
-import thrap from '../api/thrap';
+import {thrap} from '../api/thrap';
 
 const styles = theme => ({
    header: {

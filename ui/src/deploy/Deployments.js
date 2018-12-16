@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import { Grid, Button, Typography, withStyles,  IconButton } from '@material-ui/core';
+import { Grid, Typography, withStyles,  IconButton, Tooltip } from '@material-ui/core';
+
 import ListIcon from '@material-ui/icons/List';
+import AddToPhotosOutlinedIcon from '@material-ui/icons/AddToPhotosOutlined';
 import ViewModuleIcon from '@material-ui/icons/ViewModule';
 
-import thrap from '../api/thrap';
+import {thrap} from '../api/thrap';
 import DeploysBrief from './DeploysBrief';
 import DeploysList from './DeploysList';
 
@@ -39,7 +41,6 @@ class Deployments extends Component {
     fetchDeploys() {
         const proj = this.props.match.params.project;
         thrap.Deployments(proj).then(resp =>  {
-            // console.log(resp.data);
             this.setState({deploys: resp.data});
         });
     }
@@ -61,18 +62,22 @@ class Deployments extends Component {
                         <Grid item xs={4}>
                             <Typography variant="h5">Deployments</Typography>
                         </Grid>
+                        
                         <Grid item xs={4} style={{textAlign:'right'}}>
-                            <Button 
-                                color="primary" 
-                                margin="normal" 
-                                variant="outlined"
-                                component={Link} to={'/project/'+project+'/deploys/new'}
-                            >
-                                New
-                            </Button>
                             <IconButton onClick={this.toggleView}>
-                                {listView ? <ViewModuleIcon/> : <ListIcon/>}
+                                {listView 
+                                ? <Tooltip title="Profile view"><ViewModuleIcon/></Tooltip>
+                                : <Tooltip title="List view"><ListIcon/></Tooltip>
+                                }
                             </IconButton>
+                            <Tooltip title="New deployment">
+                                <IconButton
+                                    component={Link} 
+                                    to={'/project/'+project+'/deploys/new'}
+                                >
+                                    <AddToPhotosOutlinedIcon/>
+                                </IconButton>
+                            </Tooltip>
                         </Grid>
                     </Grid>
                 </div>

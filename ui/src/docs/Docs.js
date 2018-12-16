@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { RedocStandalone } from 'redoc';
-import thrap from '../api/thrap.js';
+import {thrap} from '../api/thrap.js';
 
 class APIDocs extends Component {
     render() {
