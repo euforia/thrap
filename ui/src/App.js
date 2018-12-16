@@ -12,6 +12,8 @@ import GlobalBar from './common/GlobalBar';
 import {thrap} from './api/thrap';
 import { Divider } from '@material-ui/core';
 
+import './App.css';
+
 const defaultRedirect = "/";
 const styles = theme => ({
   stageCont: {

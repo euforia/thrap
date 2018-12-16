@@ -153,22 +153,22 @@ class Deploy extends Component {
 
         return (
             <div>
-                <div style={{paddingTop: 20, paddingBottom:40}}>
-                    <Grid container justify="space-between" alignItems="center">
-                        <Grid item xs={8}>
-                            <Typography variant="h5">
-                                Deploy <b>{instance}</b> to <b>{profile}</b>
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={1} style={{textAlign:'right'}}>
-                            <IconButton component={Link}
-                                to={'/project/'+project+'/deploy/'+profile+'/'+instance}
-                            >
-                                <CloseIcon/>
-                            </IconButton>
-                        </Grid>
+                <Grid container justify="space-between" alignItems="center" 
+                    className={classes.heading}
+                >
+                    <Grid item xs={8}>
+                        <Typography variant="h5">
+                            Deploy <b>{instance}</b> to <b>{profile}</b>
+                        </Typography>
                     </Grid>
-                </div>
+                    <Grid item xs={1} style={{textAlign:'right'}}>
+                        <IconButton component={Link}
+                            to={'/project/'+project+'/deploy/'+profile+'/'+instance}
+                        >
+                            <CloseIcon/>
+                        </IconButton>
+                    </Grid>
+                </Grid>
                 <Typography color="secondary">{this.state.errMsg}</Typography>
                 <Grid container justify="space-between">
                     <Grid item xs={5}>

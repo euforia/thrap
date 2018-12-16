@@ -175,6 +175,19 @@ class Thrap {
     return axios.get(path);
   }
 
+  DeleteSpec(project, version) {
+    const path = `${THRAP_BASE}/project/${project}/deployment/spec/${version}`;
+    
+    const profiles = Object.keys(this.auth);
+    var headers = this.requestHeaders(profiles[0]);
+
+    return axios({
+      url: path,
+      method: 'delete',
+      headers: headers,
+    });
+  }
+
   Specs(project) {
     const path = `${THRAP_BASE}/project/${project}/deployment/specs`;
     return axios.get(path);

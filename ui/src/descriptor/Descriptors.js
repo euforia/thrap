@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
 import { withStyles, MenuItem, TextField, Paper, Divider } from '@material-ui/core';
-import {thrap} from '../api/thrap';
+import { Modal, Typography } from '@material-ui/core';
+
 import ImportSpec from './ImportSpec';
 import ReactJson from 'react-json-view';
-import { Modal, Typography } from '@material-ui/core';
+
+import {thrap} from '../api/thrap';
 
 const styles = theme => ({
     heading: {
@@ -135,7 +137,7 @@ class Descriptors extends Component {
                 }
                 <Typography color="secondary">{errMsg}</Typography>
                 <div className={classes.jsonViewer}>
-                    <ReactJson  name={specName}
+                    <ReactJson name={specName}
                         src={this.state.spec}
                         style={{background: 'none', width:'100%', minHeight: '50px'}}
                         displayObjectSize={true} 

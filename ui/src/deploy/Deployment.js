@@ -16,7 +16,7 @@ function getKVPairs(m) {
 }
 
 const styles = theme => ({
-    heading: {
+    header: {
         paddingBottom: theme.spacing.unit,
         paddingTop: theme.spacing.unit,
     },
@@ -100,30 +100,29 @@ class Deployment extends Component {
        
         return (
             <div>
-                <Grid container alignItems="center" justify="space-between">
+                <Grid container alignItems="center" className={classes.header}>
                     <Grid item xs={2}>
-                        <div style={{padding: '20px 0'}}>
-                            <Typography variant="h5">{deploy.Name}</Typography>
-                            <Typography>Profile: {deploy.Profile.ID}</Typography>
-                        </div>
+                        <Typography variant="h5">{deploy.Name}</Typography>
+                        <Typography>Profile: {deploy.Profile.ID}</Typography>
                     </Grid>
                     <Grid item xs={10} style={{textAlign:'right'}}>
-                        <Tooltip title={deploy.StateMessage ? deploy.StateMessage : 'Status'}>
-                            <Chip 
-                                label={thrap.stateLabel(deploy.State,deploy.Status)} 
-                                color={thrap.stateLabelColor(deploy.State, deploy.Status)}
-                            />
-                        </Tooltip>
+                        <Button color="primary" variant="outlined"
+                            component={Link} 
+                            to={"/project/"+project+"/deploy/"+deploy.Profile.ID+"/"+deploy.Name+"/deploy"}
+                        >
+                            {thrap.stateLabel(deploy.State,deploy.Status)==='Deployed' ? 'Re-deploy' : 'Deploy'}
+                        </Button>
                     </Grid>
                 </Grid>
-                {/* <Divider/> */}
                 <div className={classes.btnPanel}>
-                    <Button color="primary" variant="outlined"
-                        component={Link} 
-                        to={"/project/"+project+"/deploy/"+deploy.Profile.ID+"/"+deploy.Name+"/deploy"}
+                    <Tooltip title={deploy.StateMessage ? deploy.StateMessage : 'Status'} 
+                        placement="left"
                     >
-                        {thrap.stateLabel(deploy.State,deploy.Status)==='Deployed' ? 'Re-deploy' : 'Deploy'}
-                    </Button>
+                        <Chip 
+                            label={thrap.stateLabel(deploy.State,deploy.Status)} 
+                            color={thrap.stateLabelColor(deploy.State, deploy.Status)}
+                        />
+                    </Tooltip>
                 </div>
                 <Grid container justify="space-between">
                     <Grid item xs={5}>

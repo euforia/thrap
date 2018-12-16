@@ -141,7 +141,7 @@ class ImportSpec extends Component {
         return (
             <div className={classes.container}>
                 <div>
-                    <Typography variant="h6">New Descriptor</Typography>
+                    <Typography variant="h5">New Descriptor</Typography>
                     <TextField
                         value={specName}
                         onChange={this.handleNameChange}

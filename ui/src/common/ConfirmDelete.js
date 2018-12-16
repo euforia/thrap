@@ -51,7 +51,7 @@ class ConfirmDelete extends Component {
             <div className={classes.footer}>
                 <Button color="default" className={classes.button} 
                   onClick={this.props.onCancel}>Cancel</Button>
-                <Button color="secondary" className={classes.button} variant="contained" 
+                <Button color="secondary" className={classes.button}
                   onClick={this.props.onDelete}>Delete</Button>
             </div>
           </div>

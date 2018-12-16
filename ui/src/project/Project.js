@@ -1,21 +1,23 @@
 import React, { Component } from 'react';
 import { Route } from 'react-router-dom';
-
-import { Typography } from '@material-ui/core';
+import { Typography, Divider } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 import { Link, Switch, Redirect } from 'react-router-dom';
+
 import ConfirmDelete from '../common/ConfirmDelete';
 import Deployments from '../deploy/Deployments';
 import Deployment from '../deploy/Deployment';
 import NewDeployment from '../deploy/NewDeployment';
 import Deploy from '../deploy/Deploy';
+import DescEditor from '../descriptor/DescEditor';
+import DescList from '../descriptor/DescList';
 
 import {thrap} from '../api/thrap';
 
 const styles = theme => ({
     title: {
-        paddingTop: theme.spacing.unit * 3,
-        paddingBottom: theme.spacing.unit * 3,
+        paddingTop: theme.spacing.unit * 2,
+        paddingBottom: theme.spacing.unit * 2,
     },
     footer: {
         paddingTop: theme.spacing.unit * 2,
@@ -71,11 +73,12 @@ class Project extends Component {
         const project = this.state.project;
         return (
             <div>
-                <Typography variant="h4" className={classes.title}>
+                <Typography variant="h5" className={classes.title}>
                     <Link to={'/project/'+project.ID} className={classes.anchor}>
                         {project.Name}
                     </Link>
                 </Typography>
+                <Divider/>
                 <Switch>
                     <Route exact 
                         path="/project/:project/deploys" 
@@ -84,6 +87,12 @@ class Project extends Component {
                     <Route exact
                         path="/project/:project/deploys/new" 
                         render={(props) => <NewDeployment {...props} project={project.ID} profiles={profiles} /> } 
+                    />
+                    <Route path="/project/:project/deploy/descriptors" exact 
+                        render={(props) => <DescList {...props} project={project.ID} />} 
+                    />
+                    <Route path="/project/:project/deploy/descriptor/:descriptor" exact 
+                        render={(props) => <DescEditor {...props} />} 
                     />
                     <Route exact
                         path="/project/:project/deploy/:profile/new" 
