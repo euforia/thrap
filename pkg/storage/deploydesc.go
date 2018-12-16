@@ -94,7 +94,7 @@ func (s *ConsulDeployDescStorage) Set(projectID string, desc *pb.DeploymentDescr
 
 // Delete satisfies the DeployDescStorage interface
 func (s *ConsulDeployDescStorage) Delete(projectID string) error {
-	key := s.keyPath(projectID)
+	key := s.versionPath(projectID, DefaultSpecVersion)
 	kv := s.client.KV()
 	_, err := kv.Delete(key, &api.WriteOptions{})
 	return err

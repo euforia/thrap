@@ -133,9 +133,12 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 	case "PUT":
 		resp, err = api.setDeploymentSpec(r, dpl, version)
 
+	case "DELETE":
+		err = dpl.DeleteDescriptor(version)
+
 	case http.MethodOptions:
 		setAccessControlHeaders(w)
-		w.Header().Set("Access-Control-Allow-Methods", "GET,PUT")
+		w.Header().Set("Access-Control-Allow-Methods", "GET,PUT,DELETE")
 		w.WriteHeader(200)
 		return
 

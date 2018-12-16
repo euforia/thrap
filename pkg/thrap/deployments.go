@@ -109,3 +109,8 @@ func (d *Deployments) SetDescriptor(desc *pb.DeploymentDescriptor) error {
 func (d *Deployments) Descriptors() ([]string, error) {
 	return d.descs.ListVersions(d.proj.ID)
 }
+
+// DeleteDescriptor deletes a given descriptor version
+func (d *Deployments) DeleteDescriptor(version string) error {
+	return d.descs.DeleteVersion(d.proj.ID, version)
+}
