@@ -114,7 +114,6 @@ class Thrap {
       [PROFILE_HEADER]: profile,
       [TOKEN_HEADER]:  this.auth[profile].data.id,
     };
-    console.log('headers', obj);
     return obj;
   }
 
@@ -245,7 +244,6 @@ class Thrap {
         [PROFILE_HEADER]: profile,
       },
     });
-    console.log(token);
 
     return new Promise((resolve, reject) => {
       req

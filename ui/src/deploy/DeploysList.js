@@ -54,17 +54,7 @@ class DeploysList extends Component {
             orderBy: 'Instance',
             deploys:[],
         }
-
-        // this.fetchDeploys()
     }
-
-    // fetchDeploys() {
-    //     const proj = this.props.match.params.project;
-    //     thrap.Deployments(proj).then(resp =>  {
-    //         console.log(resp.data);
-    //         this.setState({deploys: resp.data});
-    //     });
-    // }
 
     getColor(s) {
         if (s === "dead") {
@@ -82,7 +72,6 @@ class DeploysList extends Component {
     };
 
     handleRowClick = (event, obj) => {
-        // console.log(obj);
         var path = '/project/'+this.props.project+'/deploy/'+obj.profile+'/'+obj.instance;
         this.props.history.push(path);
     }
