@@ -2,6 +2,7 @@ package secrets
 
 import (
 	"fmt"
+	"log"
 	"path/filepath"
 	"time"
 
@@ -146,7 +147,7 @@ func (sec *VaultSecrets) recursiveGet(startPath string) (map[string]map[string]i
 
 	keys, err := sec.list(startPath + "/")
 	if err != nil {
-		fmt.Println(err)
+		log.Println("WRN", err)
 		return out, nil
 	}
 
@@ -156,7 +157,7 @@ func (sec *VaultSecrets) recursiveGet(startPath string) (map[string]map[string]i
 		if key[len(key)-1] != '/' {
 			kv, err := sec.get(k)
 			if err != nil {
-				fmt.Println(err)
+				log.Println("WRN", err)
 				continue
 			}
 			out[k] = kv
@@ -164,7 +165,7 @@ func (sec *VaultSecrets) recursiveGet(startPath string) (map[string]map[string]i
 		} else {
 			kvs, err := sec.recursiveGet(k)
 			if err != nil {
-				fmt.Println(err)
+				log.Println("WRN", err)
 				continue
 			}
 			for k, v := range kvs {

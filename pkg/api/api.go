@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"mime"
 	"net/http"
 	"path"
@@ -63,7 +62,6 @@ func (h *httpHandler) handleUI(w http.ResponseWriter, r *http.Request) {
 
 	data, err := Asset(fpath)
 	if err != nil {
-		fmt.Println(err)
 		w.WriteHeader(404)
 		return
 	}

@@ -3,7 +3,6 @@ package orchestrator
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -107,9 +106,6 @@ func (orch *nomadOrchestrator) Deploy(ctx context.Context, d PreparedDeployment,
 		regOpts := &nomad.RegisterOptions{}
 		resp, _, err = jobs.RegisterOpts(job, regOpts, q)
 	}
-
-	fmt.Println(resp, err)
-
 	return
 }
 
