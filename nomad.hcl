@@ -200,6 +200,7 @@ job "thrap" {
             service {
                 name = "${TASK}"
                 port = "default"
+                tags = ["urlprefix-${NOMAD_META_PROJECT}.${NOMAD_META_DOMAIN}"]
                 check {
                     type     = "http"
                     path     = "/v1/status"
