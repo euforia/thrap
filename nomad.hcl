@@ -141,6 +141,7 @@ job "thrap" {
                         orchestrator = "dev"
                         secrets      = "dev"
                         registry     = "shared"
+                        iam          = "dev"
                         meta {
                             PUBLIC_TLD    = "{{.Data.DevPublicTLD}}"
                             PUBLIC_DOMAIN = "{{.Data.DevPublicDomain}}"
@@ -159,6 +160,7 @@ job "thrap" {
                         orchestrator = "int"
                         secrets      = "int"
                         registry     = "shared"
+                        iam          = "int"
                         meta {
                             PUBLIC_TLD    = "{{.Data.IntPublicTLD}}"
                             PUBLIC_DOMAIN = "{{.Data.IntPublicDomain}}"
@@ -177,6 +179,7 @@ job "thrap" {
                         orchestrator = "prod"
                         secrets      = "prod"
                         registry     = "shared"
+                        iam          = "prod"
                         meta {
                             PUBLIC_TLD    = "{{.Data.ProdPublicTLD}}"
                             PUBLIC_DOMAIN = "{{.Data.ProdPublicDomain}}"
