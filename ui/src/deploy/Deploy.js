@@ -64,7 +64,6 @@ class Deploy extends Component {
         const prof = this.props.match.params.profile;
         thrap.Profile(prof).then(resp => {
             var vs = getKVPairs(resp.data.Variables);
-            // var ms = getKVPairs(resp.data.Meta);
             this.setState({
                 profile: resp.data, 
                 vars: vs
@@ -110,8 +109,8 @@ class Deploy extends Component {
         thrap.DeployInstance(project, profile, instance, req)
             .then(data => {
                 this.setState({disabled:false});
-                // this.props.onDeploy();
-                console.log(data);
+                var path = `/project/${project}/deploy/${profile}/${instance}`;
+                this.props.history.push(path);
             })
             .catch(error => {
                 this.setState({disabled:false});
