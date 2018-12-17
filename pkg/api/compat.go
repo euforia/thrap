@@ -72,8 +72,14 @@ func parseMoldHCLDeployDesc(in []byte) (*pb.DeploymentDescriptor, error) {
 	}
 	job.Constraints = csts
 
+	removeVarsFromMetaVals(job.Meta)
+
 	for _, group := range job.TaskGroups {
+		removeVarsFromMetaVals(group.Meta)
+
 		for _, task := range group.Tasks {
+			removeVarsFromMetaVals(task.Meta)
+
 			for _, tmpl := range task.Templates {
 				data := tmpl.EmbeddedTmpl
 				if data == nil {
@@ -87,6 +93,15 @@ func parseMoldHCLDeployDesc(in []byte) (*pb.DeploymentDescriptor, error) {
 	}
 
 	return makeNomadJSONDeployDesc(job)
+}
+
+// empties out values in the meta block that contain variables
+func removeVarsFromMetaVals(meta map[string]string) {
+	for k, v := range meta {
+		if strings.HasPrefix(v, "${") && strings.HasSuffix(v, "}") {
+			meta[k] = ""
+		}
+	}
 }
 
 // replaces the secrets key
