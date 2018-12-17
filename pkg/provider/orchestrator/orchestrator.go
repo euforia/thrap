@@ -68,8 +68,11 @@ type Orchestrator interface {
 	// based on the orchestrator or an error
 	Deploy(context.Context, PreparedDeployment, RequestOptions) (interface{}, error)
 
-	// // Destroy the stack returning results for each component
-	// Destroy(ctx context.Context, stack *thrapb.Stack) []*thrapb.ActionResult
+	// Stop the deploy
+	Stop(context.Context, string, RequestOptions) error
+
+	// Stop and destroy
+	Destroy(context.Context, string, RequestOptions) error
 
 	// // Status of all comps
 	// Status(ctx context.Context, stack *thrapb.Stack) []*thrapb.CompStatus

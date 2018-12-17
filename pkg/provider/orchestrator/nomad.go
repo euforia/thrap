@@ -155,17 +155,17 @@ func (orch *nomadOrchestrator) Deploy(ctx context.Context, d PreparedDeployment,
 // 	return nil
 // }
 
-// func (orch *nomadOrchestrator) Destroy(ctx context.Context, stack *thrapb.Stack, opts RequestOptions) error {
-// 	jobs := orch.client.Jobs()
+func (orch *nomadOrchestrator) Stop(ctx context.Context, id string, opt RequestOptions) error {
+	jobs := orch.client.Jobs()
+	_, _, err := jobs.Deregister(id, false, &nomad.WriteOptions{Region: opt.Region})
+	return err
+}
 
-// 	writeOpt := &nomad.WriteOptions{
-// 		Region: opts.Region,
-// 	}
-
-// 	_, _, err := jobs.Deregister(stack.ID, opts.Purge, writeOpt)
-
-// 	return err
-// }
+func (orch *nomadOrchestrator) Destroy(ctx context.Context, id string, opt RequestOptions) error {
+	jobs := orch.client.Jobs()
+	_, _, err := jobs.Deregister(id, true, &nomad.WriteOptions{Region: opt.Region})
+	return err
+}
 
 // default service block added to each task
 // func serviceBlock(instance, name, comp, portLabel string) *nomad.Service {

@@ -43,8 +43,11 @@ type Engine interface {
 	// Prepare a given deploy
 	PrepareDeploy(context.Context, *provider.Request) (orchestrator.PreparedDeployment, error)
 	Deploy(context.Context, orchestrator.PreparedDeployment, orchestrator.RequestOptions) error
+	Stop(context.Context, string, string) error
+	Destroy(context.Context, string, string) error
 	// Returns the secrets path given the project and instance name
 	SecretsPath(project string, instance string) string
+	// Seeds secrets from template to instance
 	SeedSecrets(*provider.Request) error
 }
 
@@ -168,6 +171,16 @@ func (eng *engine) Deploy(ctx context.Context,
 	_, err := eng.o.Deploy(ctx, prepared, opts)
 
 	return err
+}
+
+func (eng *engine) Stop(ctx context.Context, project, instance string) error {
+	id := project + "-" + instance
+	return eng.o.Stop(ctx, id, orchestrator.RequestOptions{})
+}
+
+func (eng *engine) Destroy(ctx context.Context, project, instance string) error {
+	id := project + "-" + instance
+	return eng.o.Destroy(ctx, id, orchestrator.RequestOptions{})
 }
 
 func (eng *engine) checkSecrets(projID, instID string) error {

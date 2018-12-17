@@ -138,6 +138,16 @@ func (d *Deployment) Deploy(ctx context.Context, req *DeployRequest) (*pb.Deploy
 	return &d.depl, err
 }
 
+// Stop the deployment
+func (d *Deployment) Stop(ctx context.Context) error {
+	return d.eng.Stop(ctx, d.proj.ID, d.depl.Name)
+}
+
+// Destroy stops and destroys the deployment
+func (d *Deployment) Destroy(ctx context.Context) error {
+	return d.eng.Destroy(ctx, d.proj.ID, d.depl.Name)
+}
+
 // Sync persists the current deployment to the store
 func (d *Deployment) Sync() error {
 	d.depl.ModifiedAt = time.Now().UnixNano()
