@@ -120,12 +120,12 @@ class Deployment extends Component {
                         <Typography>Profile: {deploy.Profile.ID}</Typography>
                     </Grid>
                     <Grid item xs={10} style={{textAlign:'right'}}>
-                        <Button color="secondary"
+                        {/* <Button color="secondary"
                             onClick={this.showDeployStopModal}
                             disabled={status.includes('Deploy') ? false : true}
                         >
                             Stop
-                        </Button>
+                        </Button> */}
                         <Button color="primary"
                             component={Link} 
                             to={"/project/"+project+"/deploy/"+deploy.Profile.ID+"/"+deploy.Name+"/deploy"}

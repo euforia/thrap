@@ -81,6 +81,7 @@ func (server *Server) registerHandlers() {
 	server.registerHandler("/v1/project/{pid}/deployment/spec/{version}", server.handler.handleDeploymentSpec)
 	server.registerHandler("/v1/project/{pid}/deployment/specs", server.handler.handleListDeploymentSpecs)
 	server.registerHandler("/v1/project/{pid}/deployment/{eid}/{iid}", server.handler.handleDeployment)
+	// server.registerHandler("/v1/project/{pid}/deployment/{eid}/{iid}/deploy", server.handler.handleDeploy)
 }
 
 func (server *Server) registerHandler(path string, h http.HandlerFunc) {
