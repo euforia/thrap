@@ -56,6 +56,8 @@ class ImportSpec extends Component {
             invalidSpecFile: false,
             specName: '',
             specNameErr: '',
+            errMsg: '',
+            disabled: false,
         }
 
         this.fileInput = React.createRef();
@@ -106,16 +108,22 @@ class ImportSpec extends Component {
         var props = this.props;
         
         s = this.state;
+
+        var t = this;
+        this.setState({disabled:true});
+        
         // Closure to capture the file information.
         reader.onload = (function(theFile) {
             var project = props.project;
             return function(e) {
                 thrap.PutSpec(project, s.specName, mimeType, e.target.result)
                     .then(({data}) => {
+                        t.setState({disabled:false});
                         props.onImportSpec(s.specName, data);
                     })
                     .catch(error => {
-                        console.log(error);
+                        // console.log(error);
+                        t.setState({errMsg: error.response.data, disabled:false});
                         props.onError(error);
                     });
             };
@@ -136,12 +144,13 @@ class ImportSpec extends Component {
     render() {
 
         const { classes } = this.props;
-        const { specName, specNameErr } = this.state;
+        const { specName, specNameErr, errMsg, disabled } = this.state;
 
         return (
             <div className={classes.container}>
                 <div>
                     <Typography variant="h5">New Descriptor</Typography>
+                    <Typography color="secondary">{errMsg}</Typography>
                     <TextField
                         value={specName}
                         onChange={this.handleNameChange}
@@ -151,6 +160,7 @@ class ImportSpec extends Component {
                         label="Name"
                         helperText={specNameErr !=='' ? specNameErr : 'Unique desciptor name'}
                         error={specNameErr !== ''}
+                        disabled={disabled}
                     />
                     <FormControl style={{width: '100%'}}>
                         
@@ -169,6 +179,7 @@ class ImportSpec extends Component {
                             }}
                             helperText="Deployment file"
                             error={this.state.invalidSpecFile}
+                            disabled={disabled}
                         />
                         <input type="file" className={classes.fileUploadInput}
                             ref={this.fileInput} onChange={this.onFileSelected} />
@@ -184,6 +195,7 @@ class ImportSpec extends Component {
                             helperText="Descriptor content type"
                             required
                             fullWidth
+                            disabled={disabled}
                             error={this.state.invalidContentType}
                         >
                             {descContentTypes.map(option => (
@@ -195,7 +207,9 @@ class ImportSpec extends Component {
                     
                 </div>
                 <div style={{textAlign: 'center', marginTop:'30px'}}>
-                    <Button color="primary" variant="outlined" onClick={this.onImportSpec}>
+                    <Button color="primary" variant="outlined" onClick={this.onImportSpec}
+                        disabled={disabled}
+                    >
                         <CloudUploadOutlined fontSize="small" className={classes.importIcon}/>
                         Import
                     </Button>

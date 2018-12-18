@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Typography, Chip, Grid, Button, withStyles, Tooltip } from '@material-ui/core';
 
 import KVList from '../common/KVList';
+import DeployStop from './DeployStop';
 
 import {thrap} from '../api/thrap';
 
@@ -45,6 +46,7 @@ class Deployment extends Component {
             metas:[],
             vars:[],
             rawSpec: '',
+            showStopModal: false,
         };
 
         this.fetchDeploy();
@@ -91,12 +93,24 @@ class Deployment extends Component {
         console.log(code);
     }
 
+    showDeployStopModal = () => {
+        this.setState({showStopModal:true});
+    }
+    hideDeployStopModal = () => {
+        this.setState({showStopModal:false});
+    }
+    handleStop = (purge) => {
+        console.log(purge);
+        this.setState({showStopModal:false});
+    }
+
     render() {
         const { deploy } = this.state;
         const { classes } = this.props;
         const metaPairs = this.state.metas;
         const varsPairs = this.state.vars;
         const project = this.props.match.params.project;
+        const status = thrap.stateLabel(deploy.State,deploy.Status);
        
         return (
             <div>
@@ -106,11 +120,17 @@ class Deployment extends Component {
                         <Typography>Profile: {deploy.Profile.ID}</Typography>
                     </Grid>
                     <Grid item xs={10} style={{textAlign:'right'}}>
-                        <Button color="primary" variant="outlined"
+                        <Button color="secondary"
+                            onClick={this.showDeployStopModal}
+                            disabled={status.includes('Deploy') ? false : true}
+                        >
+                            Stop
+                        </Button>
+                        <Button color="primary"
                             component={Link} 
                             to={"/project/"+project+"/deploy/"+deploy.Profile.ID+"/"+deploy.Name+"/deploy"}
                         >
-                            {thrap.stateLabel(deploy.State,deploy.Status)==='Deployed' ? 'Re-deploy' : 'Deploy'}
+                            {status==='Deployed' ? 'Re-deploy' : 'Deploy'}
                         </Button>
                     </Grid>
                 </Grid>
@@ -119,7 +139,7 @@ class Deployment extends Component {
                         placement="left"
                     >
                         <Chip 
-                            label={thrap.stateLabel(deploy.State,deploy.Status)} 
+                            label={status} 
                             color={thrap.stateLabelColor(deploy.State, deploy.Status)}
                         />
                     </Tooltip>
@@ -154,6 +174,12 @@ class Deployment extends Component {
                             />
                     </Grid>  
                 </Grid>
+                <DeployStop 
+                    open={this.state.showStopModal}
+                    onCancel={this.hideDeployStopModal}
+                    onStop={this.handleStop}
+                    name={deploy.Name}
+                />
             </div>
         );
     }

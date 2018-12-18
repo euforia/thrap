@@ -93,6 +93,7 @@ class Descriptors extends Component {
             modalOpen:false,
         });
         this.fetchSpecs();
+        this.props.onChange(name);
     }
 
     onImportDescErr = () => {
