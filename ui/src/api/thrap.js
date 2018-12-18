@@ -32,6 +32,11 @@ const deployState = {
       1: 'Deployed',
       2: 'Deploy failed',
   },
+  4: {
+    0: 'Stopping',
+    1: 'Stopped',
+    2: 'Stop failed',
+  },
 };
 
 const nameRe = /^[a-z0-9\-_]+$/i;
@@ -56,6 +61,11 @@ const deployStateColors = {
       0: 'default',
       1: 'primary',
       2: 'secondary',
+  },
+  4: {
+    0: 'default',
+    1: 'default',
+    2: 'secondary',
   },
 };
 
@@ -209,11 +219,20 @@ class Thrap {
   }
 
   DeployInstance(project, profile, instance, payload) {
-    const path = `${THRAP_BASE}/project/${project}/deployment/${profile}/${instance}`;
+    const path = `${THRAP_BASE}/project/${project}/deployment/${profile}/${instance}/deploy`;
     return axios({
       method: 'post',
       url: path,
       data: payload,
+      headers: this.requestHeaders(profile),
+    });
+  }
+
+  StopInstance(project, profile, instance, purge) {
+    const path = `${THRAP_BASE}/project/${project}/deployment/${profile}/${instance}/deploy${purge===true ? '?purge' : ''}`;
+    return axios({
+      method: 'delete',
+      url: path,
       headers: this.requestHeaders(profile),
     });
   }

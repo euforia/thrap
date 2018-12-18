@@ -140,12 +140,30 @@ func (d *Deployment) Deploy(ctx context.Context, req *DeployRequest) (*pb.Deploy
 
 // Stop the deployment
 func (d *Deployment) Stop(ctx context.Context) error {
-	return d.eng.Stop(ctx, d.proj.ID, d.depl.Name)
+	d.depl.State = pb.DeploymentState_STOP
+	err := d.eng.Stop(ctx, d.proj.ID, d.depl.Name)
+	if err != nil {
+		d.depl.StateMessage = err.Error()
+		d.depl.Status = pb.DeployStateStatus_FAILED
+	} else {
+		d.depl.Status = pb.DeployStateStatus_OK
+	}
+	d.Sync()
+	return err
 }
 
 // Destroy stops and destroys the deployment
 func (d *Deployment) Destroy(ctx context.Context) error {
-	return d.eng.Destroy(ctx, d.proj.ID, d.depl.Name)
+	d.depl.State = pb.DeploymentState_STOP
+	err := d.eng.Destroy(ctx, d.proj.ID, d.depl.Name)
+	if err != nil {
+		d.depl.StateMessage = err.Error()
+		d.depl.Status = pb.DeployStateStatus_FAILED
+	} else {
+		d.depl.Status = pb.DeployStateStatus_OK
+	}
+	d.Sync()
+	return err
 }
 
 // Sync persists the current deployment to the store
@@ -159,7 +177,7 @@ func (d *Deployment) isVoid() bool {
 	status := d.depl.Status
 
 	switch state {
-	case pb.DeploymentState_CREATE, pb.DeploymentState_DEPLOY:
+	case pb.DeploymentState_CREATE, pb.DeploymentState_DEPLOY, pb.DeploymentState_STOP:
 		return false
 	case pb.DeploymentState_PREPARE:
 		if status == pb.DeployStateStatus_FAILED {

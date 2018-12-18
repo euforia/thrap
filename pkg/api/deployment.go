@@ -53,24 +53,24 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 	case "PUT":
 		d, err = dpl.Create(ctx, envID, instID)
 
-	case "POST":
-		defer r.Body.Close()
+	// case "POST":
+	// 	defer r.Body.Close()
 
-		d, err = dpl.Get(ctx, envID, instID)
-		if err == nil {
-			err = api.handleDeploy(d, r)
-		}
+	// 	d, err = dpl.Get(ctx, envID, instID)
+	// 	if err == nil {
+	// 		err = api.handleDeploy(d, r)
+	// 	}
 
-	case "DELETE":
-		// stop and purge
-		d, err = dpl.Get(ctx, envID, instID)
-		if err == nil {
-			err = d.Destroy(ctx)
-		}
+	// case "DELETE":
+	// 	// stop and purge
+	// 	d, err = dpl.Get(ctx, envID, instID)
+	// 	if err == nil {
+	// 		err = d.Destroy(ctx)
+	// 	}
 
 	case http.MethodOptions:
 		setAccessControlHeaders(w)
-		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT")
+		w.Header().Set("Access-Control-Allow-Methods", "GET,PUT")
 		w.WriteHeader(200)
 		return
 
@@ -86,14 +86,78 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 	writeJSONResponse(w, resp, err)
 }
 
-func (api *httpHandler) handleDeploy(d *thrap.Deployment, r *http.Request) error {
-	dec := json.NewDecoder(r.Body)
+// func (api *httpHandler) handleDeploy(d *thrap.Deployment, r *http.Request) error {
+// 	dec := json.NewDecoder(r.Body)
 
-	var req thrap.DeployRequest
-	err := dec.Decode(&req)
+// 	var req thrap.DeployRequest
+// 	err := dec.Decode(&req)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	_, err = d.Deploy(r.Context(), &req)
+// 	return err
+// }
+
+func (api *httpHandler) handleDeploy(w http.ResponseWriter, r *http.Request) {
+	var (
+		vars   = mux.Vars(r)
+		projID = vars["pid"]
+		profID = vars["eid"]
+		instID = vars["iid"]
+
+		d *thrap.Deployment
+
+		err  error
+		resp interface{}
+
+		ctx = r.Context()
+	)
+
+	proj, err := api.projects.Get(projID)
 	if err != nil {
-		return err
+		w.WriteHeader(404)
+		w.Write([]byte(err.Error()))
+		return
 	}
-	_, err = d.Deploy(r.Context(), &req)
-	return err
+	dpl := proj.Deployments()
+	d, err = dpl.Get(ctx, profID, instID)
+	if err != nil {
+		w.WriteHeader(400)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	switch r.Method {
+	case "POST":
+		dec := json.NewDecoder(r.Body)
+		var req thrap.DeployRequest
+		err = dec.Decode(&req)
+		if err == nil {
+			resp, err = d.Deploy(ctx, &req)
+		}
+
+	case "DELETE":
+		if _, purge := r.URL.Query()["purge"]; purge {
+			err = d.Destroy(ctx)
+		} else {
+			err = d.Stop(ctx)
+		}
+
+		if err == nil {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+	case http.MethodOptions:
+		setAccessControlHeaders(w)
+		w.Header().Set("Access-Control-Allow-Methods", "POST,DELETE")
+		w.WriteHeader(200)
+		return
+
+	default:
+		w.WriteHeader(405)
+		return
+	}
+	// fmt.Println(resp, err)
+	writeJSONResponse(w, resp, err)
 }

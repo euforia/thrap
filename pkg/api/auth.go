@@ -64,7 +64,7 @@ func (a *authHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.next.ServeHTTP(recW, r)
 	}
 
-	a.log.Printf("%d %s %s", recW.status, r.Method, r.URL.Path)
+	a.log.Printf("%d %s %s", recW.status, r.Method, r.RequestURI)
 }
 
 type responseRecorder struct {

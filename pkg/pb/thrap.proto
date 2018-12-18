@@ -31,6 +31,7 @@ enum DeploymentState {
     CREATE = 1;
     PREPARE = 2;
     DEPLOY = 3;
+    STOP = 4;
 }
 
 enum DeployStateStatus {

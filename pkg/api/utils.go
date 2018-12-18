@@ -24,6 +24,7 @@ func writeJSONResponse(w http.ResponseWriter, resp interface{}, err error) {
 	}
 
 	if resp == nil {
+		w.WriteHeader(200)
 		return
 	}
 

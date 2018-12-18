@@ -12,6 +12,8 @@ tags:
     description: Project operations
   - name: Deployment
     description: Deployment operations
+  - name: Deploy
+    description: Deploy operations
 
 paths:
   /project/{project}:
@@ -267,11 +269,13 @@ paths:
           description: OK
           schema:
             $ref: "#/definitions/Deployment"
+
+  /project/{project}/deployment/{environment}/{instance}/deploy:
     post:
       summary: Deploy
       description: Deploy an existing deployment bundle
       tags:
-        - Deployment
+        - Deploy
       parameters:
         - name: project
           in: path

@@ -96,12 +96,23 @@ class Deployment extends Component {
     showDeployStopModal = () => {
         this.setState({showStopModal:true});
     }
+
     hideDeployStopModal = () => {
         this.setState({showStopModal:false});
     }
+
     handleStop = (purge) => {
-        console.log(purge);
-        this.setState({showStopModal:false});
+        const {project,profile,instance} = this.props.match.params;
+        thrap.StopInstance(project, profile, instance, purge)
+        .then(resp => {
+            this.setState({showStopModal:false});
+            this.fetchDeploy();
+        })
+        .catch(err => {
+            console.log(err);
+            this.setState({showStopModal:false});
+            this.fetchDeploy();
+        })    
     }
 
     render() {
@@ -120,12 +131,12 @@ class Deployment extends Component {
                         <Typography>Profile: {deploy.Profile.ID}</Typography>
                     </Grid>
                     <Grid item xs={10} style={{textAlign:'right'}}>
-                        {/* <Button color="secondary"
+                        <Button color="secondary"
                             onClick={this.showDeployStopModal}
                             disabled={status.includes('Deploy') ? false : true}
                         >
                             Stop
-                        </Button> */}
+                        </Button>
                         <Button color="primary"
                             component={Link} 
                             to={"/project/"+project+"/deploy/"+deploy.Profile.ID+"/"+deploy.Name+"/deploy"}
