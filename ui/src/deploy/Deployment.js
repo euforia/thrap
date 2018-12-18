@@ -93,7 +93,13 @@ class Deployment extends Component {
         console.log(code);
     }
 
-    showDeployStopModal = () => {
+    onClickStop = () => {
+        const {project, profile, instance} = this.props.match.params;
+        if (!thrap.isAuthd(profile)) {
+            const path = `/login/${profile}#/project/${project}/deploy/${profile}/${instance}`;
+            this.props.history.push(path);
+            return;
+        }
         this.setState({showStopModal:true});
     }
 
@@ -132,7 +138,7 @@ class Deployment extends Component {
                     </Grid>
                     <Grid item xs={10} style={{textAlign:'right'}}>
                         <Button color="secondary"
-                            onClick={this.showDeployStopModal}
+                            onClick={this.onClickStop}
                             disabled={status.includes('Deploy') ? false : true}
                         >
                             Stop
