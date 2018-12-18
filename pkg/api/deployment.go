@@ -86,18 +86,6 @@ func (api *httpHandler) handleDeployment(w http.ResponseWriter, r *http.Request)
 	writeJSONResponse(w, resp, err)
 }
 
-// func (api *httpHandler) handleDeploy(d *thrap.Deployment, r *http.Request) error {
-// 	dec := json.NewDecoder(r.Body)
-
-// 	var req thrap.DeployRequest
-// 	err := dec.Decode(&req)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	_, err = d.Deploy(r.Context(), &req)
-// 	return err
-// }
-
 func (api *httpHandler) handleDeploy(w http.ResponseWriter, r *http.Request) {
 	var (
 		vars   = mux.Vars(r)
@@ -158,6 +146,6 @@ func (api *httpHandler) handleDeploy(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(405)
 		return
 	}
-	// fmt.Println(resp, err)
+
 	writeJSONResponse(w, resp, err)
 }

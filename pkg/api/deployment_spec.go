@@ -1,9 +1,9 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -64,17 +64,13 @@ func (api *httpHandler) handleListDeploymentSpecs(w http.ResponseWriter, r *http
 
 	var (
 		dpl  = proj.Deployments()
-		resp []byte
+		resp interface{}
 	)
 
 	switch r.Method {
 
 	case "GET":
-		var descs []string
-		descs, err = dpl.Descriptors()
-		if err == nil {
-			resp, err = json.Marshal(descs)
-		}
+		resp, err = dpl.Descriptors()
 
 	case http.MethodOptions:
 		setAccessControlHeaders(w)
@@ -87,15 +83,7 @@ func (api *httpHandler) handleListDeploymentSpecs(w http.ResponseWriter, r *http
 		return
 	}
 
-	if err != nil {
-		setAccessControlHeaders(w)
-		w.WriteHeader(400)
-		w.Write([]byte(err.Error()))
-	} else {
-		setAccessControlHeaders(w)
-		w.WriteHeader(200)
-		w.Write(resp)
-	}
+	writeJSONResponse(w, resp, err)
 }
 
 func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Request) {
@@ -128,7 +116,12 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 			w.Write([]byte(err.Error()))
 			return
 		}
-		resp = desc.Spec
+		setAccessControlHeaders(w)
+		log.Printf("project=%s desciptor=%s mime=%s", projID, desc.ID, desc.Mime)
+		// w.Header().Set("Content-Type", desc.Mime)
+		w.WriteHeader(200)
+		w.Write(desc.Spec)
+		return
 
 	case "PUT":
 		resp, err = api.setDeploymentSpec(r, dpl, version)
@@ -147,13 +140,5 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if err != nil {
-		setAccessControlHeaders(w)
-		w.WriteHeader(400)
-		w.Write([]byte(err.Error()))
-	} else {
-		setAccessControlHeaders(w)
-		w.WriteHeader(200)
-		w.Write(resp)
-	}
+	writeJSONResponse(w, resp, err)
 }
