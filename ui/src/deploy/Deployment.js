@@ -41,6 +41,7 @@ class Deployment extends Component {
                 Profile: {
                     ID: '',
                 },
+                Desc: {ID:'descriptor'},
             },
             profile: {},
             metas:[],
@@ -68,12 +69,16 @@ class Deployment extends Component {
         thrap.Deployment(proj, prof, inst).then(resp => {
             var data = resp.data;
             var rawSpec = '';
-            if (data.Spec !== undefined) {
-                rawSpec = atob(data.Spec)
-                data.Spec = JSON.parse(rawSpec);
+            
+            if (data.Desc) {
+                if (data.Desc.Spec !== undefined) {
+                    rawSpec = atob(data.Desc.Spec)
+                    data.Desc.Spec = JSON.parse(rawSpec);
+                }
             } else {
-                data.Spec = {};
+                data.Desc = {ID:'descriptor'};
             }
+
             var metaPairs = getKVPairs(data.Profile.Meta !== undefined ? data.Profile.Meta : this.state.profile.Meta);
             var varsPairs = getKVPairs(data.Profile.Variables !== undefined ? data.Profile.Variables : this.state.profile.Variables);
             
@@ -81,7 +86,8 @@ class Deployment extends Component {
                 rawSpec: rawSpec,
                 vars: varsPairs,
                 metas: metaPairs,
-                deploy: data});
+                deploy: data
+            });
         });
     }
 
@@ -178,8 +184,8 @@ class Deployment extends Component {
                     </Grid>
                     <Grid item xs={6}>
                         <Typography variant="h6" className={classes.heading}>Descriptor</Typography>
-                        <ReactJson name="descriptor" 
-                                src={this.state.deploy.Spec} 
+                        <ReactJson name={deploy.Desc.ID} 
+                                src={deploy.Desc.Spec} 
                                 style={{background: 'none', width:'100%', minHeight: '50px'}}
                                 displayObjectSize={true} 
                                 sortKeys={true} 
