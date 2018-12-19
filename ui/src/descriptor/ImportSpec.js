@@ -122,8 +122,9 @@ class ImportSpec extends Component {
                         props.onImportSpec(s.specName, data);
                     })
                     .catch(error => {
-                        // console.log(error);
-                        t.setState({errMsg: error.response.data, disabled:false});
+                        console.log(error);
+                        var errMsg = error.response ? error.response.data : '' ;
+                        t.setState({errMsg: errMsg, disabled: false});
                         props.onError(error);
                     });
             };

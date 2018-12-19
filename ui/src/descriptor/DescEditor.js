@@ -30,10 +30,10 @@ class DescEditor extends Component {
         var {project,descriptor} = this.props.match.params;
         thrap.Spec(project, descriptor)
         .then(resp => {
-            // console.log(resp.data);
-            this.setState({
-                rawSpec: JSON.stringify(resp.data, null, 2)
-            });
+            var data;
+            if (resp.headers['content-type'].includes('json')) data = JSON.stringify(resp.data, null, 2);
+            else data = resp.data;
+            this.setState({rawSpec: data});
         })
         .catch(err => {
             console.log(err.config);
@@ -69,6 +69,7 @@ class DescEditor extends Component {
                         mode: { name: 'javascript', json: true },
                         smartIndent: true,
                         lineNumbers: true,
+                        lineWrapping: true,
                         tabSize: 2,
                     }}
                     onBeforeChange={(editor, data, value) => {
