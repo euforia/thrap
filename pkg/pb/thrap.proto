@@ -48,7 +48,7 @@ message Deployment {
     uint64 Version = 2;
     
     // Action marshalled & normalized deploy job
-    bytes Spec = 3; 
+    DeploymentDescriptor Desc = 3; 
     
     // Profile for this deployment
     Profile Profile  = 4;

@@ -15,6 +15,15 @@ const (
 	ZeroSHA256Digest = digest.Digest("sha256:0000000000000000000000000000000000000000000000000000000000000000")
 )
 
+const (
+	// DescContentTypeMoldHCL is the legacy type to be deprecated
+	DescContentTypeMoldHCL = "application/vnd.thrap.mold.deployment.descriptor.v1+hcl"
+	// DescContentTypeNomadHCL is a nomad hcl file
+	DescContentTypeNomadHCL = "application/vnd.thrap.nomad.deployment.descriptor.v1+hcl"
+	// DescContentTypeNomadJSON is json object
+	DescContentTypeNomadJSON = "application/vnd.thrap.nomad.deployment.descriptor.v1+json"
+)
+
 // NewDeployment returns a new deployment object
 func NewDeployment(profID, name string) *Deployment {
 	return &Deployment{
@@ -46,10 +55,7 @@ func (d *Deployment) Clone() *Deployment {
 		Status:       d.Status,
 		StateMessage: d.StateMessage,
 	}
-	if d.Spec != nil {
-		n.Spec = make([]byte, len(d.Spec))
-		copy(n.Spec, d.Spec)
-	}
+	n.Desc = d.Desc.Clone()
 	n.Profile = d.Profile.Clone()
 
 	return n
@@ -63,22 +69,23 @@ func (d *Deployment) Clone() *Deployment {
 func (d *Deployment) Hash(h hash.Hash) {
 	h.Write([]byte(d.Previous))
 	h.Write([]byte(d.Name))
+	if d.Desc != nil {
+		h.Write([]byte(d.Desc.ID))
+		h.Write([]byte(d.Desc.Mime))
+		h.Write(d.Desc.Spec)
+	}
+
 	binary.Write(h, binary.BigEndian, d.Version)
 	binary.Write(h, binary.BigEndian, d.State)
 	binary.Write(h, binary.BigEndian, d.Status)
 	binary.Write(h, binary.BigEndian, d.CreatedAt)
 	binary.Write(h, binary.BigEndian, d.ModifiedAt)
 	binary.Write(h, binary.BigEndian, d.Nonce)
-	h.Write(d.Spec)
+
 	h.Write([]byte(d.StateMessage))
 
 	d.Profile.Hash(h)
 }
-
-// // New satisfies the ObjectVersion interface
-// func (d *Deployment) New() kvdb.ObjectVersion {
-// 	return &Deployment{}
-// }
 
 // Validate validates the deployment settings
 func (d *Deployment) Validate() error {
@@ -91,7 +98,18 @@ func (d *Deployment) Validate() error {
 	return nil
 }
 
-// // New satisfies the Object interface
-// func (desc *DeploymentDescriptor) New() kvdb.Object {
-// 	return &DeploymentDescriptor{}
-// }
+// Clone clones the DeploymentDescriptor
+func (desc *DeploymentDescriptor) Clone() *DeploymentDescriptor {
+	if desc == nil {
+		return nil
+	}
+	n := &DeploymentDescriptor{
+		ID:   desc.ID,
+		Mime: desc.Mime,
+	}
+	if desc.Spec != nil {
+		n.Spec = make([]byte, len(desc.Spec))
+		copy(n.Spec, desc.Spec)
+	}
+	return n
+}

@@ -2,6 +2,7 @@ package thrap
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"time"
@@ -106,9 +107,16 @@ func (d *Deployment) PrepareDeploy(ctx context.Context, req *DeployRequest) (orc
 
 	// Write the final spec that is deployed back to the deploy object
 	// in Prepare state
-	d.depl.Spec = prepared.Bytes()
-	d.depl.Status = pb.DeployStateStatus_OK
+	// d.depl.Desc.Spec, err = prepared.Bytes(d.depl.Desc.Mime)
+	d.depl.Desc.Spec, err = json.Marshal(prepared.Spec())
+	if err != nil {
+		d.depl.Status = pb.DeployStateStatus_FAILED
+		d.depl.StateMessage = err.Error()
+		d.Sync()
+		return nil, err
+	}
 
+	d.depl.Status = pb.DeployStateStatus_OK
 	return prepared, d.Sync()
 }
 
@@ -197,10 +205,11 @@ func (d *Deployment) setupPrepare(vars map[string]string) error {
 	// Version up
 	d.depl.Version++
 
-	// We copy the spec to the deployment as input.  The orchestrator consumes and
+	// We copy the descriptor to the deployment as input.  The orchestrator consumes and
 	// returns the deployed/edited spec.
-	d.depl.Spec = make([]byte, len(d.desc.Spec))
-	copy(d.depl.Spec, d.desc.Spec)
+	d.depl.Desc = d.desc.Clone()
+	// d.depl.Desc.Spec = make([]byte, len(d.desc.Spec))
+	// copy(d.depl.Spec, d.desc.Spec)
 
 	// Set supplied and internal vars
 	d.setProfileVars(vars)

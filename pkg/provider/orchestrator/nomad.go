@@ -1,12 +1,17 @@
 package orchestrator
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
+
+	"github.com/hashicorp/nomad/jobspec"
 
 	"github.com/pkg/errors"
 
+	"github.com/euforia/thrap/pkg/pb"
 	"github.com/euforia/thrap/pkg/provider"
 	nomad "github.com/hashicorp/nomad/api"
 )
@@ -40,19 +45,29 @@ func (orch *nomadOrchestrator) Init(c *provider.Config) error {
 }
 
 func (orch *nomadOrchestrator) PrepareDeploy(ctx context.Context, req *provider.Request) (p PreparedDeployment, err error) {
-	// job, err := jobspec.Parse(bytes.NewBuffer(req.Deployment.Spec))
+	var job *nomad.Job
 
-	var apiJob nomad.Job
-	err = json.Unmarshal(req.Deployment.Spec, &apiJob)
+	switch req.Deployment.Desc.Mime {
+	case pb.DescContentTypeNomadJSON:
+		var apiJob nomad.Job
+		err = json.Unmarshal(req.Deployment.Desc.Spec, &apiJob)
+		if err == nil {
+			job = &apiJob
+		}
+
+	case pb.DescContentTypeNomadHCL:
+		job, err = jobspec.Parse(bytes.NewBuffer(req.Deployment.Desc.Spec))
+
+	default:
+		return nil, fmt.Errorf("unsupported descriptor mime='%s'", req.Deployment.Desc.Mime)
+
+	}
+
 	if err != nil {
 		return
 	}
 
-	var (
-		jobID = req.Project.ID + "-" + req.Deployment.Name
-		job   = &apiJob
-	)
-
+	jobID := req.Project.ID + "-" + req.Deployment.Name
 	job.ID = &jobID
 	job.Name = &jobID
 

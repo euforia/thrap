@@ -1,8 +1,6 @@
 package orchestrator
 
 import (
-	"encoding/json"
-
 	nomad "github.com/hashicorp/nomad/api"
 	"github.com/hashicorp/nomad/client/driver/env"
 	hargs "github.com/hashicorp/nomad/helper/args"
@@ -15,28 +13,15 @@ const (
 
 type nomadPreparedDeployment struct {
 	job *nomad.Job
-
-	// Serialized job.  This is the final job and cannot be used
-	// for a resubmit
-	serialized []byte
 }
 
 func newNomadPreparedDeployment(job *nomad.Job) (*nomadPreparedDeployment, error) {
-	var (
-		n   = &nomadPreparedDeployment{job: job}
-		err error
-	)
-
+	n := &nomadPreparedDeployment{job: job}
 	n.addServiceDefs()
 
-	n.serialized, err = json.MarshalIndent(job, "", "  ")
-	return n, err
-}
-
-// Bytes returns the bytes for a given deployment after all normalization
-// has occured.  This is the spec that was deployed.
-func (d *nomadPreparedDeployment) Bytes() []byte {
-	return d.serialized
+	// n.serialized, err = json.MarshalIndent(job, "", "  ")
+	// return n, err
+	return n, nil
 }
 
 func (d *nomadPreparedDeployment) Spec() interface{} {

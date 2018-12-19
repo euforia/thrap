@@ -14,6 +14,10 @@ const (
 	DefaultSpecVersion = "default"
 )
 
+var (
+	errMimeTypeRequired = errors.New("descriptor mime type required")
+)
+
 // ConsulDeployDescStorage implements a consul backed DeployDescStorage
 type ConsulDeployDescStorage struct {
 	client *api.Client
@@ -78,6 +82,9 @@ func (s *ConsulDeployDescStorage) GetVersion(projectID string, version string) (
 
 // Set satisfies the DeployDescStorage interface
 func (s *ConsulDeployDescStorage) Set(projectID string, desc *pb.DeploymentDescriptor) error {
+	if len(desc.Mime) == 0 {
+		return errMimeTypeRequired
+	}
 	if len(desc.ID) == 0 {
 		desc.ID = DefaultSpecVersion
 	}

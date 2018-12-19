@@ -70,6 +70,7 @@ func Test_Deployments(t *testing.T) {
 	deploys := proj.Deployments()
 	deploys.SetDescriptor(&pb.DeploymentDescriptor{
 		Spec: []byte(`{}`),
+		Mime: pb.DescContentTypeNomadJSON,
 	})
 
 	// Create

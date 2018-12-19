@@ -24,7 +24,8 @@ func writeJSONResponse(w http.ResponseWriter, resp interface{}, err error) {
 	}
 
 	if resp == nil {
-		w.WriteHeader(200)
+		setAccessControlHeaders(w)
+		w.WriteHeader(204)
 		return
 	}
 
@@ -42,7 +43,8 @@ func writeJSONResponse(w http.ResponseWriter, resp interface{}, err error) {
 	w.Write(data)
 }
 
-// JSON Marshal nomad job, store in descriptor. It returns aDeploymentDescriptor
+// JSON Marshal nomad job, store in descriptor. It returns a DeploymentDescriptor with
+// JSON mime
 func makeNomadJSONDeployDesc(job *nomad.Job) (*pb.DeploymentDescriptor, error) {
 	nb, err := json.Marshal(job)
 	if err != nil {
@@ -51,7 +53,7 @@ func makeNomadJSONDeployDesc(job *nomad.Job) (*pb.DeploymentDescriptor, error) {
 
 	return &pb.DeploymentDescriptor{
 		Spec: nb,
-		Mime: DescContentTypeNomadJSON,
+		Mime: pb.DescContentTypeNomadJSON,
 	}, nil
 }
 

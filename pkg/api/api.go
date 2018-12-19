@@ -11,15 +11,6 @@ import (
 )
 
 const (
-	// DescContentTypeMoldHCL is the legacy type to be deprecated
-	DescContentTypeMoldHCL = "application/vnd.thrap.mold.deployment.descriptor.v1+hcl"
-	// DescContentTypeNomadHCL is a nomad hcl file
-	DescContentTypeNomadHCL = "application/vnd.thrap.nomad.deployment.descriptor.v1+hcl"
-	// DescContentTypeNomadJSON is json object
-	DescContentTypeNomadJSON = "application/vnd.thrap.nomad.deployment.descriptor.v1+json"
-)
-
-const (
 	// TokenHeader is the auth token header key
 	TokenHeader = "X-Vault-Token"
 	// ProfileHeader is the profile header key

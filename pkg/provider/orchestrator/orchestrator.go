@@ -49,7 +49,7 @@ type PreparedDeployment interface {
 
 	// Serialized bytes of a deploy after all normalization.  This is stored
 	// along with the deployment
-	Bytes() []byte
+	// Bytes() ([]byte, error)
 }
 
 // Orchestrator implements an application/project deployment orchestrator

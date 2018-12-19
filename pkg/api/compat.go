@@ -53,7 +53,7 @@ func replaceMetaPlaceholders(data string) string {
 // 	})
 // }
 
-func parseMoldHCLDeployDesc(in []byte) (*pb.DeploymentDescriptor, error) {
+func translateMoldHCLDeployDesc(in []byte) (*nomad.Job, error) {
 	// Replace < > first
 	str := replaceMetaPlaceholders(string(in))
 
@@ -91,8 +91,25 @@ func parseMoldHCLDeployDesc(in []byte) (*pb.DeploymentDescriptor, error) {
 			}
 		}
 	}
+	return job, nil
+}
 
-	return makeNomadJSONDeployDesc(job)
+// in hcl; out hcl
+func parseMoldHCLDeployDesc(in []byte) (*pb.DeploymentDescriptor, error) {
+	job, err := translateMoldHCLDeployDesc(in)
+	if err == nil {
+		return makeNomadJSONDeployDesc(job)
+	}
+	return nil, err
+}
+
+// in hcl; out json
+func parseMoldJSONDeployDesc(in []byte) (*pb.DeploymentDescriptor, error) {
+	job, err := translateMoldHCLDeployDesc(in)
+	if err == nil {
+		return makeNomadJSONDeployDesc(job)
+	}
+	return nil, err
 }
 
 // empties out values in the meta block that contain variables

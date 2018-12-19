@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -28,13 +27,13 @@ func (api *httpHandler) setDeploymentSpec(r *http.Request, dpl *thrap.Deployment
 
 	switch contentType {
 
-	case DescContentTypeMoldHCL:
+	case pb.DescContentTypeMoldHCL:
 		desc, err = parseMoldHCLDeployDesc(b)
 
-	case DescContentTypeNomadHCL:
+	case pb.DescContentTypeNomadHCL:
 		desc, err = parseNomadHCLDescriptor(b)
 
-	case DescContentTypeNomadJSON:
+	case pb.DescContentTypeNomadJSON:
 		desc, err = parseNomadJSONDescriptor(b)
 
 	default:
@@ -103,8 +102,7 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 	}
 
 	var (
-		dpl  = proj.Deployments()
-		resp []byte
+		dpl = proj.Deployments()
 	)
 
 	switch r.Method {
@@ -116,18 +114,30 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 			w.Write([]byte(err.Error()))
 			return
 		}
+		// log.Printf("project=%s desciptor=%s mime=%s", projID, desc.ID, desc.Mime)
 		setAccessControlHeaders(w)
-		log.Printf("project=%s desciptor=%s mime=%s", projID, desc.ID, desc.Mime)
-		// w.Header().Set("Content-Type", desc.Mime)
+		w.Header().Set("Content-Type", desc.Mime)
 		w.WriteHeader(200)
 		w.Write(desc.Spec)
 		return
 
 	case "PUT":
+		var resp []byte
 		resp, err = api.setDeploymentSpec(r, dpl, version)
+		if err == nil {
+			setAccessControlHeaders(w)
+			w.WriteHeader(200)
+			w.Write(resp)
+			return
+		}
 
 	case "DELETE":
 		err = dpl.DeleteDescriptor(version)
+		if err == nil {
+			setAccessControlHeaders(w)
+			w.WriteHeader(204)
+			return
+		}
 
 	case http.MethodOptions:
 		setAccessControlHeaders(w)
@@ -140,5 +150,9 @@ func (api *httpHandler) handleDeploymentSpec(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	writeJSONResponse(w, resp, err)
+	if err != nil {
+		setAccessControlHeaders(w)
+		w.WriteHeader(400)
+		w.Write([]byte(err.Error()))
+	}
 }
